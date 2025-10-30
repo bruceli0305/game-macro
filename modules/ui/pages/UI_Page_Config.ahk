@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-; “配置”页：角色配置、热键与轮询、自动化配置、技能/点位内层Tab（事件统一用闭包绑定）
+; “配置”页：角色配置、热键与轮询、自动化配置、技能/点位两套面板（按钮切换）
 
 UI_Page_Config_Build() {
     global UI
@@ -46,14 +46,13 @@ UI_Page_Config_Build() {
     UI.BtnBuffs.OnEvent("Click", (*) => BuffsManager_Show())
     UI.BtnDefault.OnEvent("Click", (*) => DefaultSkillEditor_Show())
 
-    ; ===== 内层 Tab（Tab2 + Buttons，页眉稳定） =====
-    UI.TabInner := UI.Main.Add("Tab2", "xm y+20 w860 h440 +Buttons"
-        , [ T("tab.skills","技能列表"), T("tab.points","取色点位") ])
-    ; 如主题仍冲突，可取消注释下一行：
-    ; UI.TabInner.Opt("-Theme")
+    ; ===== 页内切换按钮（替代内层 Tab）=====
+    UI.BtnPaneSkills := UI.Main.Add("Button", "xm y+20 w120 h28", T("tab.skills","技能列表"))
+    UI.BtnPanePoints := UI.Main.Add("Button", "x+8 w120 h28", T("tab.points","取色点位"))
+    UI.BtnPaneSkills.OnEvent("Click", (*) => UI_Page_Config_ShowPane(1))
+    UI.BtnPanePoints.OnEvent("Click", (*) => UI_Page_Config_ShowPane(2))
 
-    ; -- 技能页 --
-    UI.TabInner.UseTab(1)
+    ; -- 技能页控件 --
     UI.SkillLV := UI.Main.Add("ListView", "x12 y12 w100 h100 +Grid +AltSubmit"
         , [ T("col.skill.id","ID"), T("col.skill.name","技能名"), T("col.skill.key","键位")
           , T("col.skill.x","X"), T("col.skill.y","Y"), T("col.skill.color","颜色"), T("col.skill.tol","容差") ])
@@ -70,8 +69,7 @@ UI_Page_Config_Build() {
     UI.BtnTestSkill.OnEvent("Click", (*) => UI_Page_Config_TestSelectedSkill())
     UI.BtnSaveSkill.OnEvent("Click", (*) => UI_Page_Config_SaveProfile())
 
-    ; -- 点位页 --
-    UI.TabInner.UseTab(2)
+    ; -- 点位页控件 --
     UI.PointLV := UI.Main.Add("ListView", "x12 y12 w100 h100 +Grid +AltSubmit"
         , [ T("col.point.id","ID"), T("col.point.name","名称"), T("col.point.x","X")
           , T("col.point.y","Y"), T("col.point.color","颜色"), T("col.point.tol","容差") ])
@@ -88,20 +86,30 @@ UI_Page_Config_Build() {
     UI.BtnTestPoint.OnEvent("Click", (*) => UI_Page_Config_TestSelectedPoint())
     UI.BtnSavePoint.OnEvent("Click", (*) => UI_Page_Config_SaveProfile())
 
-    ; 退出内层 Tab 上下文，强制选中第一页
-    UI.TabInner.UseTab()
-    UI.TabInner.Value := 1
-
-    ; 确保控件可见可用
-    for ctl in [UI.TabInner, UI.SkillLV, UI.PointLV
-              , UI.BtnAddSkill, UI.BtnEditSkill, UI.BtnDelSkill, UI.BtnTestSkill, UI.BtnSaveSkill
-              , UI.BtnAddPoint, UI.BtnEditPoint, UI.BtnDelPoint, UI.BtnTestPoint, UI.BtnSavePoint] {
-        try ctl.Visible := true
-        try ctl.Enabled := true
-    }
+    ; 初始仅显示“技能”面板
+    UI_Page_Config_ShowPane(1)
 
     ; 变更事件
     UI.ProfilesDD.OnEvent("Change", (*) => UI_Page_Config_ProfileChanged())
+}
+
+; 面板显隐切换
+UI_Page_Config_ShowPane(pane := 1) {
+    global UI
+    pane := (pane=2) ? 2 : 1
+    UI["InnerPane"] := pane
+
+    ; 切换按钮：当前页按钮禁用（提供“选中”感）
+    try UI.BtnPaneSkills.Enabled := (pane != 1)
+    try UI.BtnPanePoints.Enabled := (pane != 2)
+
+    ; 技能面板
+    for ctl in [UI.SkillLV, UI.BtnAddSkill, UI.BtnEditSkill, UI.BtnDelSkill, UI.BtnTestSkill, UI.BtnSaveSkill]
+        try ctl.Visible := (pane = 1)
+
+    ; 点位面板
+    for ctl in [UI.PointLV, UI.BtnAddPoint, UI.BtnEditPoint, UI.BtnDelPoint, UI.BtnTestPoint, UI.BtnSavePoint]
+        try ctl.Visible := (pane = 2)
 }
 
 ; ================= Profiles =================
@@ -297,7 +305,7 @@ UI_Page_Config_TestSelectedPoint() {
         . T("msg.result","结果: ") (match ? T("msg.match","匹配") : T("msg.nomatch","不匹配"))
 }
 
-; ================= New/Clone/Delete/Export =================
+; ================= New/Clone/Delete/Export（下略：保持不变） =================
 UI_Page_Config_NewProfile() {
     dlg := Gui(, T("dlg.newProfile","新建配置"))
     dlg.SetFont("s10", "Segoe UI")

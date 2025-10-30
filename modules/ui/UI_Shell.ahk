@@ -47,6 +47,10 @@ UI_ShowMain() {
     UI_OnResize(UI.Main, 0, cw, ch)
     UI_ToggleSettingsPage(false)
     UI_ToggleMainPage(true)
+
+    ; 新增：默认显示技能面板（已替代内层 Tab）
+    try UI_Page_Config_ShowPane(1)
+
     UI.Main.Show()
 
     ; 数据加载
