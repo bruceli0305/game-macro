@@ -15,6 +15,8 @@
 - **多角色配置**：支持多个游戏角色的独立配置
 - **可视化编辑**：图形界面配置技能、点位和规则
 - **配置导出**：可将配置打包为独立脚本
+- **国际化支持**：多语言界面（英文和中文）
+- **模块化架构**：组织良好的代码结构，便于维护和扩展
 
 ## 快速开始
 
@@ -71,31 +73,46 @@
 ```
 game-macro/
 ├── Main.ahk                    # 主程序入口
+├── Config/                     # 应用配置
+│   └── AppConfig.ini          # 主配置文件
+├── Languages/                  # 国际化文件
+│   ├── en-US.ini              # 英文语言包
+│   └── zh-CN.ini              # 中文语言包
 ├── modules/                    # 功能模块
-│   ├── Core.ahk               # 核心功能
 │   ├── GUI_Main.ahk           # 主界面
-│   ├── GUI_SkillEditor.ahk    # 技能编辑器
-│   ├── GUI_PointEditor.ahk    # 点位编辑器
-│   ├── GUI_RuleEditor.ahk     # 规则编辑器
-│   ├── GUI_BuffEditor.ahk     # BUFF编辑器
-│   ├── GUI_Threads.ahk        # 线程管理
-│   ├── RuleEngine.ahk         # 规则引擎
-│   ├── BuffEngine.ahk         # BUFF引擎
-│   ├── WorkerPool.ahk         # 工作线程池
-│   ├── Poller.ahk             # 轮询器
-│   ├── Pixel.ahk              # 像素检测
-│   ├── Storage.ahk            # 配置存储
-│   ├── Exporter.ahk           # 配置导出
-│   ├── Hotkeys.ahk            # 热键管理
-│   ├── Counters.ahk           # 计数器
-│   └── Utils.ahk              # 工具函数
-├── Profiles/                   # 配置文件目录
+│   ├── core/                   # 核心功能模块
+│   │   ├── AppConfig.ahk      # 配置管理
+│   │   └── Core.ahk           # 核心系统功能
+│   ├── engines/                # 引擎模块
+│   │   ├── BuffEngine.ahk     # BUFF管理引擎
+│   │   ├── Pixel.ahk          # 像素检测引擎
+│   │   └── RuleEngine.ahk     # 规则处理引擎
+│   ├── runtime/                # 运行时模块
+│   │   ├── Counters.ahk       # 计数器管理
+│   │   ├── Hotkeys.ahk        # 热键处理
+│   │   └── Poller.ahk          # 轮询系统
+│   ├── storage/                # 存储模块
+│   │   ├── Exporter.ahk       # 配置导出
+│   │   └── Storage.ahk        # 数据存储
+│   ├── ui/                     # 用户界面模块
+│   │   ├── UI_Layout.ahk      # 布局管理
+│   │   ├── UI_Shell.ahk       # 外壳界面
+│   │   ├── dialogs/           # 对话框组件
+│   │   └── pages/             # 页面组件
+│   ├── util/                   # 工具模块
+│   │   └── Utils.ahk           # 工具函数
+│   ├── workers/                # 工作模块
+│   │   ├── WorkerHost.ahk     # 工作主机管理
+│   │   └── WorkerPool.ahk     # 工作池管理
+│   └── i18n/                   # 国际化
+│       └── Lang.ahk            # 语言管理
+├── Profiles/                   # 角色配置文件目录
 │   ├── Default.ini            # 默认配置
 │   ├── 夺魂.ini               # 示例配置
 │   └── 裁决.ini               # 示例配置
-├── Exports/                    # 导出文件目录
+├── Exports/                    # 导出目录
 │   └── 夺魂/                   # 示例导出配置
-└── Logs/                       # 日志文件目录
+└── Logs/                       # 日志目录
 ```
 
 ## 使用示例

@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-; 默认技能配置对话（与原 GUI_Main 同名函数，保持兼容）
+; 默认技能配置对话
 
 DefaultSkillEditor_Show() {
     global App
@@ -31,16 +31,21 @@ DefaultSkillEditor_Show() {
     dlg.Add("Text", "xm y+8 w60", T("label.thread","线程："))
     ddThread := dlg.Add("DropDownList", "x+6 w200")
     threadIds := []
-    tnames := []
-    for _, t in App["ProfileData"].Threads {
-        tnames.Push(t.Name)
-        threadIds.Push(t.Id)
+    threadNames := []
+    if HasProp(App["ProfileData"], "Threads") {
+        for _, thr in App["ProfileData"].Threads {
+            threadNames.Push(thr.Name)
+            threadIds.Push(thr.Id)
+        }
     }
-    if tnames.Length
-        ddThread.Add(tnames)
+    if threadNames.Length
+        ddThread.Add(threadNames)
+
+    ; 选中当前 ThreadId
+    curTid := HasProp(ds, "ThreadId") ? ds.ThreadId : 1
     sel := 1
     for i, id in threadIds
-        if (id = (HasProp(ds,"ThreadId") ? ds.ThreadId : 1)) {
+        if (id = curTid) {
             sel := i
             break
         }
@@ -54,12 +59,13 @@ DefaultSkillEditor_Show() {
 
     btnSave := dlg.Add("Button", "xm y+12 w100", T("btn.save","保存"))
     btnCancel := dlg.Add("Button", "x+8 w100", T("btn.cancel","取消"))
-    btnSave.OnEvent("Click", OnSave)
+    btnSave.OnEvent("Click", (*) => OnSave())
     btnCancel.OnEvent("Click", (*) => dlg.Destroy())
 
     dlg.Show()
 
-    OnSave(*) {
+    OnSave() {
+        global App
         en  := cbEn.Value ? 1 : 0
         si  := ddSkill.Value ? ddSkill.Value : 0
         rdy := cbReady.Value ? 1 : 0
@@ -73,13 +79,13 @@ DefaultSkillEditor_Show() {
         }
 
         last := HasProp(ds, "LastFire") ? ds.LastFire : 0
-        App["ProfileData"].DefaultSkill.Enabled := en
-        App["ProfileData"].DefaultSkill.SkillIndex := si
-        App["ProfileData"].DefaultSkill.CheckReady := rdy
-        App["ProfileData"].DefaultSkill.ThreadId := tid
-        App["ProfileData"].DefaultSkill.CooldownMs := cd
-        App["ProfileData"].DefaultSkill.PreDelayMs := pre
-        App["ProfileData"].DefaultSkill.LastFire := last
+        ds.Enabled     := en
+        ds.SkillIndex  := si
+        ds.CheckReady  := rdy
+        ds.ThreadId    := tid
+        ds.CooldownMs  := cd
+        ds.PreDelayMs  := pre
+        ds.LastFire    := last
 
         Storage_SaveProfile(App["ProfileData"])
         dlg.Destroy()

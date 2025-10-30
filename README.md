@@ -15,6 +15,8 @@ A game automation tool developed with AutoHotkey v2, supporting advanced feature
 - **Multi-character Profiles**: Independent configurations for different game characters
 - **Visual Editor**: Graphical interface for configuring skills, points, and rules
 - **Export Functionality**: Package configurations as standalone scripts
+- **Internationalization Support**: Multi-language interface (English and Chinese)
+- **Modular Architecture**: Organized code structure for easy maintenance and extension
 
 ## Quick Start
 
@@ -71,29 +73,46 @@ Automatic buff renewal functionality:
 ```
 game-macro/
 ├── Main.ahk                    # Main program entry
+├── Config/                     # Application configuration
+│   └── AppConfig.ini          # Main configuration file
+├── Languages/                  # Internationalization files
+│   ├── en-US.ini              # English language pack
+│   └── zh-CN.ini              # Chinese language pack
 ├── modules/                    # Functional modules
-│   ├── Core.ahk               # Core functionality
 │   ├── GUI_Main.ahk           # Main interface
-│   ├── GUI_SkillEditor.ahk    # Skill editor
-│   ├── GUI_PointEditor.ahk    # Point editor
-│   ├── GUI_RuleEditor.ahk    # Rule editor
-│   ├── GUI_BuffEditor.ahk    # Buff editor
-│   ├── GUI_Threads.ahk       # Thread management
-│   ├── RuleEngine.ahk        # Rule engine
-│   ├── BuffEngine.ahk        # Buff engine
-│   ├── WorkerPool.ahk        # Worker thread pool
-│   ├── Poller.ahk            # Poller
-│   ├── Pixel.ahk             # Pixel detection
-│   ├── Storage.ahk           # Configuration storage
-│   ├── Exporter.ahk          # Configuration export
-│   ├── Hotkeys.ahk           # Hotkey management
-│   ├── Counters.ahk          # Counters
-│   └── Utils.ahk             # Utility functions
-├── Profiles/                  # Configuration directory
-│   └── Default.ini           # Default configuration
-├── Exports/                   # Export directory
-│   └── Default/                  # Example export configuration
-└── Logs/                      # Log directory
+│   ├── core/                   # Core functionality modules
+│   │   ├── AppConfig.ahk      # Configuration management
+│   │   └── Core.ahk           # Core system functions
+│   ├── engines/                # Engine modules
+│   │   ├── BuffEngine.ahk     # Buff management engine
+│   │   ├── Pixel.ahk          # Pixel detection engine
+│   │   └── RuleEngine.ahk     # Rule processing engine
+│   ├── runtime/                # Runtime modules
+│   │   ├── Counters.ahk       # Counter management
+│   │   ├── Hotkeys.ahk        # Hotkey handling
+│   │   └── Poller.ahk          # Polling system
+│   ├── storage/                # Storage modules
+│   │   ├── Exporter.ahk       # Configuration export
+│   │   └── Storage.ahk        # Data storage
+│   ├── ui/                     # User interface modules
+│   │   ├── UI_Layout.ahk      # Layout management
+│   │   ├── UI_Shell.ahk       # Shell interface
+│   │   ├── dialogs/           # Dialog components
+│   │   └── pages/             # Page components
+│   ├── util/                   # Utility modules
+│   │   └── Utils.ahk           # Utility functions
+│   ├── workers/                # Worker modules
+│   │   ├── WorkerHost.ahk     # Worker host management
+│   │   └── WorkerPool.ahk     # Worker pool management
+│   └── i18n/                   # Internationalization
+│       └── Lang.ahk            # Language management
+├── Profiles/                   # Character profile directory
+│   ├── Default.ini            # Default configuration
+│   ├── 夺魂.ini               # Example configuration
+│   └── 裁决.ini               # Example configuration
+├── Exports/                    # Export directory
+│   └── 夺魂/                   # Example export configuration
+└── Logs/                       # Log directory
 ```
 
 ## Usage Examples
