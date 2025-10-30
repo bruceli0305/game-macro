@@ -27,4 +27,10 @@ Core_Init()
 GUI_Main_Show()
 
 ; 退出时清理
-OnExit (*) => (Poller_Stop(), WorkerPool_Dispose())
+OnExit ExitCleanup
+ExitCleanup(*) {
+    try Poller_Stop()
+    try WorkerPool_Dispose()
+    try Pixel_ROI_Dispose()
+    return 0
+}

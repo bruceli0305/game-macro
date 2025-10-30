@@ -1,4 +1,4 @@
-; Pixel.ahk - 颜色/拾色工具 + 帧级取色缓存
+; Pixel.ahk - 颜色/拾色工具 + 帧级取色缓存 + ROI 快照加速
 
 Pixel_ColorToHex(colorInt) {
     return Format("0x{:06X}", colorInt & 0xFFFFFF)
@@ -23,7 +23,7 @@ Pixel_ColorMatch(curInt, targetInt, tol := 10) {
     return Abs(r1 - r2) <= tol && Abs(g1 - g2) <= tol && Abs(b1 - b2) <= tol
 }
 
-; ---------- 帧级取色缓存 ----------
+; ---------------- 帧级取色缓存 ----------------
 global gPxFrame := { id: 0, cache: Map() }
 
 Pixel_FrameBegin() {
@@ -32,16 +32,192 @@ Pixel_FrameBegin() {
     gPxFrame.cache := Map()
 }
 
+; 优先从 ROI 读取，不在 ROI 再走系统 PixelGetColor
 Pixel_FrameGet(x, y) {
     global gPxFrame
     key := x "|" y
     if gPxFrame.cache.Has(key)
         return gPxFrame.cache[key]
+
+    c := Pixel_ROI_GetIfInside(x, y)  ; -1 = 不在 ROI
+    if (c != -1) {
+        gPxFrame.cache[key] := c
+        return c
+    }
+
     c := PixelGetColor(x, y, "RGB")
     gPxFrame.cache[key] := c
     return c
 }
-; -----------------------------------
+; ------------------------------------------------
+
+; ---------------- ROI 快照（单矩形） ----------------
+; 说明：
+; - 每帧 Pixel_ROI_BeginSnapshot() 用 BitBlt 把 ROI 矩形拷到内存位图
+; - Pixel_ROI_GetIfInside(x,y) 直接从内存位图读 BGRA 并转换为 RGB
+; - 提供自动计算 ROI：基于 Skills（可选包含 Points）的包围盒 + padding
+
+global gROI := { enabled: false, rects: [] }
+
+Pixel_ROI_Enable(flag := true) {
+    global gROI
+    gROI.enabled := !!flag
+    return gROI.enabled
+}
+
+Pixel_ROI_Clear() {
+    global gROI
+    if IsObject(gROI) && HasProp(gROI, "rects") {
+        for _, r in gROI.rects {
+            try {
+                if (r.hDC && r.hOld)
+                    DllCall("gdi32\SelectObject", "ptr", r.hDC, "ptr", r.hOld, "ptr")
+                if (r.hBmp)
+                    DllCall("gdi32\DeleteObject", "ptr", r.hBmp)
+                if (r.hDC)
+                    DllCall("gdi32\DeleteDC", "ptr", r.hDC)
+            }
+        }
+        gROI.rects := []
+    }
+}
+
+Pixel_ROI_Dispose() {
+    Pixel_ROI_Clear()
+    global gROI
+    gROI.enabled := false
+}
+
+; 内部：添加一个 ROI 矩形并创建 DIB 缓存
+Pixel_ROI_AddRect(l, t, w, h) {
+    global gROI
+    if (w <= 0 || h <= 0)
+        return false
+
+    hDC := DllCall("gdi32\CreateCompatibleDC", "ptr", 0, "ptr")
+    if !hDC
+        return false
+
+    bmi := Buffer(40, 0) ; BITMAPINFOHEADER
+    NumPut("UInt", 40, bmi, 0)           ; biSize
+    NumPut("Int",  w,  bmi, 4)           ; biWidth
+    NumPut("Int", -h,  bmi, 8)           ; biHeight (负数=top-down)
+    NumPut("UShort", 1, bmi, 12)         ; biPlanes
+    NumPut("UShort", 32, bmi, 14)        ; biBitCount
+    NumPut("UInt", 0, bmi, 16)           ; biCompression = BI_RGB
+    ; 其余默认 0
+
+    pBits := 0
+    hBmp := DllCall("gdi32\CreateDIBSection"
+        , "ptr", hDC, "ptr", bmi.Ptr, "uint", 0   ; DIB_RGB_COLORS
+        , "ptr*", &pBits, "ptr", 0, "uint", 0, "ptr")
+    if (!hBmp || !pBits) {
+        DllCall("gdi32\DeleteDC", "ptr", hDC)
+        return false
+    }
+
+    hOld := DllCall("gdi32\SelectObject", "ptr", hDC, "ptr", hBmp, "ptr")
+    rect := {
+        L:l, T:t, W:w, H:h, R:(l+w-1), B:(t+h-1)
+      , hDC:hDC, hBmp:hBmp, hOld:hOld, pBits:pBits
+      , stride:(w * 4)
+    }
+    gROI.rects.Push(rect)
+    return true
+}
+
+Pixel_ROI_SetRect(l, t, w, h) {
+    Pixel_ROI_Clear()
+    return Pixel_ROI_AddRect(l, t, w, h)
+}
+
+; 自动设置 ROI：基于 Skills（可选包含 Points）的包围盒 + padding
+; 超过 maxArea 或不足 minCount 个点时自动禁用
+Pixel_ROI_SetAutoFromProfile(prof, pad := 8, includePoints := false, maxArea := 1000000, minCount := 3) {
+    try {
+        pts := []
+        for _, s in prof.Skills {
+            if IsNumber(s.X) && IsNumber(s.Y)
+                pts.Push([s.X, s.Y])
+        }
+        if includePoints && HasProp(prof, "Points") {
+            for _, p in prof.Points {
+                if IsNumber(p.X) && IsNumber(p.Y)
+                    pts.Push([p.X, p.Y])
+            }
+        }
+        if (pts.Length < minCount) {
+            Pixel_ROI_Enable(false)
+            Pixel_ROI_Clear()
+            return false
+        }
+        minX := 999999, minY := 999999, maxX := -999999, maxY := -999999
+        for _, pt in pts {
+            x := pt[1], y := pt[2]
+            if (x < minX) minX := x
+            if (y < minY) minY := y
+            if (x > maxX) maxX := x
+            if (y > maxY) maxY := y
+        }
+        l := Max(0, minX - pad)
+        t := Max(0, minY - pad)
+        r := Min(A_ScreenWidth - 1,  maxX + pad)
+        b := Min(A_ScreenHeight - 1, maxY + pad)
+        w := r - l + 1
+        h := b - t + 1
+        if (w <= 0 || h <= 0 || w * h > maxArea) {
+            Pixel_ROI_Enable(false)
+            Pixel_ROI_Clear()
+            return false
+        }
+        Pixel_ROI_SetRect(l, t, w, h)
+        Pixel_ROI_Enable(true)
+        return true
+    } catch {
+        Pixel_ROI_Enable(false)
+        Pixel_ROI_Clear()
+        return false
+    }
+}
+
+; 每帧刷新 ROI 图像（BitBlt）
+Pixel_ROI_BeginSnapshot() {
+    global gROI
+    if !gROI.enabled
+        return
+    if (gROI.rects.Length = 0)
+        return
+    hScr := DllCall("user32\GetDC", "ptr", 0, "ptr")
+    if !hScr
+        return
+    for _, r in gROI.rects {
+        DllCall("gdi32\BitBlt"
+            , "ptr", r.hDC, "int", 0, "int", 0, "int", r.W, "int", r.H
+            , "ptr", hScr, "int", r.L, "int", r.T, "uint", 0x00CC0020) ; SRCCOPY
+    }
+    DllCall("user32\ReleaseDC", "ptr", 0, "ptr", hScr)
+}
+
+; 点是否在 ROI 内？在则从 DIB 读取 RGB；否则返回 -1
+Pixel_ROI_GetIfInside(x, y) {
+    global gROI
+    if !gROI.enabled
+        return -1
+    for _, r in gROI.rects {
+        if (x >= r.L && x <= r.R && y >= r.T && y <= r.B) {
+            dx := x - r.L
+            dy := y - r.T
+            off := dy * r.stride + dx * 4
+            px := NumGet(r.pBits, off, "UInt")        ; BGRA
+            b :=  px        & 0xFF
+            g := (px >> 8)  & 0xFF
+            r8:= (px >> 16) & 0xFF
+            return (r8 << 16) | (g << 8) | b          ; RGB
+        }
+    }
+    return -1
+}
+; ------------------------------------------------
 
 ; 支持避让参数的拾色对话：Pixel_PickPixel(parentGui?, offsetY?, dwellMs?)
 Pixel_PickPixel(parentGui := 0, offsetY := 0, dwellMs := 0) {
