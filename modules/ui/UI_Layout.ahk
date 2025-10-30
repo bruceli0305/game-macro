@@ -17,25 +17,30 @@ UI_TabPageRect(tabCtrl) {
 
 ; 顶层 Tab 切换：显隐两页控件
 UI_OnTopTabChange(ctrl, *) {
+    global UI
     val := ctrl.Value
     if (val <= 0)
         val := 1
     UI_ToggleMainPage(val = 1)
     UI_ToggleSettingsPage(val = 2)
-    ; 已无内层 Tab
+    ; 切页后立即做一次布局，确保“设置”页坐标生效
+    try {
+        rc := Buffer(16, 0)
+        DllCall("user32\GetClientRect", "ptr", UI.Main.Hwnd, "ptr", rc.Ptr)
+        cw := NumGet(rc, 8, "Int"), ch := NumGet(rc, 12, "Int")
+        UI_OnResize(UI.Main, 0, cw, ch)
+    }
 }
 
 ; 显隐：配置页
 UI_ToggleMainPage(vis) {
     global UI
     for ctl in [
-        UI.GB_Profile, UI.ProfilesDD, UI.BtnNew, UI.BtnClone, UI.BtnDelete, UI.BtnExport
-      , UI.GB_General, UI.LblStartStop, UI.HkStart, UI.LblPoll, UI.PollEdit, UI.LblDelay, UI.CdEdit, UI.BtnApply
-      , UI.LblPick, UI.ChkPick, UI.LblOffY, UI.OffYEdit, UI.LblDwell, UI.DwellEdit
-      , UI.GB_Auto, UI.BtnThreads, UI.BtnRules, UI.BtnBuffs, UI.BtnDefault
-      , UI.BtnPaneSkills, UI.BtnPanePoints
-      , UI.SkillLV, UI.BtnAddSkill, UI.BtnEditSkill, UI.BtnDelSkill, UI.BtnTestSkill, UI.BtnSaveSkill
-      , UI.PointLV, UI.BtnAddPoint, UI.BtnEditPoint, UI.BtnDelPoint, UI.BtnTestPoint, UI.BtnSavePoint
+        UI.GB_Profile, UI.ProfilesDD, UI.BtnNew, UI.BtnClone, UI.BtnDelete, UI.BtnExport, UI.GB_General, UI.LblStartStop,
+        UI.HkStart, UI.LblPoll, UI.PollEdit, UI.LblDelay, UI.CdEdit, UI.BtnApply, UI.LblPick, UI.ChkPick, UI.LblOffY,
+        UI.OffYEdit, UI.LblDwell, UI.DwellEdit, UI.GB_Auto, UI.BtnThreads, UI.BtnRules, UI.BtnBuffs, UI.BtnDefault, UI.BtnPaneSkills,
+        UI.BtnPanePoints, UI.SkillLV, UI.BtnAddSkill, UI.BtnEditSkill, UI.BtnDelSkill, UI.BtnTestSkill, UI.BtnSaveSkill,
+        UI.PointLV, UI.BtnAddPoint, UI.BtnEditPoint, UI.BtnDelPoint, UI.BtnTestPoint, UI.BtnSavePoint
     ] {
         try ctl.Visible := vis
     }
@@ -48,7 +53,7 @@ UI_ToggleMainPage(vis) {
 ; 显隐：设置页
 UI_ToggleSettingsPage(vis) {
     global UI
-    for ctl in [ UI.LblLang, UI.DdLang, UI.BtnApplyLang, UI.BtnOpenLang, UI.LblNote ] {
+    for ctl in [UI.LblLang, UI.DdLang, UI.BtnApplyLang, UI.BtnOpenLang, UI.LblNote] {
         try ctl.Visible := vis
     }
 }
@@ -86,13 +91,13 @@ UI_OnResize(gui, minmax, w, h) {
         return
 
     ; 顶层 Tab 占满窗口
-    UI.TopTab.Move(mX, mY, Max(w - mX*2, 420), Max(h - mY*2, 320))
+    UI.TopTab.Move(mX, mY, Max(w - mX * 2, 420), Max(h - mY * 2, 320))
     rcTop := UI_TabPageRect(UI.TopTab)
     pad := 10
 
     ; ---------- 第1页（配置）三大分组 ----------
     profH := 80, genH := 116, autoH := 60, gapY := 10
-    gbW := Max(rcTop.W - pad*2, 420)
+    gbW := Max(rcTop.W - pad * 2, 420)
     x0 := rcTop.X + pad
     y0 := rcTop.Y + pad
 
@@ -108,10 +113,10 @@ UI_OnResize(gui, minmax, w, h) {
         _UI_Move(UI.ProfilesDD, px + ip, py + 32, ddW, ddH)
         UI.ProfilesDD.GetPos(&dx, &dy, &dw, &dh)
         bx := dx + dw + 10
-        _UI_Move(UI.BtnNew,    bx + (btnW+gap)*0, btnY, btnW, btnH)
-        _UI_Move(UI.BtnClone,  bx + (btnW+gap)*1, btnY, btnW, btnH)
-        _UI_Move(UI.BtnDelete, bx + (btnW+gap)*2, btnY, btnW, btnH)
-        _UI_Move(UI.BtnExport, bx + (btnW+gap)*3, btnY, 92, 28)
+        _UI_Move(UI.BtnNew, bx + (btnW + gap) * 0, btnY, btnW, btnH)
+        _UI_Move(UI.BtnClone, bx + (btnW + gap) * 1, btnY, btnW, btnH)
+        _UI_Move(UI.BtnDelete, bx + (btnW + gap) * 2, btnY, btnW, btnH)
+        _UI_Move(UI.BtnExport, bx + (btnW + gap) * 3, btnY, 92, 28)
     }
 
     ; 热键与轮询
@@ -164,9 +169,9 @@ UI_OnResize(gui, minmax, w, h) {
         inPad := 12, btnW := 100, btnH := 28, gap := 8
         btnY := ay + ah - inPad - btnH
         _UI_Move(UI.BtnThreads, ax + inPad, btnY, btnW, btnH)
-        _UI_Move(UI.BtnRules,   ax + inPad + (btnW+gap)*1, btnY, btnW, btnH)
-        _UI_Move(UI.BtnBuffs,   ax + inPad + (btnW+gap)*2, btnY, btnW, btnH)
-        _UI_Move(UI.BtnDefault, ax + inPad + (btnW+gap)*3, btnY, btnW, btnH)
+        _UI_Move(UI.BtnRules, ax + inPad + (btnW + gap) * 1, btnY, btnW, btnH)
+        _UI_Move(UI.BtnBuffs, ax + inPad + (btnW + gap) * 2, btnY, btnW, btnH)
+        _UI_Move(UI.BtnDefault, ax + inPad + (btnW + gap) * 3, btnY, btnW, btnH)
     }
 
     ; ---------- 下方区域：按钮切换 + 两套面板 ----------
@@ -179,23 +184,27 @@ UI_OnResize(gui, minmax, w, h) {
         _UI_Move(UI.BtnPanePoints, x0 + 120 + 8, tabTop, 120, 28)
     }
 
-    ; 列表区尺寸
-    bar := 36
+    ; 列表区与按钮区尺寸（预留按钮行高度与间距）
+    bar := 36                     ; 顶部“面板切换按钮”区高度（28 + 间距8）
+    rowGap := 8                   ; 列表与按钮行的垂直间距
+    rowH := 36                    ; 预留按钮行高度（DPI 友好，略大于 h28）
+
     lvX := x0
     lvY := tabTop + bar
     lvW := Max(gbW, 100)
-    lvH := Max(tabH - bar - 8, 80)
+    ; 关键修复：lvH 需扣除 rowGap 与 rowH，避免按钮被页底裁切
+    lvH := Max(tabH - bar - rowGap - rowH, 80)
 
     ; 技能页
     if IsObject(UI.SkillLV) {
         _UI_Move(UI.SkillLV, lvX, lvY, lvW, lvH)
-        btnY := lvY + lvH + 8
+        btnY := lvY + lvH + rowGap
         btnW := 96, btnH := 28, gap := 8, startX := lvX
-        _UI_Move(UI.BtnAddSkill,  startX + (btnW+gap)*0, btnY, btnW, btnH)
-        _UI_Move(UI.BtnEditSkill, startX + (btnW+gap)*1, btnY, btnW, btnH)
-        _UI_Move(UI.BtnDelSkill,  startX + (btnW+gap)*2, btnY, btnW, btnH)
-        _UI_Move(UI.BtnTestSkill, startX + (btnW+gap)*3, btnY, btnW, btnH)
-        _UI_Move(UI.BtnSaveSkill, startX + (btnW+gap)*4, btnY, btnW, btnH)
+        _UI_Move(UI.BtnAddSkill, startX + (btnW + gap) * 0, btnY, btnW, btnH)
+        _UI_Move(UI.BtnEditSkill, startX + (btnW + gap) * 1, btnY, btnW, btnH)
+        _UI_Move(UI.BtnDelSkill, startX + (btnW + gap) * 2, btnY, btnW, btnH)
+        _UI_Move(UI.BtnTestSkill, startX + (btnW + gap) * 3, btnY, btnW, btnH)
+        _UI_Move(UI.BtnSaveSkill, startX + (btnW + gap) * 4, btnY, btnW, btnH)
         loop 7
             try UI.SkillLV.ModifyCol(A_Index, "AutoHdr")
     }
@@ -203,13 +212,13 @@ UI_OnResize(gui, minmax, w, h) {
     ; 点位页
     if IsObject(UI.PointLV) {
         _UI_Move(UI.PointLV, lvX, lvY, lvW, lvH)
-        pY := lvY + lvH + 8
+        pY := lvY + lvH + rowGap
         btnW := 96, btnH := 28, gap := 8, startX := lvX
-        _UI_Move(UI.BtnAddPoint,  startX + (btnW+gap)*0, pY, btnW, btnH)
-        _UI_Move(UI.BtnEditPoint, startX + (btnW+gap)*1, pY, btnW, btnH)
-        _UI_Move(UI.BtnDelPoint,  startX + (btnW+gap)*2, pY, btnW, btnH)
-        _UI_Move(UI.BtnTestPoint, startX + (btnW+gap)*3, pY, btnW, btnH)
-        _UI_Move(UI.BtnSavePoint, startX + (btnW+gap)*4, pY, btnW, btnH)
+        _UI_Move(UI.BtnAddPoint, startX + (btnW + gap) * 0, pY, btnW, btnH)
+        _UI_Move(UI.BtnEditPoint, startX + (btnW + gap) * 1, pY, btnW, btnH)
+        _UI_Move(UI.BtnDelPoint, startX + (btnW + gap) * 2, pY, btnW, btnH)
+        _UI_Move(UI.BtnTestPoint, startX + (btnW + gap) * 3, pY, btnW, btnH)
+        _UI_Move(UI.BtnSavePoint, startX + (btnW + gap) * 4, pY, btnW, btnH)
         loop 6
             try UI.PointLV.ModifyCol(A_Index, "AutoHdr")
     }
@@ -225,4 +234,13 @@ UI_OnResize(gui, minmax, w, h) {
 
     ; 强制整窗与子控件重绘，解决恢复后不刷新的现象
     UI_ForceRedrawAll()
+    ; ---------- 第2页（设置） ----------
+    if IsObject(UI.LblLang) {
+        ; x0/y0/gbW 已在上文计算
+        _UI_Move(UI.LblLang, x0, y0, 120, 24)
+        _UI_Move(UI.DdLang, x0 + 120 + 6, y0, 260, 24)
+        _UI_Move(UI.BtnApplyLang, x0, y0 + 40, 120, 28)
+        _UI_Move(UI.BtnOpenLang, x0 + 120 + 8, y0 + 40, 140, 28)
+        _UI_Move(UI.LblNote, x0, y0 + 78, Max(gbW, 200), 24)
+    }
 }
