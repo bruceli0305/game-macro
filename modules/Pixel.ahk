@@ -136,40 +136,72 @@ Pixel_ROI_SetRect(l, t, w, h) {
 Pixel_ROI_SetAutoFromProfile(prof, pad := 8, includePoints := false, maxArea := 1000000, minCount := 3) {
     try {
         pts := []
-        for _, s in prof.Skills {
-            if IsNumber(s.X) && IsNumber(s.Y)
-                pts.Push([s.X, s.Y])
-        }
-        if includePoints && HasProp(prof, "Points") {
-            for _, p in prof.Points {
-                if IsNumber(p.X) && IsNumber(p.Y)
-                    pts.Push([p.X, p.Y])
+
+        ; 收集技能坐标
+        if HasProp(prof, "Skills") && IsObject(prof.Skills) {
+            for _, s in prof.Skills {
+                ; 统一转为整数，避免类型干扰
+                x := Integer(s.X)
+                y := Integer(s.Y)
+                pts.Push([x, y])
             }
         }
+
+        ; 可选：包含“取色点位”
+        if includePoints && HasProp(prof, "Points") && IsObject(prof.Points) {
+            for _, p in prof.Points {
+                x := Integer(p.X)
+                y := Integer(p.Y)
+                pts.Push([x, y])
+            }
+        }
+
+        ; 点太少则禁用 ROI
         if (pts.Length < minCount) {
             Pixel_ROI_Enable(false)
             Pixel_ROI_Clear()
             return false
         }
-        minX := 999999, minY := 999999, maxX := -999999, maxY := -999999
-        for _, pt in pts {
-            x := pt[1], y := pt[2]
-            if (x < minX) minX := x
-            if (y < minY) minY := y
-            if (x > maxX) maxX := x
-            if (y > maxY) maxY := y
+
+        ; 用第一个点初始化包围盒
+        minX := pts[1][1]
+        minY := pts[1][2]
+        maxX := minX
+        maxY := minY
+
+        ; 扫描其余点
+        if (pts.Length >= 2) {
+            loop pts.Length - 1 {
+                i := A_Index + 1
+                x := pts[i][1]
+                y := pts[i][2]
+                if (x < minX)
+                    minX := x
+                if (y < minY)
+                    minY := y
+                if (x > maxX)
+                    maxX := x
+                if (y > maxY)
+                    maxY := y
+            }
         }
+
+        ; padding + 屏幕边界夹取
         l := Max(0, minX - pad)
         t := Max(0, minY - pad)
         r := Min(A_ScreenWidth - 1,  maxX + pad)
         b := Min(A_ScreenHeight - 1, maxY + pad)
         w := r - l + 1
         h := b - t + 1
+
+        ; 面积过大或异常 → 禁用 ROI
         if (w <= 0 || h <= 0 || w * h > maxArea) {
             Pixel_ROI_Enable(false)
             Pixel_ROI_Clear()
             return false
         }
+
+        ; 建立 ROI
         Pixel_ROI_SetRect(l, t, w, h)
         Pixel_ROI_Enable(true)
         return true
