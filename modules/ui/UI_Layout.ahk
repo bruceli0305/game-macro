@@ -1,14 +1,15 @@
 #Requires AutoHotkey v2
-; 自适应布局与切页显隐（已移除内层 Tab，改为按钮切换两个面板）
+; 自适应布局与切页显隐（无内层 Tab，按钮切换两个面板）
+; 修复：最小化/恢复后子控件未重绘 -> 在恢复时强制 RedrawWindow
 
 ; 计算 Tab 当前页的内容矩形（父 GUI 坐标）
 UI_TabPageRect(tabCtrl) {
     rc := Buffer(16, 0)
-    DllCall("GetClientRect", "ptr", tabCtrl.Hwnd, "ptr", rc.Ptr)
+    DllCall("user32\GetClientRect", "ptr", tabCtrl.Hwnd, "ptr", rc.Ptr)
     ; TCM_ADJUSTRECT: 把客户区矩形转换为“显示矩形”
-    DllCall("SendMessage", "ptr", tabCtrl.Hwnd, "uint", 0x1328, "ptr", 0, "ptr", rc.Ptr)
-    parent := DllCall("GetParent", "ptr", tabCtrl.Hwnd, "ptr")
-    DllCall("MapWindowPoints", "ptr", tabCtrl.Hwnd, "ptr", parent, "ptr", rc.Ptr, "uint", 2)
+    DllCall("user32\SendMessage", "ptr", tabCtrl.Hwnd, "uint", 0x1328, "ptr", 0, "ptr", rc.Ptr)
+    parent := DllCall("user32\GetParent", "ptr", tabCtrl.Hwnd, "ptr")
+    DllCall("user32\MapWindowPoints", "ptr", tabCtrl.Hwnd, "ptr", parent, "ptr", rc.Ptr, "uint", 2)
     x := NumGet(rc, 0, "Int"), y := NumGet(rc, 4, "Int")
     w := NumGet(rc, 8, "Int") - x, h := NumGet(rc, 12, "Int") - y
     return { X: x, Y: y, W: w, H: h }
@@ -40,7 +41,7 @@ UI_ToggleMainPage(vis) {
     }
     ; 恢复当前页（避免切页后两个面板同时显示）
     pane := 1
-    try pane := UI["InnerPane"]  ; 若尚未设置则保持默认 1
+    try pane := UI["InnerPane"]
     UI_Page_Config_ShowPane(pane)
 }
 
@@ -64,9 +65,22 @@ _UI_Move(ctrl, x, y, w := "", h := "") {
     }
 }
 
+; 强制重绘主窗体及全部子控件（修复恢复后未重绘）
+UI_ForceRedrawAll() {
+    global UI
+    try {
+        flags := 0x0001 | 0x0080 | 0x0100   ; RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_UPDATENOW
+        DllCall("user32\RedrawWindow", "ptr", UI.Main.Hwnd, "ptr", 0, "ptr", 0, "uint", flags)
+    }
+}
+
 ; 自适应布局
 UI_OnResize(gui, minmax, w, h) {
     global UI
+    ; 最小化时不进行布局，避免 0x0 尺寸/无效移动导致的绘制问题
+    if (minmax = 1)  ; SIZE_MINIMIZED
+        return
+
     mX := gui.MarginX, mY := gui.MarginY
     if !IsObject(UI.TopTab)
         return
@@ -199,4 +213,16 @@ UI_OnResize(gui, minmax, w, h) {
         loop 6
             try UI.PointLV.ModifyCol(A_Index, "AutoHdr")
     }
+
+    ; 若当前是“配置”页，则再次应用当前面板的显隐，防止恢复后状态错乱
+    try {
+        if (UI.TopTab.Value = 1) {
+            pane := 1
+            try pane := UI["InnerPane"]
+            UI_Page_Config_ShowPane(pane)
+        }
+    }
+
+    ; 强制整窗与子控件重绘，解决恢复后不刷新的现象
+    UI_ForceRedrawAll()
 }
