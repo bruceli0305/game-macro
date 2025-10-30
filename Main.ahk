@@ -5,30 +5,34 @@ CoordMode "Mouse", "Screen"
 CoordMode "Pixel", "Screen"
 
 ; ========= Includes =========
-#Include "modules\Utils.ahk"
-#Include "modules\Core.ahk"
-#Include "modules\AppConfig.ahk"
-#Include "modules\Lang.ahk"
-#Include "modules\Pixel.ahk"
-#Include "modules\Storage.ahk"
-#Include "modules\Poller.ahk"
-#Include "modules\Hotkeys.ahk"
-#Include "modules\Exporter.ahk"
-#Include "modules\GUI_SkillEditor.ahk"
-#Include "modules\GUI_Main.ahk"
-#Include "modules\GUI_PointEditor.ahk"
-#Include "modules\RuleEngine.ahk"
-#Include "modules\GUI_RuleEditor.ahk"
-#Include "modules\BuffEngine.ahk"
-#Include "modules\GUI_BuffEditor.ahk"
-#Include "modules\WorkerPool.ahk"
-#Include "modules\GUI_Threads.ahk"
-#Include "modules\Counters.ahk"
+#Include "modules\util\Utils.ahk"
+#Include "modules\i18n\Lang.ahk"
+#Include "modules\core\AppConfig.ahk"
+#Include "modules\core\Core.ahk"
+#Include "modules\storage\Storage.ahk"
+#Include "modules\engines\Pixel.ahk"
+#Include "modules\engines\RuleEngine.ahk"
+#Include "modules\engines\BuffEngine.ahk"
+#Include "modules\runtime\Counters.ahk"
+#Include "modules\runtime\Poller.ahk"
+#Include "modules\runtime\Hotkeys.ahk"
+#Include "modules\workers\WorkerPool.ahk"
+#Include "modules\storage\Exporter.ahk"
+#Include "modules\ui\pages\UI_Page_Config.ahk"
+#Include "modules\ui\pages\UI_Page_Settings.ahk"
+#Include "modules\ui\dialogs\UI_DefaultSkillDlg.ahk"
+#Include "modules\ui\dialogs\GUI_SkillEditor.ahk"
+#Include "modules\ui\dialogs\GUI_PointEditor.ahk"
+#Include "modules\ui\dialogs\GUI_RuleEditor.ahk"
+#Include "modules\ui\dialogs\GUI_BuffEditor.ahk"
+#Include "modules\ui\dialogs\GUI_Threads.ahk"
+#Include "modules\ui\UI_Layout.ahk"
+#Include "modules\ui\UI_Shell.ahk"
 ; ========= Bootstrap =========
 AppConfig_Init()
-Lang_Init(AppConfig_Get("Language", "zh-CN"))
+Lang_Init(AppConfig_Get("Language","zh-CN"))
 Core_Init()
-GUI_Main_Show()
+UI_ShowMain()
 
 ; 退出时清理
 OnExit ExitCleanup
