@@ -9,7 +9,7 @@ global gLang := Map()
 Lang_Dir() {
     try {
         global App
-        if IsSet(App) && IsObject(App) && HasProp(App, "LangDir") && App["LangDir"] != ""
+        if IsSet(App) && IsObject(App) && App.Has("LangDir") && App["LangDir"] != ""
             return App["LangDir"]
     }
     return A_ScriptDir "\Languages"
@@ -19,7 +19,7 @@ Lang_Init(code := "") {
     global App, gLang
     if !IsSet(App)
         global App := Map()
-    if !HasProp(App, "LangDir")
+    if !App.Has("LangDir")
         App["LangDir"] := A_ScriptDir "\Languages"
     DirCreate(App["LangDir"])  ; 确保目录存在
 

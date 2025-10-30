@@ -42,11 +42,9 @@ SkillEditor_Open(skill, idx := 0, onSaved := 0) {
 
     OnPick(*) {
         global App
-        ; 若启用避让，带参数；否则传 0
-        offY  := App["ProfileData"].PickHoverEnabled ? App["ProfileData"].PickHoverOffsetY : 0
+        offY := App["ProfileData"].PickHoverEnabled ? App["ProfileData"].PickHoverOffsetY : 0
         dwell := App["ProfileData"].PickHoverEnabled ? App["ProfileData"].PickHoverDwellMs : 0
-        
-        res := Pixel_PickPixel(dlg)
+        res := Pixel_PickPixel(dlg, offY, dwell)   ; 修正：传入避让参数
         if res {
             tbX.Value := res.X
             tbY.Value := res.Y

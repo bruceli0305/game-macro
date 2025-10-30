@@ -178,6 +178,7 @@ UI_Page_Config_AddSkill() {
     SkillEditor_Open({}, 0, (newSkill, idx) => (
         App["ProfileData"].Skills.Push(newSkill),
         UI_Page_Config_RefreshSkillList()
+        Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
     ))
 }
 UI_Page_Config_EditSelectedSkill() {
@@ -187,11 +188,12 @@ UI_Page_Config_EditSelectedSkill() {
         MsgBox T("msg.selectSkill","请先选中一个技能行。")
         return
     }
-    idx := row
+    idx := Integer(UI.SkillLV.GetText(row, 1))
     cur := App["ProfileData"].Skills[idx]
     SkillEditor_Open(cur, idx, (newSkill, idx2) => (
         App["ProfileData"].Skills[idx2] := newSkill,
         UI_Page_Config_RefreshSkillList()
+        Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
     ))
 }
 UI_Page_Config_DeleteSelectedSkill() {
@@ -201,13 +203,14 @@ UI_Page_Config_DeleteSelectedSkill() {
         MsgBox T("msg.selectSkill","请先选中一个技能行。")
         return
     }
-    idx := row
+    idx := Integer(UI.SkillLV.GetText(row, 1))
     if (idx < 1 || idx > App["ProfileData"].Skills.Length) {
         MsgBox T("msg.indexMismatch","索引异常，列表与配置不同步。")
         return
     }
     App["ProfileData"].Skills.RemoveAt(idx)
     UI_Page_Config_RefreshSkillList()
+    Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
     Notify(T("msg.skillDeleted","已删除技能"))
 }
 UI_Page_Config_TestSelectedSkill() {
@@ -217,7 +220,7 @@ UI_Page_Config_TestSelectedSkill() {
         MsgBox T("msg.selectSkill","请先选中一个技能行。")
         return
     }
-    idx := row
+    idx := Integer(UI.SkillLV.GetText(row, 1))
     if (idx < 1 || idx > App["ProfileData"].Skills.Length) {
         MsgBox T("msg.indexMismatch","索引异常，列表与配置不同步。")
         return
@@ -258,7 +261,7 @@ UI_Page_Config_EditSelectedPoint() {
         MsgBox T("msg.selectPoint","请先选中一个点位。")
         return
     }
-    idx := row
+    idx := Integer(UI.PointLV.GetText(row, 1))
     cur := App["ProfileData"].Points[idx]
     PointEditor_Open(cur, idx, (newPoint, idx2) => (
         App["ProfileData"].Points[idx2] := newPoint,
@@ -272,7 +275,7 @@ UI_Page_Config_DeleteSelectedPoint() {
         MsgBox T("msg.selectPoint","请先选中一个点位。")
         return
     }
-    idx := row
+    idx := Integer(UI.PointLV.GetText(row, 1))
     if (idx < 1 || idx > App["ProfileData"].Points.Length) {
         MsgBox T("msg.indexMismatch","索引异常，列表与配置不同步。")
         return
@@ -288,7 +291,7 @@ UI_Page_Config_TestSelectedPoint() {
         MsgBox T("msg.selectPoint","请先选中一个点位。")
         return
     }
-    idx := row
+    idx := Integer(UI.PointLV.GetText(row, 1))
     if (idx < 1 || idx > App["ProfileData"].Points.Length) {
         MsgBox T("msg.indexMismatch","索引异常，列表与配置不同步。")
         return

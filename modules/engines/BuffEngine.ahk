@@ -79,6 +79,7 @@ BuffEngine_SendSkillByIndex(idx, updateBuff := true, requireReady := false) {
 
     s := App["ProfileData"].Skills[idx]
     thr := HasProp(s, "ThreadId") ? s.ThreadId : 1
+
     if requireReady {
         cur := Pixel_FrameGet(s.X, s.Y)
         tgt := Pixel_HexToInt(s.Color)
@@ -86,12 +87,9 @@ BuffEngine_SendSkillByIndex(idx, updateBuff := true, requireReady := false) {
             return false
     }
 
-    ; 统一通道：这里仍走 Poller_SendKey（保持原行为）
-    Poller_SendKey(s.Key)
-
-    if updateBuff
-        BuffEngine_NotifySkillUsed(idx)
-    return true
+    ok := WorkerPool_SendSkillIndex(thr, idx, "Buff:" s.Name)
+    ; WorkerPool 内已做计数与 BuffEngine_NotifySkillUsed，这里无需重复
+    return ok
 }
 
 ; 当某个技能被释放（无论来源）时，通知 BUFF 引擎重置相关 BUFF 计时
