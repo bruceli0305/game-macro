@@ -127,6 +127,17 @@ Storage_LoadProfile(name) {
             data.Threads.Push({ Id: i, Name: tName })
         }
     }
+    ; ===== Default（兜底技能） =====
+    dsEn  := Integer(IniRead(file, "Default", "Enabled", 0))
+    dsIdx := Integer(IniRead(file, "Default", "SkillIndex", 0))
+    dsRdy := Integer(IniRead(file, "Default", "CheckReady", 1))
+    dsTid := Integer(IniRead(file, "Default", "ThreadId", 1))
+    dsCd  := Integer(IniRead(file, "Default", "CooldownMs", 600))
+    dsPre := Integer(IniRead(file, "Default", "PreDelayMs", 0))
+    data.DefaultSkill := {
+        Enabled: dsEn, SkillIndex: dsIdx, CheckReady: dsRdy, ThreadId: dsTid
+      , CooldownMs: dsCd, PreDelayMs: dsPre, LastFire: 0
+    }
 
     return data
 }
@@ -150,6 +161,17 @@ Storage_SaveProfile(data) {
         sec := "Thread" i
         IniWrite(t.Name, file, sec, "Name")
     }
+     ; ===== Default（兜底技能） =====
+    ds := HasProp(data, "DefaultSkill") ? data.DefaultSkill : 0
+    if ds {
+        IniWrite(HasProp(ds,"Enabled")    ? ds.Enabled    : 0,   file, "Default", "Enabled")
+        IniWrite(HasProp(ds,"SkillIndex") ? ds.SkillIndex : 0,   file, "Default", "SkillIndex")
+        IniWrite(HasProp(ds,"CheckReady") ? ds.CheckReady : 1,   file, "Default", "CheckReady")
+        IniWrite(HasProp(ds,"ThreadId")   ? ds.ThreadId   : 1,   file, "Default", "ThreadId")
+        IniWrite(HasProp(ds,"CooldownMs") ? ds.CooldownMs : 600, file, "Default", "CooldownMs")
+        IniWrite(HasProp(ds,"PreDelayMs") ? ds.PreDelayMs : 0,   file, "Default", "PreDelayMs")
+    }
+    
     for idx, s in data.Skills {
         sec := "Skill" idx
         IniWrite(s.Name, file, sec, "Name")
