@@ -13,7 +13,7 @@ PointEditor_Open(point, idx := 0, onSaved := 0) {
         if !HasProp(point, k)
             point.%k% := v
 
-    dlg := Gui(, isNew ? "新增点位" : "编辑点位")
+    dlg := Gui("+Owner" UI.Main.Hwnd, isNew ? "新增点位" : "编辑点位")
     dlg.MarginX := 14, dlg.MarginY := 12
     dlg.SetFont("s10", "Segoe UI")
 
@@ -75,6 +75,7 @@ PointEditor_Open(point, idx := 0, onSaved := 0) {
             onSaved(newPoint, idx)
 
         dlg.Destroy()
+        UI_ActivateMain()                 ; 新增：回到主窗
         Notify(isNew ? "已新增点位" : "已保存点位")
     }
 }

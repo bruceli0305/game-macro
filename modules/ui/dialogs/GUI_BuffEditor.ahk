@@ -5,7 +5,7 @@ BuffsManager_Show() {
     global App
     prof := App["ProfileData"]
 
-    dlg := Gui(, "BUFF 配置 - 续时优先释放")
+    dlg := Gui("+Owner" UI.Main.Hwnd, "BUFF 配置 - 续时优先释放")
     dlg.SetFont("s10", "Segoe UI")
     dlg.MarginX := 12, dlg.MarginY := 10
 
@@ -143,7 +143,7 @@ BuffEditor_Open(buff, idx := 0, onSaved := 0) {
     if !HasProp(buff, "NextIdx")
         buff.NextIdx := 1
 
-    dlg := Gui(, isNew ? "新增 BUFF" : "编辑 BUFF")
+    dlg := Gui("+Owner" UI.Main.Hwnd, isNew ? "新增 BUFF" : "编辑 BUFF")
     dlg.SetFont("s10", "Segoe UI")
     dlg.MarginX := 12, dlg.MarginY := 10
 

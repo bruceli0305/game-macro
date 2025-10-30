@@ -2,7 +2,7 @@
 
 ThreadsManager_Show() {
     global App
-    dlg := Gui(, "线程配置（工作进程池）")
+    dlg := Gui("+Owner" UI.Main.Hwnd, "线程配置（工作进程池）")
     dlg.SetFont("s10", "Segoe UI")
     dlg.MarginX := 12, dlg.MarginY := 10
 

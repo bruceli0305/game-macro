@@ -10,7 +10,7 @@ SkillEditor_Open(skill, idx := 0, onSaved := 0) {
         if !HasProp(skill, k)
             skill.%k% := v
 
-    dlg := Gui(, isNew ? "新增技能" : "编辑技能")
+    dlg := Gui("+Owner" UI.Main.Hwnd, isNew ? "新增技能" : "编辑技能")
     dlg.MarginX := 14, dlg.MarginY := 12
     dlg.SetFont("s10", "Segoe UI")
 
@@ -83,6 +83,7 @@ SkillEditor_Open(skill, idx := 0, onSaved := 0) {
             onSaved(newSkill, idx)
 
         dlg.Destroy()
+        UI_ActivateMain()                 ; 新增：回到主窗
         Notify(isNew ? "已新增技能" : "已保存修改")
     }
 }

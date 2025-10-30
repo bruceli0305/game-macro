@@ -9,7 +9,7 @@ DefaultSkillEditor_Show() {
         ds := App["ProfileData"].DefaultSkill
     }
 
-    dlg := Gui(, T("dlg.defaultSkill","默认技能（兜底触发）"))
+    dlg := Gui("+Owner" UI.Main.Hwnd, T("dlg.defaultSkill","默认技能（兜底触发）"))
     dlg.SetFont("s10", "Segoe UI")
     dlg.MarginX := 12, dlg.MarginY := 10
 
@@ -89,6 +89,7 @@ DefaultSkillEditor_Show() {
 
         Storage_SaveProfile(App["ProfileData"])
         dlg.Destroy()
+        UI_ActivateMain()                 ; 新增：回到主窗
         Notify(T("msg.defaultSaved","默认技能配置已保存"))
     }
 }

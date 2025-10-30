@@ -17,6 +17,7 @@ UI_ShowMain() {
     UI.Main := Gui("+Resize", T("app.title","输出取色宏 - v0.0.1-Alpha-0.1"))
     UI.Main.MarginX := 14, UI.Main.MarginY := 12
     UI.Main.SetFont("s10", "Segoe UI")
+    UI.Main.Opt("+OwnDialogs")   ; 新增：让标准对话框属于主窗口
     UI.Main.OnEvent("Close", (*) => ExitApp())
 
     ; 顶层 Tab：第1页=配置，第2页=设置

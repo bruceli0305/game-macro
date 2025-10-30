@@ -6,7 +6,7 @@ RulesManager_Show() {
     global App
     prof := App["ProfileData"]
 
-    dlg := Gui(, "技能循环 - 规则管理")
+    dlg := Gui("+Owner" UI.Main.Hwnd, "技能循环 - 规则管理")
     dlg.SetFont("s10", "Segoe UI")
     dlg.MarginX := 12, dlg.MarginY := 10
 
@@ -143,7 +143,7 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
     if !HasProp(rule, "Actions")
         rule.Actions := []
 
-    dlg := Gui(, isNew ? "新增规则" : "编辑规则")
+    dlg := Gui("+Owner" UI.Main.Hwnd, isNew ? "新增规则" : "编辑规则")
     dlg.MarginX := 12, dlg.MarginY := 10
     dlg.SetFont("s10", "Segoe UI")
 
@@ -377,7 +377,7 @@ CondEditor_Open(cond, idx := 0, onSaved := 0) {
                 cond.%k% := v
     }
 
-    dlg := Gui(, "编辑条件")
+    dlg := Gui("+Owner" UI.Main.Hwnd, "编辑条件")
     dlg.MarginX := 12, dlg.MarginY := 10
     dlg.SetFont("s10", "Segoe UI")
 
@@ -557,7 +557,7 @@ ActEditor_Open(act, idx := 0, onSaved := 0) {
         if !HasProp(act, k)
             act.%k% := v
 
-    dlg := Gui(, "编辑动作")
+    dlg := Gui("+Owner" UI.Main.Hwnd, "编辑动作")
     dlg.SetFont("s10", "Segoe UI")
     dlg.MarginX := 12, dlg.MarginY := 10
 

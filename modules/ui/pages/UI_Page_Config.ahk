@@ -307,7 +307,7 @@ UI_Page_Config_TestSelectedPoint() {
 
 ; ================= New/Clone/Delete/Export（下略：保持不变） =================
 UI_Page_Config_NewProfile() {
-    dlg := Gui(, T("dlg.newProfile","新建配置"))
+    dlg := Gui("+Owner" UI.Main.Hwnd, T("dlg.newProfile","新建配置"))
     dlg.SetFont("s10", "Segoe UI")
     dlg.MarginX := 14, dlg.MarginY := 12
     dlg.Add("Text", , T("label.profileName","配置名称："))
@@ -336,7 +336,7 @@ UI_Page_Config_CloneProfile() {
         return
     }
     src := App["CurrentProfile"]
-    dlg := Gui(, T("dlg.cloneProfile","复制配置"))
+    dlg := Gui("+Owner" UI.Main.Hwnd, T("dlg.cloneProfile","复制配置"))
     dlg.SetFont("s10", "Segoe UI")
     dlg.MarginX := 14, dlg.MarginY := 12
     dlg.Add("Text", , T("label.newProfileName","新配置名称："))
