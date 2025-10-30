@@ -1,10 +1,12 @@
 #Requires AutoHotkey v2
-; 自适应布局与切页显隐
+; 自适应布局与切页显隐（修复“角色配置/热键与轮询”分组内容错位）
 
+; 计算 Tab 当前页的内容矩形（父 GUI 坐标）
 UI_TabPageRect(tabCtrl) {
     rc := Buffer(16, 0)
     DllCall("GetClientRect", "ptr", tabCtrl.Hwnd, "ptr", rc.Ptr)
-    DllCall("SendMessage", "ptr", tabCtrl.Hwnd, "uint", 0x1328, "ptr", 0, "ptr", rc.Ptr) ; TCM_ADJUSTRECT
+    ; TCM_ADJUSTRECT: 把客户区矩形转换为“显示矩形”
+    DllCall("SendMessage", "ptr", tabCtrl.Hwnd, "uint", 0x1328, "ptr", 0, "ptr", rc.Ptr)
     parent := DllCall("GetParent", "ptr", tabCtrl.Hwnd, "ptr")
     DllCall("MapWindowPoints", "ptr", tabCtrl.Hwnd, "ptr", parent, "ptr", rc.Ptr, "uint", 2)
     x := NumGet(rc, 0, "Int"), y := NumGet(rc, 4, "Int")
@@ -12,6 +14,7 @@ UI_TabPageRect(tabCtrl) {
     return { X: x, Y: y, W: w, H: h }
 }
 
+; 顶层 Tab 切换：显隐两页控件
 UI_OnTopTabChange(ctrl, *) {
     val := ctrl.Value
     if (val <= 0)
@@ -22,6 +25,7 @@ UI_OnTopTabChange(ctrl, *) {
     try DllCall("user32\UpdateWindow", "ptr", UI.TabInner.Hwnd)
 }
 
+; 显隐：配置页
 UI_ToggleMainPage(vis) {
     global UI
     for ctl in [
@@ -35,6 +39,7 @@ UI_ToggleMainPage(vis) {
     }
 }
 
+; 显隐：设置页
 UI_ToggleSettingsPage(vis) {
     global UI
     for ctl in [ UI.LblLang, UI.DdLang, UI.BtnApplyLang, UI.BtnOpenLang, UI.LblNote ] {
@@ -42,77 +47,159 @@ UI_ToggleSettingsPage(vis) {
     }
 }
 
+; 统一 Move（安全包装）
+_UI_Move(ctrl, x, y, w := "", h := "") {
+    try {
+        if (w = "" && h = "")
+            ctrl.Move(x, y)
+        else if (h = "")
+            ctrl.Move(x, y, w)
+        else
+            ctrl.Move(x, y, w, h)
+    }
+}
+
+; 自适应布局
 UI_OnResize(gui, minmax, w, h) {
     global UI
     mX := gui.MarginX, mY := gui.MarginY
     if !IsObject(UI.TopTab)
         return
 
-    ; 顶层Tab占满
+    ; 顶层 Tab 占满窗口
     UI.TopTab.Move(mX, mY, Max(w - mX*2, 420), Max(h - mY*2, 320))
     rcTop := UI_TabPageRect(UI.TopTab)
     pad := 10
 
-    ; 第1页（配置）三大分组
+    ; ---------- 第1页（配置）三大分组 ----------
     profH := 80, genH := 116, autoH := 60, gapY := 10
     gbW := Max(rcTop.W - pad*2, 420)
     x0 := rcTop.X + pad
     y0 := rcTop.Y + pad
 
-    try UI.GB_Profile.Move(x0, y0, gbW, profH)
-    try UI.GB_General.Move(x0, y0 + profH + gapY, gbW, genH)
+    ; 角色配置分组及内部控件（显式重排）
+    if IsObject(UI.GB_Profile) {
+        UI.GB_Profile.Move(x0, y0, gbW, profH)
+        UI.GB_Profile.GetPos(&px, &py, &pw, &ph)
+        ip := 12                   ; 内边距
+        ddW := 280, ddH := 24
+        btnW := 80, btnH := 28, gap := 8
+        btnY := py + 28            ; 与下拉对齐的按钮 Y
 
-    ; 自动化分组 + 按钮
-    autoTop := y0 + profH + gapY + genH + gapY
-    try UI.GB_Auto.Move(x0, autoTop, gbW, autoH)
-    if IsObject(UI.GB_Auto) {
-        UI.GB_Auto.GetPos(&ax, &ay, &aw, &ah)
-        inPad := 12, btnW := 100, btnH := 28, gap := 8, btnY := ay + ah - inPad - btnH
-        try UI.BtnThreads.Move(ax+inPad, btnY, btnW, btnH)
-        try UI.BtnRules.Move(ax+inPad + (btnW+gap)*1, btnY, btnW, btnH)
-        try UI.BtnBuffs.Move(ax+inPad + (btnW+gap)*2, btnY, btnW, btnH)
-        try UI.BtnDefault.Move(ax+inPad + (btnW+gap)*3, btnY, btnW, btnH)
+        ; 下拉
+        _UI_Move(UI.ProfilesDD, px + ip, py + 32, ddW, ddH)
+        ; 读取下拉的宽度，排后续按钮
+        UI.ProfilesDD.GetPos(&dx, &dy, &dw, &dh)
+        bx := dx + dw + 10
+        _UI_Move(UI.BtnNew,    bx + (btnW+gap)*0, btnY, btnW, btnH)
+        _UI_Move(UI.BtnClone,  bx + (btnW+gap)*1, btnY, btnW, btnH)
+        _UI_Move(UI.BtnDelete, bx + (btnW+gap)*2, btnY, btnW, btnH)
+        ; 导出按钮宽度略大
+        _UI_Move(UI.BtnExport, bx + (btnW+gap)*3, btnY, 92, 28)
     }
 
-    ; 内层Tab（技能/点位）
+    ; 热键与轮询分组及内部控件（两行精确重排）
+    if IsObject(UI.GB_General) {
+        UI.GB_General.Move(x0, y0 + profH + gapY, gbW, genH)
+        UI.GB_General.GetPos(&gx, &gy, &gw, &gh)
+        ip := 12
+
+        ; 行1
+        line1Y := gy + 50
+        _UI_Move(UI.LblStartStop, gx + ip, line1Y)          ; 文本宽度自适应
+        UI.LblStartStop.GetPos(&sx, &sy, &sw, &sh)
+        _UI_Move(UI.HkStart, sx + sw + 6, line1Y - 4, 180, 24)
+        UI.HkStart.GetPos(&hkx, &hky, &hkw, &hkh)
+
+        _UI_Move(UI.LblPoll, hkx + hkw + 18, line1Y)
+        UI.LblPoll.GetPos(&plx, &ply, &plw, &plh)
+        _UI_Move(UI.PollEdit, plx + plw + 6, line1Y - 2, 90, 24)
+        UI.PollEdit.GetPos(&pex, &pey, &pew, &peh)
+
+        _UI_Move(UI.LblDelay, pex + pew + 18, line1Y)
+        UI.LblDelay.GetPos(&dlx, &dly, &dlw, &dlh)
+        _UI_Move(UI.CdEdit, dlx + dlw + 6, line1Y - 2, 100, 24)
+        UI.CdEdit.GetPos(&cdx, &cdy, &cdw, &cdh)
+
+        _UI_Move(UI.BtnApply, cdx + cdw + 18, line1Y - 6, 80, 28)
+
+        ; 行2
+        line2Y := line1Y + 34
+        _UI_Move(UI.LblPick, gx + ip, line2Y)
+        UI.LblPick.GetPos(&pkx, &pky, &pkw, &pkh)
+        _UI_Move(UI.ChkPick, pkx + pkw + 6, line2Y - 2, 18, 18)
+
+        UI.ChkPick.GetPos(&ckx, &cky, &ckw, &ckh)
+        _UI_Move(UI.LblOffY, ckx + ckw + 14, line2Y)
+        UI.LblOffY.GetPos(&ofx, &ofy, &ofw, &ofh)
+        _UI_Move(UI.OffYEdit, ofx + ofw + 6, line2Y - 2, 80, 24)
+
+        UI.OffYEdit.GetPos(&ox, &oy, &ow, &oh)
+        _UI_Move(UI.LblDwell, ox + ow + 14, line2Y)
+        UI.LblDwell.GetPos(&dwx, &dwy, &dww, &dwh)
+        _UI_Move(UI.DwellEdit, dwx + dww + 6, line2Y - 2, 90, 24)
+    }
+
+    ; 自动化配置分组
+    autoTop := y0 + profH + gapY + genH + gapY
+    if IsObject(UI.GB_Auto) {
+        UI.GB_Auto.Move(x0, autoTop, gbW, autoH)
+        UI.GB_Auto.GetPos(&ax, &ay, &aw, &ah)
+        inPad := 12, btnW := 100, btnH := 28, gap := 8
+        btnY := ay + ah - inPad - btnH
+        _UI_Move(UI.BtnThreads, ax + inPad, btnY, btnW, btnH)
+        _UI_Move(UI.BtnRules,   ax + inPad + (btnW+gap)*1, btnY, btnW, btnH)
+        _UI_Move(UI.BtnBuffs,   ax + inPad + (btnW+gap)*2, btnY, btnW, btnH)
+        _UI_Move(UI.BtnDefault, ax + inPad + (btnW+gap)*3, btnY, btnW, btnH)
+    }
+
+    ; ---------- 内层 Tab（技能/点位） ----------
     if IsObject(UI.TabInner) {
         tabTop := autoTop + autoH + gapY
         tabH := Max(rcTop.H - (tabTop - rcTop.Y) - pad, 260)
         UI.TabInner.Move(x0, tabTop, gbW, tabH)
 
         rc := UI_TabPageRect(UI.TabInner)
-        ip := 10, bar := 36
-        lvX := rc.X + ip, lvY := rc.Y + ip
-        lvW := Max(rc.W - ip*2, 100)
-        lvH := Max(rc.H - ip*2 - bar, 80)
+        ip2 := 10, bar := 36
+        lvX := rc.X + ip2, lvY := rc.Y + ip2
+        lvW := Max(rc.W - ip2*2, 100)
+        lvH := Max(rc.H - ip2*2 - bar, 80)
 
         ; 技能页
-        try UI.SkillLV.Move(lvX, lvY, lvW, lvH)
-        btnY := lvY + lvH + 8, btnW := 96, btnH := 28, gap := 8, startX := lvX
-        try UI.BtnAddSkill.Move(startX, btnY, btnW, btnH)
-        try UI.BtnEditSkill.Move(startX + (btnW+gap)*1, btnY, btnW, btnH)
-        try UI.BtnDelSkill.Move(startX + (btnW+gap)*2, btnY, btnW, btnH)
-        try UI.BtnTestSkill.Move(startX + (btnW+gap)*3, btnY, btnW, btnH)
-        try UI.BtnSaveSkill.Move(startX + (btnW+gap)*4, btnY, btnW, btnH)
-        loop 7
-            try UI.SkillLV.ModifyCol(A_Index, "AutoHdr")
+        if IsObject(UI.SkillLV) {
+            _UI_Move(UI.SkillLV, lvX, lvY, lvW, lvH)
+            btnY := lvY + lvH + 8
+            btnW := 96, btnH := 28, gap := 8, startX := lvX
+            _UI_Move(UI.BtnAddSkill,  startX + (btnW+gap)*0, btnY, btnW, btnH)
+            _UI_Move(UI.BtnEditSkill, startX + (btnW+gap)*1, btnY, btnW, btnH)
+            _UI_Move(UI.BtnDelSkill,  startX + (btnW+gap)*2, btnY, btnW, btnH)
+            _UI_Move(UI.BtnTestSkill, startX + (btnW+gap)*3, btnY, btnW, btnH)
+            _UI_Move(UI.BtnSaveSkill, startX + (btnW+gap)*4, btnY, btnW, btnH)
+            loop 7
+                try UI.SkillLV.ModifyCol(A_Index, "AutoHdr")
+        }
 
         ; 点位页
-        try UI.PointLV.Move(lvX, lvY, lvW, lvH)
-        pY := lvY + lvH + 8
-        try UI.BtnAddPoint.Move(startX, pY, btnW, btnH)
-        try UI.BtnEditPoint.Move(startX + (btnW+gap)*1, pY, btnW, btnH)
-        try UI.BtnDelPoint.Move(startX + (btnW+gap)*2, pY, btnW, btnH)
-        try UI.BtnTestPoint.Move(startX + (btnW+gap)*3, pY, btnW, btnH)
-        try UI.BtnSavePoint.Move(startX + (btnW+gap)*4, pY, btnW, btnH)
-        loop 6
-            try UI.PointLV.ModifyCol(A_Index, "AutoHdr")
+        if IsObject(UI.PointLV) {
+            _UI_Move(UI.PointLV, lvX, lvY, lvW, lvH)
+            pY := lvY + lvH + 8
+            btnW := 96, btnH := 28, gap := 8, startX := lvX
+            _UI_Move(UI.BtnAddPoint,  startX + (btnW+gap)*0, pY, btnW, btnH)
+            _UI_Move(UI.BtnEditPoint, startX + (btnW+gap)*1, pY, btnW, btnH)
+            _UI_Move(UI.BtnDelPoint,  startX + (btnW+gap)*2, pY, btnW, btnH)
+            _UI_Move(UI.BtnTestPoint, startX + (btnW+gap)*3, pY, btnW, btnH)
+            _UI_Move(UI.BtnSavePoint, startX + (btnW+gap)*4, pY, btnW, btnH)
+            loop 6
+                try UI.PointLV.ModifyCol(A_Index, "AutoHdr")
+        }
     }
 
-    ; 第2页（设置）
-    try UI.LblLang.Move(x0, y0, 120, 24)
-    try UI.DdLang.Move(x0 + 120 + 6, y0, 220, 24)
-    try UI.BtnApplyLang.Move(x0, y0 + 40, 120, 28)
-    try UI.BtnOpenLang.Move(x0 + 120 + 8, y0 + 40, 140, 28)
-    try UI.LblNote.Move(x0, y0 + 78, Max(gbW, 200), 24)
+    ; ---------- 第2页（设置） ----------
+    if IsObject(UI.LblLang) {
+        _UI_Move(UI.LblLang, x0, y0, 120, 24)
+        _UI_Move(UI.DdLang,  x0 + 120 + 6, y0, 220, 24)
+        _UI_Move(UI.BtnApplyLang, x0, y0 + 40, 120, 28)
+        _UI_Move(UI.BtnOpenLang,  x0 + 120 + 8, y0 + 40, 140, 28)
+        _UI_Move(UI.LblNote, x0, y0 + 78, Max(gbW, 200), 24)
+    }
 }
