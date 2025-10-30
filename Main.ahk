@@ -7,6 +7,8 @@ CoordMode "Pixel", "Screen"
 ; ========= Includes =========
 #Include "modules\Utils.ahk"
 #Include "modules\Core.ahk"
+#Include "modules\AppConfig.ahk"
+#Include "modules\Lang.ahk"
 #Include "modules\Pixel.ahk"
 #Include "modules\Storage.ahk"
 #Include "modules\Poller.ahk"
@@ -23,6 +25,8 @@ CoordMode "Pixel", "Screen"
 #Include "modules\GUI_Threads.ahk"
 #Include "modules\Counters.ahk"
 ; ========= Bootstrap =========
+AppConfig_Init()
+Lang_Init(AppConfig_Get("Language", "zh-CN"))
 Core_Init()
 GUI_Main_Show()
 
