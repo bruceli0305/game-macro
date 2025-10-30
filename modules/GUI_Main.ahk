@@ -26,7 +26,6 @@ GUI_Main_Show() {
     global gChkPickAway, gPickOffsetEdit, gPickDwellEdit
     global gPointLV
     global gBtnPAdd, gBtnPEdit, gBtnPDel, gBtnPTest, gBtnPSave
-    global gBtnPAdd, gBtnPEdit, gBtnPDel, gBtnPTest, gBtnPSave
     global gTabMain
     global gGBAuto, gBtnRuleCfg, gBtnBuffCfg
     global gBtnThreads
