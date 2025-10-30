@@ -29,6 +29,34 @@ Lang_Init(code := "") {
     Lang_Load(code)
 }
 
+; 从 UTF-8 文件中解析 [meta] Name（优先）
+Lang_ReadMetaNameUTF8(path) {
+    try {
+        content := FileRead(path, "UTF-8")
+    } catch {
+        return ""
+    }
+    cur := ""
+    loop parse content, "`n", "`r" {
+        line := Trim(A_LoopField)
+        if (line = "" || SubStr(line,1,1) = ";")
+            continue
+        if (SubStr(line,1,1) = "[" && SubStr(line,-1) = "]") {
+            cur := SubStr(line, 2, StrLen(line)-2)
+            continue
+        }
+        if (StrLower(cur) != "meta")
+            continue
+        pos := InStr(line, "=")
+        if (pos > 1) {
+            key := Trim(SubStr(line, 1, pos-1))
+            if (StrLower(key) = "name")
+                return Trim(SubStr(line, pos+1))
+        }
+    }
+    return ""
+}
+
 Lang_Load(code) {
     global gLang
     dir := Lang_Dir()
@@ -46,6 +74,7 @@ Lang_Load(code) {
     }
     m := Map()
     try {
+        ; 解析 strings 段（UTF-8）
         content := FileRead(file, "UTF-8")
         curSection := ""
         loop parse content, "`n", "`r" {
@@ -56,7 +85,7 @@ Lang_Load(code) {
                 curSection := SubStr(line, 2, StrLen(line)-2)
                 continue
             }
-            if (curSection != "strings")
+            if (StrLower(curSection) != "strings")
                 continue
             pos := InStr(line, "=")
             if (pos > 1) {
@@ -65,7 +94,14 @@ Lang_Load(code) {
                 m[key] := val
             }
         }
-        name := IniRead(file, "meta", "Name", code)
+        ; 解析 meta.Name（UTF-8 优先，失败再回退 IniRead）
+        name := Lang_ReadMetaNameUTF8(file)
+        if (name = "") {
+            try name := IniRead(file, "meta", "Name", code)
+        }
+        if (name = "")
+            name := code
+
         gLang["Map"] := m
         gLang["Code"] := code
         gLang["Name"] := name
@@ -83,8 +119,12 @@ Lang_ListPackages() {
     found := false
     loop files, dir "\*.ini" {
         code := RegExReplace(A_LoopFileName, "\.ini$")
-        name := ""
-        try name := IniRead(A_LoopFileFullPath, "meta", "Name", code)
+        name := Lang_ReadMetaNameUTF8(A_LoopFileFullPath)
+        if (name = "") {
+            try name := IniRead(A_LoopFileFullPath, "meta", "Name", code)
+        }
+        if (name = "")
+            name := code
         list.Push({ Code: code, Name: name })
         found := true
     }
