@@ -1,0 +1,43 @@
+# AutoHotkey编译输出
+*.exe
+
+# 编译后的可执行文件（如果使用编译器）
+*.exe
+
+# 日志文件
+Logs/*.log
+Logs/*.txt
+
+# 导出目录（包含用户生成的配置文件）
+Exports/
+
+# IDE配置文件
+.vscode/
+*.vscode/
+
+# 系统文件
+Thumbs.db
+.DS_Store
+
+# 临时文件
+*.tmp
+*.temp
+
+# 备份文件
+*.bak
+*~
+
+# 用户特定的配置文件（可能包含敏感信息）
+Profiles/*.ini
+
+# 编译缓存
+*.cache
+
+# 调试文件
+*.pdb
+*.idb
+
+# 性能分析文件
+*.prof
+*.gcda
+*.gcno

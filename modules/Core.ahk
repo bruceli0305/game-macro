@@ -1,0 +1,36 @@
+; Core.ahk - 全局状态与默认配置
+global App := Map()
+
+Core_Init() {
+    global App
+    App["ProfilesDir"] := A_ScriptDir "\Profiles"
+    App["ExportDir"]   := A_ScriptDir "\Exports"
+    App["ConfigExt"]   := ".ini"
+
+    App["CurrentProfile"] := ""
+    App["Profiles"]       := []
+    App["ProfileData"]    := Core_DefaultProfileData()
+    App["IsRunning"]      := false
+    App["BoundHotkeys"]   := Map()
+
+    DirCreate(App["ProfilesDir"])
+    DirCreate(App["ExportDir"])
+}
+
+Core_DefaultProfileData() {
+    ; Note: 可扩展更多 General 项
+    return {
+        Name: "Default"
+      , StartHotkey: "F9"         ; 开始/停止
+      , PollIntervalMs: 25        ; 轮询间隔
+      , SendCooldownMs: 250       ; 防刷冷却（同一技能两次触发的最小间隔）
+      , PickHoverEnabled: 1          ; 取色避让：1=开 0=关
+      , PickHoverOffsetY: -60        ; 负数=向上移动
+      , PickHoverDwellMs: 120        ; 避让后等待时间
+      , Skills: []                ; { Name, Key, X, Y, Color("0xRRGGBB"), Tol }
+      , Points: []   ; 新增：独立点位
+      , Rules: []                      ; 规则数组（见 Rule 结构）
+      , Buffs: []    ; 续BUFF配置数组
+      , Threads: [ { Id: 1, Name: "默认线程" } ]
+    }
+}
