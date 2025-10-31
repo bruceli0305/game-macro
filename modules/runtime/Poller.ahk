@@ -100,52 +100,16 @@ Poller_TryDefaultSkill() {
     return false
 }
 
-; 统一发键：在真正发送前等待“全局延迟ms”；支持按住时长
+; 统一发键：走 WorkerPool 的一次性通道（延迟下放到 WorkerHost）
 Poller_SendKey(keySpec, holdMs := 0) {
     global App
-    delay := 0
-    try {
-        if HasProp(App, "ProfileData") && HasProp(App["ProfileData"], "SendCooldownMs") {
-            delay := Integer(App["ProfileData"].SendCooldownMs)
-        }
-    } catch {
-        delay := 0
-    }
-    if (delay > 0)
-        Sleep delay
-
     s := Trim(keySpec)
     if (s = "")
         return false
-
-    if RegExMatch(s, "[\{\}\^\!\+#]") {
-        if (holdMs > 0) {
-            SendEvent "{" s " down}"
-            Sleep holdMs
-            SendEvent "{" s " up}"
-        } else {
-            SendEvent s
-        }
-        return true
+    delay := 0
+    try {
+        if IsObject(App) && App.Has("ProfileData") && HasProp(App["ProfileData"], "SendCooldownMs")
+            delay := Max(0, Integer(App["ProfileData"].SendCooldownMs))
     }
-
-    if RegExMatch(s, "i)^(F([1-9]|1[0-9]|2[0-4])|Tab|Enter|Space|Backspace|Delete|Insert|Home|End|PgUp|PgDn|Up|Down|Left|Right|Esc|Escape|AppsKey|PrintScreen|Pause|ScrollLock|CapsLock|NumLock|LWin|RWin|Numpad(Enter|Add|Sub|Mult|Div|\d+))$") {
-        if (holdMs > 0) {
-            SendEvent "{" s " down}"
-            Sleep holdMs
-            SendEvent "{" s " up}"
-        } else {
-            SendEvent "{" s "}"
-        }
-        return true
-    }
-
-    if (holdMs > 0) {
-        SendEvent "{" s " down}"
-        Sleep holdMs
-        SendEvent "{" s " up}"
-    } else {
-        SendEvent s
-    }
-    return true
+    return WorkerPool_FireAndForget(s, delay, Max(0, holdMs))
 }

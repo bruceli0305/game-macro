@@ -23,6 +23,7 @@ Storage_LoadProfile(name) {
     data.PickHoverEnabled := Integer(IniRead(file, "General", "PickHoverEnabled", data.PickHoverEnabled))
     data.PickHoverOffsetY := Integer(IniRead(file, "General", "PickHoverOffsetY", data.PickHoverOffsetY))
     data.PickHoverDwellMs := Integer(IniRead(file, "General", "PickHoverDwellMs", data.PickHoverDwellMs))
+    data.PickConfirmKey   := IniRead(file, "General", "PickConfirmKey", "LButton")   ; 新增
     sc := Integer(IniRead(file, "General", "SkillCount", 0))
     data.Skills := []
     loop sc {
@@ -153,6 +154,7 @@ Storage_SaveProfile(data) {
     IniWrite(data.PickHoverEnabled, file, "General", "PickHoverEnabled")
     IniWrite(data.PickHoverOffsetY, file, "General", "PickHoverOffsetY")
     IniWrite(data.PickHoverDwellMs, file, "General", "PickHoverDwellMs")
+    IniWrite(HasProp(data,"PickConfirmKey") ? data.PickConfirmKey : "LButton", file, "General", "PickConfirmKey")  ; 新增
     IniWrite(data.Points.Length, file, "General", "PointCount")
     IniWrite(data.Rules.Length, file, "General", "RuleCount")
     IniWrite(data.Buffs.Length, file, "General", "BuffCount")

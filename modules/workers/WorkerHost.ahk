@@ -84,27 +84,46 @@ WorkerHost_SendKey(key, delay := 0, hold := 0) {
     if (key = "")
         return
 
-    ; 按住（down/up）优先，适配多数键名
+    mouseRe := "i)^(LButton|MButton|RButton|XButton1|XButton2|WheelUp|WheelDown|WheelLeft|WheelRight)$"
+
+    ; 按住优先：仅对功能/鼠标键做 down/up；其它复杂发送原样
     if (hold > 0) {
-        SendEvent "{" key " down}"
-        Sleep hold
-        SendEvent "{" key " up}"
+        if RegExMatch(key, "[\{\}\^\!\+#]") {
+            SendEvent key
+            return
+        }
+        if RegExMatch(key
+            , "i)^(F([1-9]|1[0-9]|2[0-4])|Tab|Enter|Space|Backspace|Delete|Insert|Home|End|PgUp|PgDn|Up|Down|Left|Right|Esc|Escape|AppsKey|PrintScreen|Pause|ScrollLock|CapsLock|NumLock|LWin|RWin|Numpad(Enter|Add|Sub|Mult|Div|\d+))$") {
+            SendEvent "{" key " down}"
+            Sleep hold
+            SendEvent "{" key " up}"
+            return
+        }
+        if RegExMatch(key, mouseRe) && !RegExMatch(key, "i)^Wheel") {
+            SendEvent "{" key " down}"
+            Sleep hold
+            SendEvent "{" key " up}"
+            return
+        }
+        ; 其它情况无法可靠 down/up，按一次
+        SendEvent "{" key "}"
         return
     }
 
-    ; 已含 {…} 或修饰 (^!+#) → 原样发送
+    ; 非按住
     if RegExMatch(key, "[\{\}\^\!\+#]") {
         SendEvent key
         return
     }
-
-    ; 功能键（F1、Tab、Enter、方向键、Numpad…）自动补花括号
     if RegExMatch(key
         , "i)^(F([1-9]|1[0-9]|2[0-4])|Tab|Enter|Space|Backspace|Delete|Insert|Home|End|PgUp|PgDn|Up|Down|Left|Right|Esc|Escape|AppsKey|PrintScreen|Pause|ScrollLock|CapsLock|NumLock|LWin|RWin|Numpad(Enter|Add|Sub|Mult|Div|\d+))$") {
         SendEvent "{" key "}"
         return
     }
+    if RegExMatch(key, mouseRe) {
+        SendEvent "{" key "}"
+        return
+    }
 
-    ; 普通字符（字母/数字/符号）
     SendEvent key
 }

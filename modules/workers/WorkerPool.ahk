@@ -16,7 +16,8 @@ WP_Log(msg) {
 WorkerPool_Rebuild() {
     global App, WorkerPool
     WorkerPool.Mode := "FF_ONLY"
-    WP_Log("Rebuild (FF-only): skip spawning workers; threads=" (HasProp(App["ProfileData"], "Threads") ? App["ProfileData"].Threads.Length : 0))
+    WP_Log("Rebuild (FF-only): skip spawning workers; threads=" (HasProp(App["ProfileData"], "Threads") ? App[
+        "ProfileData"].Threads.Length : 0))
 }
 
 WorkerPool_Dispose() {
@@ -84,8 +85,8 @@ WorkerPool_SendSkillIndex(threadId, idx, src := "") {
     ; 发送延迟（全局）
     delay := 0
     try {
-        if HasProp(App, "ProfileData") && HasProp(App["ProfileData"], "SendCooldownMs")
-            delay := Integer(App["ProfileData"].SendCooldownMs)
+        if IsObject(App) && App.Has("ProfileData") && HasProp(App["ProfileData"], "SendCooldownMs")
+            delay := Max(0, Integer(App["ProfileData"].SendCooldownMs))
     } catch {
         delay := 0
     }
@@ -102,7 +103,7 @@ WorkerPool_SendSkillIndex(threadId, idx, src := "") {
     }
 
     WP_Log(Format("Send FF-only: thr={1} idx={2} key={3} delay={4} hold={5} src={6}"
-        , threadId, idx, s.Key, delay, hold, (src!="" ? src : "?")))
+        , threadId, idx, s.Key, delay, hold, (src != "" ? src : "?")))
 
     ok := WorkerPool_FireAndForget(s.Key, delay, hold)
 

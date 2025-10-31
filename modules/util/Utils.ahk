@@ -12,7 +12,7 @@ Confirm(msg) {
 UI_ActivateMain() {
     try {
         global UI
-        if IsObject(UI) && HasProp(UI, "Main") && UI.Main && UI.Main.Hwnd {
+        if IsObject(UI) && UI.Has("Main") && UI.Main && UI.Main.Hwnd {
             WinActivate "ahk_id " UI.Main.Hwnd
             DllCall("user32\SetForegroundWindow", "ptr", UI.Main.Hwnd)
         }

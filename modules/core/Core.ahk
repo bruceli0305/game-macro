@@ -23,10 +23,11 @@ Core_DefaultProfileData() {
         Name: "Default"
       , StartHotkey: "F9"         ; 开始/停止
       , PollIntervalMs: 25        ; 轮询间隔
-      , SendCooldownMs: 250       ; 防刷冷却（同一技能两次触发的最小间隔）
+      , SendCooldownMs: 250       ; 全局每次发送延迟
       , PickHoverEnabled: 1          ; 取色避让：1=开 0=关
       , PickHoverOffsetY: -60        ; 负数=向上移动
       , PickHoverDwellMs: 120        ; 避让后等待时间
+      , PickConfirmKey: "LButton"      ; 新增：拾色确认热键
       , Skills: []                ; { Name, Key, X, Y, Color("0xRRGGBB"), Tol }
       , Points: []   ; 新增：独立点位
       , Rules: []                      ; 规则数组（见 Rule 结构）
