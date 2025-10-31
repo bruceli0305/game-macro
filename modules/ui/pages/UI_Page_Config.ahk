@@ -178,6 +178,7 @@ UI_Page_Config_SwitchProfile(name) {
     WorkerPool_Rebuild()
     Counters_Init()
     try Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
+    try Dup_OnProfileChanged()
 }
 
 ; ================= Skills =================

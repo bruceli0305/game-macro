@@ -1,6 +1,7 @@
 #Requires AutoHotkey v2
 #SingleInstance Off
 #NoTrayIcon
+SendMode "Input"   ; 全局使用 SendInput（游戏环境更稳）
 OnExit (*) => ExitApp()
 
 ;================ 日志工具（写到项目根 Logs） ================

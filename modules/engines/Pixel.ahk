@@ -28,28 +28,44 @@ global gPxFrame := { id: 0, cache: Map() }
 
 Pixel_FrameBegin() {
     global gPxFrame
+    try Dup_FrameBegin()          ; 新增：统计与日志（安全调用）
     gPxFrame.id += 1
     gPxFrame.cache := Map()
 }
 
-; 优先从 ROI 读取，不在 ROI 再走系统 PixelGetColor
+; 优先从 DXGI Dup -> ROI -> 系统取色
 Pixel_FrameGet(x, y) {
     global gPxFrame
     key := x "|" y
     if gPxFrame.cache.Has(key)
         return gPxFrame.cache[key]
 
+    ; 1) DXGI Dup 优先（仅当坐标落在当前输出）
+    try {
+        cdx := Dup_GetPixelAtScreen(x, y)    ; -1=不在输出或未就绪；0..=有效颜色
+        if (cdx != -1) {
+            gPxFrame.cache[key] := cdx
+            try Dup_NotifyPath("DX")         ; 新增
+            return cdx
+        }
+    } catch {
+        ; 忽略异常，继续回退路径
+    }
+
+    ; 2) ROI 缓存
     c := Pixel_ROI_GetIfInside(x, y)  ; -1 = 不在 ROI
     if (c != -1) {
         gPxFrame.cache[key] := c
+        try Dup_NotifyPath("ROI")            ; 新增
         return c
     }
 
+    ; 3) GDI 取色
     c := PixelGetColor(x, y, "RGB")
     gPxFrame.cache[key] := c
+    try Dup_NotifyPath("GDI")                ; 新增
     return c
 }
-; ------------------------------------------------
 
 ; ---------------- ROI 快照（单矩形） ----------------
 ; 说明：
