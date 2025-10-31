@@ -1,17 +1,18 @@
 #Requires AutoHotkey v2
-; DXGI Dup AHK 封装 + 屏幕坐标映射 + 调试日志/路径统计 + 启动回退与环境打印
+; DXGI Dup AHK 封装 + 安全兜底（无输出/异常时绝不创建线程）+ 日志
 ; dll: modules\lib\dxgi_dup.dll
 ; 日志：Logs\dxgi_dup.log
 
 global DX_dll := ""
 global gDX := {
-    Ready: false
-  , OutIdx: 0
-  , FPS: 60
-  , MonName: ""
-  , L: 0, T: 0, R: 0, B: 0
-  , Debug: true
-  , Stats: { FrameNo: 0, Dx: 0, Roi: 0, Gdi: 0, LastPath: "", LastLog: 0, LastReady: -1 }
+    Enabled: true,                 ; 总开关（可用 Dup_Enable(false) 强制关闭）
+    Ready: false,
+    OutIdx: 0,
+    FPS: 60,
+    MonName: "",
+    L: 0, T: 0, R: 0, B: 0,
+    Debug: true,
+    Stats: { FrameNo: 0, Dx: 0, Roi: 0, Gdi: 0, LastPath: "", LastLog: 0, LastReady: -1 }
 }
 
 ; ---------- 日志 ----------
@@ -34,8 +35,12 @@ Dup_SetDebug(flag := true) {
     gDX.Debug := !!flag
     DUP_Log("Debug=" (gDX.Debug ? "ON" : "OFF"))
 }
+Dup_Enable(flag := true) {
+    gDX.Enabled := !!flag
+    DUP_Log("DXGI Enable=" (gDX.Enabled ? "ON" : "OFF"))
+}
 
-; ---------- 环境与输出枚举 ----------
+; ---------- 环境信息 ----------
 Dup_IsRemoteSession() {
     return DllCall("user32\GetSystemMetrics", "int", 0x1000, "int") != 0    ; SM_REMOTESESSION
 }
@@ -47,34 +52,6 @@ Dup_DumpEnv() {
     DUP_Log(Format("Env: ahk={1} perm={2} session={3} os={4}", arch, admin, remote, os))
     if Dup_IsRemoteSession()
         DUP_Log("Warning: Remote session may block DXGI duplication", "WARN")
-}
-Dup_LogOutputs() {
-    cnt := 0
-    try cnt := DX_EnumOutputs()
-    DUP_Log("EnumOutputs count=" cnt)
-    loop cnt {
-        i := A_Index - 1
-        name := ""
-        try name := DX_GetOutputName(i)
-        ; 映射到 AHK Monitor（按设备名）
-        mapIdx := 0
-        monCnt := 0
-        try monCnt := MonitorGetCount()
-        loop monCnt {
-            mi := A_Index
-            mname := ""
-            try {
-                mname := MonitorGetName(mi)
-            } catch {
-                mname := ""
-            }
-            if (mname != "" && name != "" && mname = name) {
-                mapIdx := mi
-                break
-            }
-        }
-        DUP_Log(Format("Output[{1}] Name={2} MapToMonitor={3}", i, (name!=""?name:"<unknown>"), mapIdx))
-    }
 }
 
 ; ---------- DLL 导出 ----------
@@ -129,12 +106,18 @@ DX_LastError() {
     return { Code: code, Text: StrGet(buf.Ptr, "UTF-16") }
 }
 
-; ---------- 高层：自动初始化 / 映射 / 屏幕取色 ----------
-; 尝试指定 outIdx；若失败，枚举其余输出逐一尝试，并记录每次失败的 LastError
+; ---------- 高层：自动初始化 / 映射 / 取色（兜底防闪退版本） ----------
 Dup_InitAuto(outputIdx := 0, fps := 0) {
-    Dup_DumpEnv()
-    Dup_LogOutputs()
+    ; 关掉就不走任何 DLL
+    if (!gDX.Enabled) {
+        DUP_Log("DXGI disabled by switch, skip init")
+        gDX.Ready := false
+        return false
+    }
 
+    Dup_DumpEnv()
+
+    ; 估算 FPS（按轮询间隔）
     if (fps <= 0) {
         try {
             global App
@@ -146,12 +129,18 @@ Dup_InitAuto(outputIdx := 0, fps := 0) {
     }
     DUP_Log("InitAuto: dll=" A_ScriptDir "\modules\lib\dxgi_dup.dll out=" outputIdx " fps=" fps)
 
-    ; 构建尝试序列：先用户指定，再其它输出
-    attempts := []
+    ; 先探测输出数量（若为0，绝不创建线程）
     cnt := 0
     try cnt := DX_EnumOutputs()
-    if (cnt <= 0)
-        DUP_Log("EnumOutputs returned 0 (no outputs?)", "WARN")
+    DUP_Log("EnumOutputs count=" cnt)
+    if (cnt <= 0) {
+        DUP_Log("DXGI disabled: DupEnumOutputs=0 -> fall back to ROI/GDI", "WARN")
+        gDX.Ready := false
+        return false
+    }
+
+    ; 构造尝试序列
+    attempts := []
     attempts.Push(outputIdx)
     loop cnt {
         i := A_Index - 1
@@ -164,19 +153,20 @@ Dup_InitAuto(outputIdx := 0, fps := 0) {
         name := ""
         try name := DX_GetOutputName(idx)
         DUP_Log(Format("Try Init on Output[{1}] Name={2}", idx, (name!=""?name:"<unknown>")))
+
+        ok := 0
         try {
             ok := DX_Init(idx, fps)
         } catch {
             ok := 0
-            ; 可选：记录抛异常的 init 失败
             Dup_LogLastError(Format("Init@{1}-throw", idx))
         }
+
         if (ok = 1) {
             chosen := idx
             break
         } else {
             Dup_LogLastError(Format("Init@{1}", idx))
-            ; 防止占用未释放：确保彻底关闭
             try DX_Shutdown()
         }
     }
@@ -186,10 +176,11 @@ Dup_InitAuto(outputIdx := 0, fps := 0) {
         gDX.OutIdx := chosen
         gDX.FPS := fps
         Dup_UpdateMonitorRect()
-        ready := DX_IsReady()
-        gDX.Stats.LastReady := ready ? 1 : 0
+        ready := 0
+        try ready := DX_IsReady() ? 1 : 0
+        gDX.Stats.LastReady := ready
         DUP_Log(Format("Init OK on Output[{1}] Ready={2} Name={3} Rect=({4},{5})-({6},{7}) FPS={8}"
-            , chosen, (ready?1:0), gDX.MonName, gDX.L, gDX.T, gDX.R, gDX.B, gDX.FPS))
+            , chosen, ready, gDX.MonName, gDX.L, gDX.T, gDX.R, gDX.B, gDX.FPS))
         if (!ready)
             Dup_LogLastError("PostInit")
         return true
@@ -231,7 +222,7 @@ Dup_UpdateMonitorRect() {
         if (idx >= 1 && idx <= cnt) {
             try MonitorGet(idx, &l, &t, &r, &b)
         } else {
-            try MonitorGet(1, &l, &t, &r, &b)
+            try MonitorGet(1, &l, &t, &r, &b)   ; 主屏兜底
         }
         gDX.L := l, gDX.T := t, gDX.R := r, gDX.B := b
     }
@@ -245,15 +236,21 @@ Dup_ScreenToOutput(x, y) {
     return { ok:true, X: x - gDX.L, Y: y - gDX.T }
 }
 
+; 屏幕取色（优先 DXGI），返回 0xRRGGBB；不在当前输出或未就绪 -> -1
 Dup_GetPixelAtScreen(x, y) {
-    if (!gDX.Ready || !DX_IsReady())
+    if (!gDX.Enabled || !gDX.Ready)
+        return -1
+    ready := 0
+    try ready := DX_IsReady() ? 1 : 0
+    if (!ready)
         return -1
     m := Dup_ScreenToOutput(x, y)
     if !m.ok
         return -1
-    return DX_GetPixel(m.X, m.Y)
+    return DX_GetPixel(m.X, m.Y)   ; 注意：0 也是有效色(黑)，-1 才表示失败
 }
 
+; 轮询间隔变化/切换配置时调用（动态 FPS）
 Dup_OnProfileChanged() {
     try {
         global App
@@ -269,14 +266,24 @@ Dup_OnProfileChanged() {
     }
 }
 
+; 运行中切换输出（0-based）
 Dup_SelectOutputIdx(idx) {
+    if (!gDX.Enabled)
+        return 0
     gDX.OutIdx := Max(0, idx)
-    DX_SelectOutput(gDX.OutIdx)
-    Dup_UpdateMonitorRect()
-    DUP_Log("SelectOutput -> " gDX.OutIdx " (" gDX.MonName ")")
+    ok := 0
+    try ok := DX_SelectOutput(gDX.OutIdx)
+    if (ok = 1) {
+        Dup_UpdateMonitorRect()
+        DUP_Log("SelectOutput -> " gDX.OutIdx " (" gDX.MonName ")")
+        return 1
+    } else {
+        Dup_LogLastError("SelectOutput")
+        return 0
+    }
 }
 
-; ---------- 帧级统计 ----------
+; ---------- 帧统计（可选：如果你已接入） ----------
 Dup_FrameBegin() {
     s := gDX.Stats
     if !IsObject(s) {
@@ -284,7 +291,8 @@ Dup_FrameBegin() {
         s := gDX.Stats
     }
     if gDX.Debug {
-        readyNow := DX_IsReady() ? 1 : 0
+        readyNow := 0
+        try readyNow := DX_IsReady() ? 1 : 0
         if (s.FrameNo = 0) {
             s.LastReady := readyNow
             DUP_Log(Format("State: Ready={1} Out={2} Name={3} Rect=({4},{5})-({6},{7}) FPS={8}"
@@ -298,8 +306,7 @@ Dup_FrameBegin() {
                 s.LastPath := path
                 need := true
             }
-            last := s.LastReady
-            if (last != readyNow) {
+            if (s.LastReady != readyNow) {
                 s.LastReady := readyNow
                 DUP_Log("Ready -> " (readyNow ? "READY" : "NOT_READY"))
                 if (!readyNow)
@@ -316,7 +323,6 @@ Dup_FrameBegin() {
     s.Dx := 0, s.Roi := 0, s.Gdi := 0
     s.FrameNo++
 }
-
 Dup_NotifyPath(path) {
     s := gDX.Stats
     if !IsObject(s) {

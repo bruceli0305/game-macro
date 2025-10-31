@@ -42,8 +42,18 @@ CoordMode "Pixel", "Screen"
 AppConfig_Init()
 Lang_Init(AppConfig_Get("Language","zh-CN"))
 Core_Init()
-; 启动 DXGI Dup（若 dll 存在则尝试，失败自动忽略回退）
-try Dup_InitAuto()
+; 如需强制关闭 DXGI，可放开这一行
+; Dup_Enable(false)
+
+; 带保护的 DXGI 初始化
+try {
+    Dup_InitAuto()   ; 如果 EnumOutputs=0，将直接返回 false，不创建线程
+} catch as e {
+    DirCreate(A_ScriptDir "\Logs")
+    FileAppend(FormatTime() " [CRASH] Dup_InitAuto exception: " e.Message "`r`n"
+        , A_ScriptDir "\Logs\app_crash.log", "UTF-8")
+    try Dup_Enable(false)
+}
 
 UI_ShowMain()
 

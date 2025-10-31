@@ -55,7 +55,7 @@ WorkerPool_CreateProcess(cmdLine) {
 ;================ 一次性发送（FF-ONLY 通道） ================
 ; 直接启动 WorkerHost.ahk 的 --fire 模式；key 用双引号包裹并转义内部引号
 WorkerPool_FireAndForget(key, delay := 0, hold := 0) {
-    host := A_ScriptDir "\modules\WorkerHost.ahk"
+    host := A_ScriptDir "\modules\workers\WorkerHost.ahk"
     if !FileExist(host) {
         WP_Log("Start one-shot FAIL: WorkerHost not found: " host)
         return false
