@@ -52,16 +52,70 @@ WorkerPool_CreateProcess(cmdLine) {
     return { pid: pid, hProcess: hProcess, hThread: hThread }
 }
 
-;================ 一次性发送（FF-ONLY 通道） ================
-; 直接启动 WorkerHost.ahk 的 --fire 模式；key 用双引号包裹并转义内部引号
+; ============== 宿主定位（优先 EXE，再 AHK） ==============
+; 查找 WorkerHost 宿主，返回 { Path, Kind:"exe"/"ahk" } 或 0
+WorkerPool_FindHost() {
+    global App
+    ; 1) App 配置覆写（可选）
+    try {
+        if IsObject(App) && App.Has("WorkerHostPath") {
+            p := App["WorkerHostPath"]
+            if (p != "" && FileExist(p)) {
+                ext := StrLower(RegExReplace(p, ".*\.", ""))
+                return { Path: p, Kind: (ext="exe" ? "exe" : "ahk") }
+            }
+        }
+    }
+
+    ; 2) 环境变量覆写（WORKERHOST_PATH）
+    try {
+        p := EnvGet("WORKERHOST_PATH")
+        if (p != "" && FileExist(p)) {
+            ext := StrLower(RegExReplace(p, ".*\.", ""))
+            return { Path: p, Kind: (ext="exe" ? "exe" : "ahk") }
+        }
+    }
+
+    ; 3) 常规候选路径（相对主程序目录）
+    candidates := [
+        A_ScriptDir "\modules\workers\WorkerHost.exe"
+      , A_ScriptDir "\modules\WorkerHost.exe"
+      , A_ScriptDir "\WorkerHost.exe"
+      , A_ScriptDir "\modules\workers\WorkerHost.ahk"
+      , A_ScriptDir "\modules\WorkerHost.ahk"
+      , A_ScriptDir "\WorkerHost.ahk"
+    ]
+    for _, p in candidates {
+        if FileExist(p) {
+            ext := StrLower(RegExReplace(p, ".*\.", ""))
+            return { Path: p, Kind: (ext="exe" ? "exe" : "ahk") }
+        }
+    }
+    return 0
+}
+
+; ============== 一次性发送（FF-only）：自动选择宿主 ==============
 WorkerPool_FireAndForget(key, delay := 0, hold := 0) {
-    host := A_ScriptDir "\modules\workers\WorkerHost.ahk"
-    if !FileExist(host) {
-        WP_Log("Start one-shot FAIL: WorkerHost not found: " host)
+    host := WorkerPool_FindHost()
+    if !host {
+        WP_Log("Start one-shot FAIL: WorkerHost not found in candidates")
         return false
     }
+
+    ; 组装命令行（优先 EXE）
     qkey := '"' . StrReplace(key, '"', '""') . '"'
-    cmd := '"' . A_AhkPath . '" "' . host . '" --fire ' . qkey . ' ' . delay . ' ' . hold
+    if (host.Kind = "exe") {
+        cmd := '"' host.Path '" --fire ' . qkey . ' ' . delay . ' ' . hold
+    } else {
+        ; .ahk：依赖解释器
+        ip := A_AhkPath
+        if (ip = "" || !FileExist(ip)) {
+            WP_Log("Start one-shot FAIL: A_AhkPath invalid for .ahk host. Please deploy WorkerHost.exe")
+            return false
+        }
+        cmd := '"' ip '" "' host.Path '" --fire ' . qkey . ' ' . delay . ' ' . hold
+    }
+
     WP_Log("Start one-shot: " cmd)
 
     pr := WorkerPool_CreateProcess(cmd)
