@@ -2,6 +2,7 @@
 
 global gPoller := { running: false, timerBound: 0 }
 
+
 ; 判定当前环境下是否能正确采样屏幕（独占全屏多数会失败）
 Poller_CaptureReady() {
     ; 在屏幕四角采样一圈，若全为同色或返回异常，认为不可用
@@ -55,7 +56,8 @@ Poller_Tick() {
     global App, gPoller
     if !gPoller.running
         return
-
+    ; 隐藏任何屏幕提示，避免轮询时在鼠标旁出现 ToolTip
+    try ToolTip()
     ; 先抓 ROI，再清帧缓存（如未启用 ROI，此步骤会自动跳过）
     ; 先抓 ROI（DXGI 可用则跳过），再清帧缓存
     try if !DX_IsReady()
