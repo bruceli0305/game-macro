@@ -42,5 +42,19 @@ Core_DefaultProfileData() {
           , PreDelayMs: 0         ; 触发前延时
           , LastFire: 0           ; 运行时字段，不落盘
         }
+      , Rotation: {
+          Enabled: 0
+        , DefaultTrackId: 1
+        , SwapKey: ""                 ; M1 可不填；切轨时若有则发送
+        , BusyWindowMs: 200
+        , ColorTolBlack: 16
+        , RespectCastLock: 1
+        , BlackGuard: { Enabled: 1, SampleCount: 5, BlackRatioThresh: 0.7
+                      , WindowMs: 120, CooldownMs: 600, MinAfterSendMs: 60
+                      , MaxAfterSendMs: 800, UniqueRequired: 1 }
+        , Opener: { Enabled: 0, MaxDurationMs: 4000, Watch: [] }
+        , Track1: { Id:1, Name:"轨道1", ThreadId:1, MaxDurationMs:8000, Watch:[], RuleRefs:[] }
+        , Track2: { Id:2, Name:"轨道2", ThreadId:1, MaxDurationMs:8000, Watch:[], RuleRefs:[] }
+      }
     }
 }

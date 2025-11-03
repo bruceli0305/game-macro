@@ -2,11 +2,10 @@
 
 global gPoller := { running: false, timerBound: 0 }
 
-
 ; 判定当前环境下是否能正确采样屏幕（独占全屏多数会失败）
 Poller_CaptureReady() {
     ; 在屏幕四角采样一圈，若全为同色或返回异常，认为不可用
-    pts := [[10,10],[A_ScreenWidth-10,10],[10,A_ScreenHeight-10],[A_ScreenWidth-10,A_ScreenHeight-10]]
+    pts := [[10, 10], [A_ScreenWidth - 10, 10], [10, A_ScreenHeight - 10], [A_ScreenWidth - 10, A_ScreenHeight - 10]]
     cols := []
     try {
         Pixel_FrameBegin()
@@ -32,6 +31,7 @@ Poller_Start() {
         Notify("检测到独占全屏或无法取色，请切换为“无边框窗口化”后再启动。")
         return
     }
+    try Rotation_InitFromProfile()
     gPoller.running := true
     Notify("状态：运行中")
     gPoller.timerBound := Poller_Tick
@@ -66,15 +66,23 @@ Poller_Tick() {
 
     ; 1) BUFF 引擎（最高优先级）
     try {
-        if (BuffEngine_RunTick())
-            return
+        if !Rotation_IsBusyWindowActive() {
+            if (BuffEngine_RunTick())
+                return
+        }
     } catch {
     }
 
     ; 2) 规则引擎
     try {
-        if (RuleEngine_RunTick())
-            return
+        if Rotation_IsEnabled() {
+            if (Rotation_Tick())
+                return
+        } else {
+            ; Rotation 未启用，则跑旧的 RuleEngine
+            if (RuleEngine_RunTick())
+                return
+        }
     } catch {
     }
 
@@ -102,7 +110,7 @@ Poller_TryDefaultSkill() {
     ; 冷却判定
     now := A_TickCount
     last := HasProp(ds, "LastFire") ? ds.LastFire : 0
-    cd   := HasProp(ds, "CooldownMs") ? ds.CooldownMs : 600
+    cd := HasProp(ds, "CooldownMs") ? ds.CooldownMs : 600
     if (now - last < cd)
         return false
 

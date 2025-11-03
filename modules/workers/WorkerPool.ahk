@@ -198,6 +198,7 @@ WorkerPool_SendSkillIndex(threadId, idx, src := "") {
     ok := WorkerPool_FireAndForget(s.Key, delay, hold)
 
     if (ok) {
+        try Rotation_OnSkillSent(idx)         ; 新增：记录最近发送 tick（黑框时间窗使用）
         newCnt := Counters_Inc(idx)
         WP_Log("Counter inc: idx=" idx " key=" s.Key " count=" newCnt)
         ; 新增：若配置了读条时间（CastMs），对该线程加锁

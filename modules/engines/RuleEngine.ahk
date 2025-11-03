@@ -4,6 +4,19 @@
 global RE_Debug := false               ; 总开关：日志开/关
 global RE_DebugVerbose := false        ; 详细级：打印每个条件细节
 global RE_ShowTips := false  ; 是否在屏幕弹提示（默认关）
+global RE_Filter := { Enabled:false, AllowSkills:0 }
+
+RE_SetAllowedSkills(mapAllow) {
+    global RE_Filter
+    RE_Filter.Enabled := true
+    RE_Filter.AllowSkills := mapAllow  ; Map<skillIndex,true>
+}
+
+RE_ClearFilter() {
+    global RE_Filter
+    RE_Filter.Enabled := false
+    RE_Filter.AllowSkills := 0
+}
 
 RE_Tip(msg, ms := 1000) {
     global RE_ShowTips
@@ -27,7 +40,7 @@ RE_LogV(msg) {
         RE_Log(msg, "VERB")
 }
 RE_SkillNameByIndex(prof, idx) {
-    return (idx>=1 && idx<=prof.Skills.Length) ? prof.Skills[idx].Name : ("技能#" idx)
+    return (idx >= 1 && idx <= prof.Skills.Length) ? prof.Skills[idx].Name : ("技能#" idx)
 }
 RE_ColorHex(n) {
     return Format("0x{:06X}", n & 0xFFFFFF)
@@ -35,7 +48,7 @@ RE_ColorHex(n) {
 RE_List(arr) {
     out := ""
     for i, v in arr
-        out .= (i=1 ? "" : ",") v
+        out .= (i = 1 ? "" : ",") v
     return out
 }
 ; ====================================
@@ -62,10 +75,10 @@ RuleEngine_SendVerified(thr, idx, ruleName) {
     attempt := 0
     loop RE_VerifyRetry + 1 {
         if (attempt > 0) {
-            RE_Log("  Verify attempt#" (attempt+1) " (retry send)")
+            RE_Log("  Verify attempt#" (attempt + 1) " (retry send)")
             WorkerPool_SendSkillIndex(thr, idx, "Retry:" ruleName)
         } else {
-            RE_Log("  Verify attempt#" (attempt+1))
+            RE_Log("  Verify attempt#" (attempt + 1))
         }
 
         Sleep RE_VerifyWaitMs
@@ -108,7 +121,7 @@ RuleEngine_CheckSkillReady(prof, idx) {
     s := prof.Skills[idx]
     cur := Pixel_FrameGet(s.X, s.Y)
     tgt := Pixel_HexToInt(s.Color)
-    ok  := Pixel_ColorMatch(cur, tgt, s.Tol)
+    ok := Pixel_ColorMatch(cur, tgt, s.Tol)
     RE_LogV(Format("  ReadyCheck idx={1} name={2} X={3} Y={4} cur={5} tgt={6} tol={7} -> {8}"
         , idx, s.Name, s.X, s.Y, RE_ColorHex(cur), RE_ColorHex(tgt), s.Tol, ok))
     return ok
@@ -130,15 +143,29 @@ RuleEngine_RunTick() {
 
     RE_Log("Tick#" tick " begin, rules=" prof.Rules.Length " now=" now)
 
-    for _, r in prof.Rules {
+    for rIdx, r in prof.Rules {
         if !r.Enabled {
             RE_LogV("Tick#" tick " skip disabled rule: " r.Name)
             continue
         }
+
+        ; 由 Rotation 设置的按技能集合过滤：以第一个动作的 SkillIndex 为准（M1 简化）
+        try {
+            if RE_Filter.Enabled {
+                if (r.Actions.Length = 0) {
+                    continue
+                }
+                a1 := r.Actions[1]
+                sIdx1 := HasProp(a1, "SkillIndex") ? a1.SkillIndex : 0
+                if !(RE_Filter.AllowSkills && RE_Filter.AllowSkills.Has(sIdx1))
+                    continue
+            }
+        }
         last := HasProp(r, "LastFire") ? r.LastFire : 0
         remain := r.CooldownMs - (now - last)
         if (remain > 0) {
-            RE_LogV("Tick#" tick " skip by cooldown: " r.Name " remain=" remain "ms (cd=" r.CooldownMs ", last=" last ")")
+            RE_LogV("Tick#" tick " skip by cooldown: " r.Name " remain=" remain "ms (cd=" r.CooldownMs ", last=" last ")"
+            )
             continue
         }
 
@@ -148,7 +175,7 @@ RuleEngine_RunTick() {
             continue
         }
 
-        RE_Log("Tick#" tick " FIRE rule: " r.Name " thr=" (HasProp(r,"ThreadId")?r.ThreadId:1))
+        RE_Log("Tick#" tick " FIRE rule: " r.Name " thr=" (HasProp(r, "ThreadId") ? r.ThreadId : 1))
         sent := RuleEngine_Fire(r, prof)   ; 返回是否真的发送了至少一个动作
         if sent {
             r.LastFire := A_TickCount
@@ -178,10 +205,10 @@ RuleEngine_EvalRule(rule, prof) {
     ; 两段：先 Counter，后 Pixel
     evalList := []
     for _, c in rule.Conditions
-        if (HasProp(c,"Kind") && StrUpper(c.Kind)="COUNTER")
+        if (HasProp(c, "Kind") && StrUpper(c.Kind) = "COUNTER")
             evalList.Push(c)
     for _, c in rule.Conditions
-        if !(HasProp(c,"Kind") && StrUpper(c.Kind)="COUNTER")
+        if !(HasProp(c, "Kind") && StrUpper(c.Kind) = "COUNTER")
             evalList.Push(c)
 
     for _, c in evalList {
@@ -189,24 +216,24 @@ RuleEngine_EvalRule(rule, prof) {
         res := false
 
         if (HasProp(c, "Kind") && StrUpper(c.Kind) = "COUNTER") {
-            si  := HasProp(c,"SkillIndex") ? c.SkillIndex : 1
+            si := HasProp(c, "SkillIndex") ? c.SkillIndex : 1
             cnt := Counters_Get(si)
-            cmp := StrUpper(HasProp(c,"Cmp") ? c.Cmp : "GE")
-            val := HasProp(c,"Value") ? Integer(c.Value) : 1
+            cmp := StrUpper(HasProp(c, "Cmp") ? c.Cmp : "GE")
+            val := HasProp(c, "Value") ? Integer(c.Value) : 1
             switch cmp {
                 case "GE": res := (cnt >= val)
-                case "EQ": res := (cnt  = val)
-                case "GT": res := (cnt  > val)
+                case "EQ": res := (cnt = val)
+                case "GT": res := (cnt > val)
                 case "LE": res := (cnt <= val)
-                case "LT": res := (cnt  < val)
-                default:   res := (cnt >= val)
+                case "LT": res := (cnt < val)
+                default: res := (cnt >= val)
             }
             RE_LogV(Format("Cond#{1} Counter: skill={2}({3}) cnt={4} cmp={5} val={6} -> {7}"
                 , i, si, RE_SkillNameByIndex(prof, si), cnt, cmp, val, res))
         } else {
-            refType := StrUpper(HasProp(c,"RefType") ? c.RefType : "SKILL")
-            refIdx  := HasProp(c,"RefIndex") ? c.RefIndex : 1
-            op      := StrUpper(HasProp(c,"Op") ? c.Op : "EQ")
+            refType := StrUpper(HasProp(c, "RefType") ? c.RefType : "SKILL")
+            refIdx := HasProp(c, "RefIndex") ? c.RefIndex : 1
+            op := StrUpper(HasProp(c, "Op") ? c.Op : "EQ")
             if (refType = "SKILL") {
                 if (refIdx >= 1 && refIdx <= prof.Skills.Length) {
                     s := prof.Skills[refIdx]
@@ -216,7 +243,8 @@ RuleEngine_EvalRule(rule, prof) {
                     cur := Pixel_FrameGet(rx, ry)
                     match := Pixel_ColorMatch(cur, tgt, tol)
                     res := (op = "EQ") ? match : !match
-                    RE_LogV(Format("Cond#{1} Pixel(Skill): idx={2} name={3} X={4} Y={5} cur={6} tgt={7} tol={8} op={9} -> match={10} res={11}"
+                    RE_LogV(Format(
+                        "Cond#{1} Pixel(Skill): idx={2} name={3} X={4} Y={5} cur={6} tgt={7} tol={8} op={9} -> match={10} res={11}"
                         , i, refIdx, s.Name, rx, ry, RE_ColorHex(cur), RE_ColorHex(tgt), tol, op, match, res))
                 } else {
                     RE_LogV(Format("Cond#{1} Pixel(Skill): invalid ref idx={2} -> false", i, refIdx))
@@ -231,7 +259,8 @@ RuleEngine_EvalRule(rule, prof) {
                     cur := Pixel_FrameGet(rx, ry)
                     match := Pixel_ColorMatch(cur, tgt, tol)
                     res := (op = "EQ") ? match : !match
-                    RE_LogV(Format("Cond#{1} Pixel(Point): idx={2} name={3} X={4} Y={5} cur={6} tgt={7} tol={8} op={9} -> match={10} res={11}"
+                    RE_LogV(Format(
+                        "Cond#{1} Pixel(Point): idx={2} name={3} X={4} Y={5} cur={6} tgt={7} tol={8} op={9} -> match={10} res={11}"
                         , i, refIdx, p.Name, rx, ry, RE_ColorHex(cur), RE_ColorHex(tgt), tol, op, match, res))
                 } else {
                     RE_LogV(Format("Cond#{1} Pixel(Point): invalid ref idx={2} -> false", i, refIdx))
@@ -254,7 +283,7 @@ RuleEngine_EvalRule(rule, prof) {
     }
 
     final := logicAnd ? all : any
-    RE_Log("Rule '" rule.Name "' eval done: logic=" (logicAnd?"AND":"OR") " -> " final)
+    RE_Log("Rule '" rule.Name "' eval done: logic=" (logicAnd ? "AND" : "OR") " -> " final)
     return final
 }
 
@@ -304,7 +333,7 @@ RuleEngine_Fire(rule, prof) {
         sname := prof.Skills[selIdx].Name
         ok := (RE_VerifyForCounterOnly
             ? RuleEngine_SendVerified(thr, selIdx, rule.Name)
-            : WorkerPool_SendSkillIndex(thr, selIdx, "Rule:" rule.Name))
+                : WorkerPool_SendSkillIndex(thr, selIdx, "Rule:" rule.Name))
         RE_Log("  Action#" selAi " send idx=" selIdx " name=" sname " -> " (ok ? "OK" : "FAIL"))
         if (ok) {
             anySent := true
@@ -339,7 +368,7 @@ RuleEngine_Fire(rule, prof) {
     if (anySent) {
         resetList := []
         for _, c in rule.Conditions {
-            if (HasProp(c, "Kind") && StrUpper(c.Kind)="COUNTER" && HasProp(c, "ResetOnTrigger") && c.ResetOnTrigger) {
+            if (HasProp(c, "Kind") && StrUpper(c.Kind) = "COUNTER" && HasProp(c, "ResetOnTrigger") && c.ResetOnTrigger) {
                 if HasProp(c, "SkillIndex")
                     resetList.Push(c.SkillIndex)
             }

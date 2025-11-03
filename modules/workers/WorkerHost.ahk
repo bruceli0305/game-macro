@@ -1,31 +1,24 @@
 #Requires AutoHotkey v2
 #SingleInstance Off
 #NoTrayIcon
-SendMode "Input"   ; 全局使用 SendInput（游戏环境更稳）
+SendMode "Input"
 OnExit (*) => ExitApp()
 
-; 计算项目根目录：兼容 modules\ 或 modules\workers\
 Host_RootDir() {
     dir := A_ScriptDir
-    if RegExMatch(dir, "i)\\modules\\workers$") {
+    if RegExMatch(dir, "i)\\modules\\workers$")
         return SubStr(dir, 1, StrLen(dir) - StrLen("\modules\workers"))
-    }
-    if RegExMatch(dir, "i)\\modules$") {
+    if RegExMatch(dir, "i)\\modules$")
         return SubStr(dir, 1, StrLen(dir) - StrLen("\modules"))
-    }
     return dir
 }
 
-; 共享方式安全追加到文件（UTF-8，无 BOM）；失败返回 false
 Host_AppendShared(path, text) {
     try {
-        ; FILE_APPEND_DATA(0x0004) + FILE_SHARE_READ|WRITE(0x1|0x2) + OPEN_ALWAYS(4)
-        h := DllCall("CreateFileW"
-            , "WStr", path, "UInt", 0x0004, "UInt", 0x0003
-            , "Ptr", 0, "UInt", 4, "UInt", 0x80, "Ptr", 0, "Ptr")
+        h := DllCall("CreateFileW", "WStr", path, "UInt", 0x0004  ; FILE_APPEND_DATA
+            , "UInt", 0x0003, "Ptr", 0, "UInt", 4, "UInt", 0x80, "Ptr", 0, "Ptr")
         if (h = -1)
             return false
-        ; UTF-8 编码，不写终止零
         bytes := StrPut(text, "UTF-8") - 1
         buf := Buffer(bytes, 0)
         StrPut(text, buf, "UTF-8")
@@ -38,31 +31,14 @@ Host_AppendShared(path, text) {
     }
 }
 
-; 日志：并发安全；失败则退到“每进程独立文件”
 Host_Log(title, msg) {
     root := Host_RootDir()
     logDir := root "\Logs"
     DirCreate logDir
     ts := FormatTime(, "yyyy-MM-dd HH:mm:ss")
-    line := ts " [WorkerHost " title "] " msg "`r`n"
-    path := logDir "\workerhost_" title ".log"
-
-    ; 尝试共享追加 + 简单重试
-    ok := false
-    Loop 3 {
-        if Host_AppendShared(path, line) {
-            ok := true
-            break
-        }
-        Sleep 20
-    }
-    if ok
-        return
-
-    ; 退回当前进程独立日志（完全避免共享冲突）
     pid := DllCall("Kernel32\GetCurrentProcessId", "UInt")
-    alt := logDir "\workerhost_" title "_" pid ".log"
-    Host_AppendShared(alt, line)
+    FileAppend ts " [WorkerHost " title "] " msg "`r`n"
+        , logDir "\workerhost_" title "_" pid ".log", "UTF-8"
 }
 
 ;================ 一次性模式：--fire key delay hold ================

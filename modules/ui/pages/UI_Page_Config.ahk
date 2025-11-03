@@ -22,7 +22,7 @@ UI_Page_Config_Build() {
     UI.LblStartStop := UI.Main.Add("Text", "xp+12 yp+50 Section", T("label.startStop", "开始/停止："))
     UI.HkStart := UI.Main.Add("Hotkey", "x+6 w180")
     ; 新增：捕获鼠标键（中键/侧键）
-    UI.BtnCapStartMouse := UI.Main.Add("Button", "x+8 w110 h28", T("btn.captureMouse","捕获鼠标键"))
+    UI.BtnCapStartMouse := UI.Main.Add("Button", "x+8 w110 h28", T("btn.captureMouse", "捕获鼠标键"))
     UI.BtnCapStartMouse.OnEvent("Click", (*) => UI_Page_Config_CaptureStartMouse())
 
     UI.LblPoll := UI.Main.Add("Text", "x+18", T("label.pollMs", "轮询(ms)："))
@@ -182,7 +182,27 @@ UI_Page_Config_SwitchProfile(name) {
     WorkerPool_Rebuild()
     Counters_Init()
     try Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
+    try App["ProfileData"].Rotation.Enabled := 1
+    try Rotation_InitFromProfile()
     try Dup_OnProfileChanged()
+
+    try {
+        rot := App["ProfileData"].Rotation
+        Diag_Log("SwitchProfile: Rotation.Enabled(before init)=" (HasProp(rot, "Enabled") ? rot.Enabled : "<no-prop>"))
+        ; 调试期：有 Watch 但未启用则强制启用并保存（保证下次启动也为 1）
+        hasWatch := (HasProp(rot, "Opener") ? rot.Opener.Watch.Length : 0)
+        + (HasProp(rot, "Track1") ? rot.Track1.Watch.Length : 0)
+        + (HasProp(rot, "Track2") ? rot.Track2.Watch.Length : 0)
+        if (hasWatch > 0 && (!HasProp(rot, "Enabled") || rot.Enabled = 0)) {
+            rot.Enabled := 1
+            App["ProfileData"].Rotation := rot
+            Diag_Log("SwitchProfile: Force enable -> Enabled=1 (and save)")
+            Storage_SaveProfile(App["ProfileData"])
+        }
+        Rotation_InitFromProfile()
+    } catch as e {
+        Diag_Log("SwitchProfile init error: " e.Message)
+    }
 }
 
 ; ================= Skills =================
@@ -431,9 +451,9 @@ UI_Page_Config_CaptureStartMouse() {
     ToolTip "请按下 鼠标中键/侧键 作为开始/停止热键（Esc取消）"
     key := ""
     while true {
-        if GetKeyState("Esc","P")
+        if GetKeyState("Esc", "P")
             break
-        for k in ["XButton1","XButton2","MButton"] {
+        for k in ["XButton1", "XButton2", "MButton"] {
             if GetKeyState(k, "P") {
                 key := k
                 ; 等待释放，避免立即触发
