@@ -34,7 +34,8 @@ Storage_LoadProfile(name) {
         sY := Integer(IniRead(file, sec, "Y", 0))
         sClr := IniRead(file, sec, "Color", "0x000000")
         sTol := Integer(IniRead(file, sec, "Tol", 10))
-        data.Skills.Push({ Name: sName, Key: sKey, X: sX, Y: sY, Color: sClr, Tol: sTol })
+        sCast := Integer(IniRead(file, sec, "CastMs", 0))               ; 新增
+        data.Skills.Push({ Name: sName, Key: sKey, X: sX, Y: sY, Color: sClr, Tol: sTol, CastMs: sCast })
     }
     pc := Integer(IniRead(file, "General", "PointCount", 0))
     data.Points := []
@@ -182,6 +183,7 @@ Storage_SaveProfile(data) {
         IniWrite(s.Y, file, sec, "Y")
         IniWrite(s.Color, file, sec, "Color")
         IniWrite(s.Tol, file, sec, "Tol")
+        IniWrite(HasProp(s, "CastMs") ? s.CastMs : 0, file, sec, "CastMs")   ; 新增
     }
     for idx, p in data.Points {
         sec := "Point" idx

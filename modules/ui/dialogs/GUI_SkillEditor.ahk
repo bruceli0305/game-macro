@@ -3,7 +3,7 @@
 SkillEditor_Open(skill, idx := 0, onSaved := 0) {
     isNew := (idx = 0)
 
-    defaults := Map("Name", "", "Key", "", "X", 0, "Y", 0, "Color", "0x000000", "Tol", 10)
+    defaults := Map("Name","", "Key","", "X",0, "Y",0, "Color","0x000000", "Tol",10, "CastMs",0)
     if !IsObject(skill)
         skill := {}
     for k, v in defaults
@@ -32,6 +32,8 @@ SkillEditor_Open(skill, idx := 0, onSaved := 0) {
     tbColor := dlg.Add("Edit", "x+10 w160", skill.Color)
     dlg.Add("Text", "x+16 w70", "容差：")
     tbTol := dlg.Add("Edit", "x+10 w96 Number", skill.Tol)
+    dlg.Add("Text", "x+16 w70", "读条(ms)：")
+    tbCast := dlg.Add("Edit", "x+10 w96 Number", HasProp(skill,"CastMs") ? skill.CastMs : 0)
 
     btnSave := dlg.Add("Button", "xm w96 h30", "保存")
     btnCancel := dlg.Add("Button", "x+8 w96 h30", "取消")
@@ -103,7 +105,8 @@ SkillEditor_Open(skill, idx := 0, onSaved := 0) {
         }
 
         col := Pixel_ColorToHex(Pixel_HexToInt(col))
-        newSkill := { Name: name, Key: key, X: x, Y: y, Color: col, Tol: tol }
+        cast := (tbCast.Value != "") ? Integer(tbCast.Value) : 0
+        newSkill := { Name: name, Key: key, X: x, Y: y, Color: col, Tol: tol, CastMs: cast }
 
         if onSaved
             onSaved(newSkill, idx)
