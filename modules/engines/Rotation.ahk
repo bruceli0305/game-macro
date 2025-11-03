@@ -85,6 +85,11 @@ Rotation_NewRT(cfg) {
       , PhaseState: 0               ; { StartedAt, Baseline:Map, Items:[{si,need,verify,BlackSeen}] }
       , LastSent: Map()             ; SkillIndex -> last tick（用于黑框时间窗）
       , BlackoutUntil: 0            ; 全局黑忽略窗口截止（眩晕/击倒等）
+      , OpStep: {
+          Index: 1
+        , StepStarted: 0
+        , StepWaiting: 0
+      }
     }
     return rt
 }
@@ -295,27 +300,41 @@ Rotation_WatchEval() {
 ; ========== 规则过滤（按当前轨道 WatchList 的技能集合） ==========
 
 Rotation_RunRules_ForCurrentTrack() {
-    global App, gRot, RE_Filter
-    tr := (gRot["RT"].TrackId=1) ? gRot["Cfg"].Track1 : gRot["Cfg"].Track2
-
-    allow := Map()
-    for _, w in tr.Watch {
-        if (w.SkillIndex>=1)
-            allow[w.SkillIndex] := true
-    }
-    RE_SetAllowedSkills(allow)
+    global gRot
+    cfg := gRot["Cfg"], rt := gRot["RT"]
+    tr := (rt.TrackId=1) ? cfg.Track1 : cfg.Track2
 
     acted := false
-    try {
-        acted := RuleEngine_RunTick()
-    } catch {
-        ; 可选：Rot_Log("RuleEngine exception", "WARN")
-    } finally {
-        RE_ClearFilter()
+
+    ; 优先用 RuleRefs
+    if HasProp(tr, "RuleRefs") && tr.RuleRefs.Length>0 {
+        allow := Map()
+        for i, rid in tr.RuleRefs
+            allow[rid] := true
+        RE_SetAllowedRules(allow)
+        try {
+            acted := RuleEngine_RunTick()
+        } catch {
+        } finally {
+            RE_ClearFilter()
+        }
+    } else {
+        ; 回退：按 Watch 的技能集合过滤
+        allowS := Map()
+        for _, w in tr.Watch
+            if (w.SkillIndex>=1)
+                allowS[w.SkillIndex] := true
+        RE_SetAllowedSkills(allowS)
+        try {
+            acted := RuleEngine_RunTick()
+        } catch {
+        } finally {
+            RE_ClearFilter()
+        }
     }
-    if acted {
-        gRot["RT"].BusyUntil := A_TickCount + gRot["Cfg"].BusyWindowMs
-    }
+
+    if acted
+        gRot["RT"].BusyUntil := A_TickCount + cfg.BusyWindowMs
     return acted
 }
 
@@ -334,24 +353,58 @@ Rotation_Tick() {
     ; 1) 起手阶段
     if (rt.Phase = "Opener") {
         opener := cfg.Opener
-        done := Rotation_WatchEval()
-        timeout := (now - st.StartedAt >= opener.MaxDurationMs)
+        if Rotation_OpenerHasSteps() {
+            res := Rotation_OpenerStepTick()
+            if (res = -1) {
+                ; 步骤全部完成 → 进入默认轨
+                nextId := (cfg.DefaultTrackId > 0) ? cfg.DefaultTrackId : 1
+                Rotation_EnterTrack(nextId)
+                Rot_Log("Opener(Steps) -> Track#" nextId)
+                return true
+            }
 
-        if (done || timeout) {
-            rt.OpenerDone := true
-            nextId := (cfg.DefaultTrackId>0) ? cfg.DefaultTrackId : 1
-            Rotation_EnterTrack(nextId)
-            Rot_Log("Opener -> Track#" nextId " by " (done?"allOk":"timeout"))
-            return true
-        }
+            if (res = 1) {
+                ; 本帧已消费（例如刚发出一步）→ 不再跑规则
+                return true
+            }
 
-        ; M1 简化：起手不做专门过滤，放行现有规则（如需更严格可在以后给起手专属规则）
-        acted := RuleEngine_RunTick()
-        if acted {
-            rt.BusyUntil := now + cfg.BusyWindowMs
-            return true
+            ; 本帧未消费，允许规则跑一次（兼容 M1）
+            acted := false
+            try {
+                acted := RuleEngine_RunTick()
+            } catch {
+                ; 忽略异常
+            }
+            if (acted) {
+                rt.BusyUntil := A_TickCount + cfg.BusyWindowMs
+                return true
+            }
+
+            ; 超时兜底
+            if (A_TickCount - rt.PhaseState.StartedAt >= opener.MaxDurationMs) {
+                nextId := (cfg.DefaultTrackId > 0) ? cfg.DefaultTrackId : 1
+                Rotation_EnterTrack(nextId)
+                Rot_Log("Opener(Steps) timeout -> Track#" nextId)
+                return true
+            }
+            return false
+        } else {
+            ; M1 回退：Watch 判定
+            done := Rotation_WatchEval()
+            timeout := (A_TickCount - rt.PhaseState.StartedAt >= opener.MaxDurationMs)
+            if (done || timeout) {
+                nextId := (cfg.DefaultTrackId>0) ? cfg.DefaultTrackId : 1
+                Rotation_EnterTrack(nextId)
+                Rot_Log("Opener -> Track#" nextId " by " (done?"allOk":"timeout"))
+                return true
+            }
+            acted := RuleEngine_RunTick()
+            if acted {
+                rt.BusyUntil := A_TickCount + cfg.BusyWindowMs
+                return true
+            }
+            return false
         }
-        return false
     }
 
     ; 2) 轨道阶段（Track1/Track2）
@@ -370,7 +423,15 @@ Rotation_Tick() {
         }
         return false
     }
-
+    ; 非锁/非 BusyWindow 才评估 Gate
+    if (!cast.Locked && now >= rt.BusyUntil && HasProp(cfg,"GatesEnabled") && cfg.GatesEnabled) {
+        target := Rotation_GateFindMatch()
+        if (target > 0 && target != rt.TrackId) {
+            Rotation_TryEnterTrackWithSwap(target)
+            Rot_Log("GATE hit -> Track#" target)
+            return true
+        }
+    }
     ; 2.2 执行当前轨规则（带过滤）
     acted := Rotation_RunRules_ForCurrentTrack()
     if acted
@@ -411,4 +472,210 @@ Rotation_OnSkillSent(si) {
     } catch {
         ; 忽略异常
     }
+}
+
+; —— 解析引用（Skill/Point）返回 {X,Y,Color,Tol}，Color 允许为空 —— 
+Rotation_ResolveRef(refType, refIndex) {
+    global App
+    if (refType="Skill" && refIndex>=1 && refIndex<=App["ProfileData"].Skills.Length) {
+        s := App["ProfileData"].Skills[refIndex]
+        return { X:s.X, Y:s.Y, Color:s.Color, Tol:s.Tol }
+    }
+    if (refType="Point" && refIndex>=1 && refIndex<=App["ProfileData"].Points.Length) {
+        p := App["ProfileData"].Points[refIndex]
+        return { X:p.X, Y:p.Y, Color:p.Color, Tol:p.Tol }
+    }
+    return 0
+}
+
+Rotation_PixelOpCompare(cur, tgt, tol, op) {
+    tgtInt := Pixel_HexToInt(tgt)
+    match := Pixel_ColorMatch(cur, tgtInt, tol)
+    if (StrUpper(op)="EQ")
+        return match
+    else
+        return !match
+}
+
+Rotation_GateEval_PixelReady(g) {
+    global gRot
+    ref := Rotation_ResolveRef(g.RefType, g.RefIndex)
+    if !ref
+        return false
+    ; 默认 “NEQ 黑” 表示就绪
+    op := (HasProp(g,"Op") ? g.Op : "NEQ")
+    tol := (HasProp(g,"Tol") ? g.Tol : gRot["Cfg"].ColorTolBlack)
+    tgt := (HasProp(g,"Color") ? g.Color : "0x000000")
+    cur := Pixel_FrameGet(ref.X, ref.Y)
+    return Rotation_PixelOpCompare(cur, tgt, tol, op)
+}
+
+Rotation_GateEval_RuleQuiet(g) {
+    global RE_LastFireTick
+    rid := HasProp(g,"RuleId") ? g.RuleId : 0
+    quiet := HasProp(g,"QuietMs") ? g.QuietMs : 0
+    if (rid<=0 || quiet<=0)
+        return false
+    last := (RE_LastFireTick.Has(rid) ? RE_LastFireTick[rid] : 0)
+    return (A_TickCount - last >= quiet)
+}
+
+Rotation_GateFindMatch() {
+    global gRot
+    cfg := gRot["Cfg"]
+    if !HasProp(cfg,"GatesEnabled") || !cfg.GatesEnabled
+        return 0
+    if !HasProp(cfg,"Gates") || cfg.Gates.Length=0
+        return 0
+
+    ; 简化：按 ini 顺序评估（若需要可按 Priority 排）
+    for _, g in cfg.Gates {
+        kind := StrUpper(g.Kind)
+        ok := false
+        if (kind = "PIXELREADY") {
+            ok := Rotation_GateEval_PixelReady(g)
+            if ok
+                return (HasProp(g,"TargetTrackId") ? g.TargetTrackId : 0)
+        } else if (kind = "RULEQUIET") {
+            ok := Rotation_GateEval_RuleQuiet(g)
+            if ok
+                return (HasProp(g,"TargetTrackId") ? g.TargetTrackId : 0)
+        } else {
+            ; 其他种类（Counter/Timer）可在 M2+ 增补
+        }
+    }
+    return 0
+}
+
+Rotation_TryEnterTrackWithSwap(trackId) {
+    global gRot
+    cfg := gRot["Cfg"]
+
+    if HasProp(cfg, "SwapKey") && cfg.SwapKey!="" {
+        Poller_SendKey(cfg.SwapKey)
+        gRot["RT"].BusyUntil := A_TickCount + cfg.BusyWindowMs
+        ; 验证（可选）
+        if (cfg.VerifySwap) {
+            ok := Rotation_VerifySwapPixel(cfg.SwapVerify, cfg.SwapTimeoutMs, cfg.SwapRetry)
+            ; 无论 OK/FAIL 都进入轨道（避免卡死）
+        }
+    }
+    Rotation_EnterTrack(trackId)
+    return true
+}
+
+Rotation_VerifySwapPixel(vcfg, timeoutMs := 800, retry := 0) {
+    if !vcfg
+        return true
+    tries := Max(1, retry+1)
+    loop tries {
+        t0 := A_TickCount
+        while (A_TickCount - t0 <= timeoutMs) {
+            ref := Rotation_ResolveRef(vcfg.RefType, vcfg.RefIndex)
+            if !ref
+                break
+            cur := PixelGetColor(ref.X, ref.Y, "RGB")  ; 实时
+            if Rotation_PixelOpCompare(cur, (HasProp(vcfg,"Color")?vcfg.Color:"0x000000")
+                    , (HasProp(vcfg,"Tol")?vcfg.Tol:16), (HasProp(vcfg,"Op")?vcfg.Op:"NEQ")) {
+                Rot_Log("Swap verify OK")
+                return true
+            }
+            Sleep 20
+        }
+        if (A_Index < tries)
+            Rot_Log("Swap verify retry")
+    }
+    Rot_Log("Swap verify FAIL", "WARN")
+    return false
+}
+
+Rotation_OpenerHasSteps() {
+    global gRot
+    try {
+        return (gRot["Cfg"].Opener.StepsCount > 0 && gRot["Cfg"].Opener.Steps.Length > 0)
+    } catch {
+        return false
+    }
+}
+
+Rotation_OpenerStepTick() {
+    ; 返回：1=本帧已消费；-1=全部完成；0=本帧未消费
+    global gRot
+    cfg := gRot["Cfg"], rt := gRot["RT"]
+    steps := cfg.Opener.Steps
+    if !steps || steps.Length=0
+        return 0
+    if !HasProp(rt, "OpStep") {
+        rt.OpStep := { Index:1, StepStarted:0 }
+    }
+    i := rt.OpStep.Index
+    if (i < 1 || i > steps.Length)
+        return -1
+    stp := steps[i]
+    now := A_TickCount
+
+    if (stp.Kind = "Wait") {
+        if (rt.OpStep.StepStarted = 0)
+            rt.OpStep.StepStarted := now
+        if (now - rt.OpStep.StepStarted >= (HasProp(stp,"DurationMs")?stp.DurationMs:0)) {
+            rt.OpStep.Index := i + 1
+            rt.OpStep.StepStarted := 0
+            return 0
+        }
+        return 0
+    } else if (stp.Kind = "Swap") {
+        ; 发送切武器（验证可选）
+        if (rt.OpStep.StepStarted = 0) {
+            if HasProp(cfg, "SwapKey") && cfg.SwapKey!="" {
+                Poller_SendKey(cfg.SwapKey)
+                rt.BusyUntil := now + cfg.BusyWindowMs
+                if (cfg.VerifySwap)
+                    Rotation_VerifySwapPixel(cfg.SwapVerify, (HasProp(stp,"TimeoutMs")?stp.TimeoutMs:800), (HasProp(stp,"Retry")?stp.Retry:0))
+            }
+            rt.OpStep.Index := i + 1
+            rt.OpStep.StepStarted := 0
+            return 1
+        }
+        return 0
+    } else if (stp.Kind = "Skill") {
+        si := HasProp(stp,"SkillIndex") ? stp.SkillIndex : 0
+        if (si < 1)
+            return 0
+        ; 就绪需要（可选）
+        if (HasProp(stp,"RequireReady") && stp.RequireReady) {
+            ; 采用帧缓存判就绪=非黑
+            ready := false
+            try {
+                global App
+                s := App["ProfileData"].Skills[si]
+                c := Pixel_FrameGet(s.X, s.Y)
+                tol := cfg.ColorTolBlack
+                ready := !Rotation_IsBlack(c, tol)
+            }
+            if !ready
+                return 0
+        }
+        ; 前延时
+        if (HasProp(stp,"PreDelayMs") && stp.PreDelayMs > 0)
+            Sleep stp.PreDelayMs
+
+        ; 发送（成功消费本帧）
+        thr := (cfg.Track1.ThreadId)    ; 简化：用 Track1 线程；可扩展为 OpenerThreadId
+        ok := WorkerPool_SendSkillIndex(thr, si, "OpenerStep")
+        if (ok) {
+            if (HasProp(stp,"HoldMs") && stp.HoldMs>0) {
+                ; 若需要按住，可在 WorkerHost 内处理；此处省略
+            }
+            ; 可选：发送回执（M2 支持）
+            if (HasProp(stp,"Verify") && stp.Verify) {
+                ; 轻量像素反馈（省略详细实现）：可复用 RuleEngine_SendVerified
+            }
+            gRot["RT"].BusyUntil := A_TickCount + cfg.BusyWindowMs
+            rt.OpStep.Index := i + 1
+            rt.OpStep.StepStarted := 0
+            return 1
+        }
+        return 0
+    }
+    return 0
 }

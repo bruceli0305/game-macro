@@ -4,17 +4,24 @@
 global RE_Debug := false               ; 总开关：日志开/关
 global RE_DebugVerbose := false        ; 详细级：打印每个条件细节
 global RE_ShowTips := false  ; 是否在屏幕弹提示（默认关）
-global RE_Filter := { Enabled:false, AllowSkills:0 }
+global RE_Filter := { Enabled:false, AllowSkills:0, AllowRuleIds:0 }
+; 规则最后触发时间（供 Gate:RuleQuiet 使用）
+global RE_LastFireTick := Map()
 
-RE_SetAllowedSkills(mapAllow) {
+RE_SetAllowedRules(mapRuleIds) {
     global RE_Filter
     RE_Filter.Enabled := true
-    RE_Filter.AllowSkills := mapAllow  ; Map<skillIndex,true>
+    RE_Filter.AllowRuleIds := mapRuleIds   ; Map<ruleId,true>
 }
-
+RE_SetAllowedSkills(mapSkills) {
+    global RE_Filter
+    RE_Filter.Enabled := true
+    RE_Filter.AllowSkills := mapSkills     ; Map<skillIdx,true>
+}
 RE_ClearFilter() {
     global RE_Filter
     RE_Filter.Enabled := false
+    RE_Filter.AllowRuleIds := 0
     RE_Filter.AllowSkills := 0
 }
 
@@ -152,13 +159,23 @@ RuleEngine_RunTick() {
         ; 由 Rotation 设置的按技能集合过滤：以第一个动作的 SkillIndex 为准（M1 简化）
         try {
             if RE_Filter.Enabled {
-                if (r.Actions.Length = 0) {
-                    continue
+                if (RE_Filter.AllowRuleIds) {
+                    if !RE_Filter.AllowRuleIds.Has(rIdx) {
+                        RE_LogV("filtered by RuleIds -> " r.Name)
+                        continue
+                    }
+                } else if (RE_Filter.AllowSkills) {
+                    if (r.Actions.Length = 0) {
+                        RE_LogV("filtered: no action -> " r.Name)
+                        continue
+                    }
+                    a1 := r.Actions[1]
+                    sIdx1 := HasProp(a1,"SkillIndex") ? a1.SkillIndex : 0
+                    if !(RE_Filter.AllowSkills.Has(sIdx1)) {
+                        RE_LogV("filtered by AllowSkills -> " r.Name)
+                        continue
+                    }
                 }
-                a1 := r.Actions[1]
-                sIdx1 := HasProp(a1, "SkillIndex") ? a1.SkillIndex : 0
-                if !(RE_Filter.AllowSkills && RE_Filter.AllowSkills.Has(sIdx1))
-                    continue
             }
         }
         last := HasProp(r, "LastFire") ? r.LastFire : 0
@@ -176,7 +193,7 @@ RuleEngine_RunTick() {
         }
 
         RE_Log("Tick#" tick " FIRE rule: " r.Name " thr=" (HasProp(r, "ThreadId") ? r.ThreadId : 1))
-        sent := RuleEngine_Fire(r, prof)   ; 返回是否真的发送了至少一个动作
+        sent := RuleEngine_Fire(r, prof, rIdx)   ; 传 rIdx 给 Fire
         if sent {
             r.LastFire := A_TickCount
             RE_Log("Tick#" tick " rule fired, set LastFire=" r.LastFire)
@@ -288,7 +305,7 @@ RuleEngine_EvalRule(rule, prof) {
 }
 
 ; 返回是否真的发送了至少一个动作（用于决定是否进入冷却/清零计数）
-RuleEngine_Fire(rule, prof) {
+RuleEngine_Fire(rule, prof, ruleIndex := 0) {
     gap := HasProp(rule, "ActionGapMs") ? rule.ActionGapMs : 60
     thr := HasProp(rule, "ThreadId") ? rule.ThreadId : 1
     isCounterMode := RuleEngine_HasCounterCond(rule)
@@ -366,6 +383,7 @@ RuleEngine_Fire(rule, prof) {
 
     ; 仅在“确实发出了至少一个动作”时，按条件配置清零计数
     if (anySent) {
+        try RE_LastFireTick[ruleIndex] := A_TickCount   ; 记录最后触发时间
         resetList := []
         for _, c in rule.Conditions {
             if (HasProp(c, "Kind") && StrUpper(c.Kind) = "COUNTER" && HasProp(c, "ResetOnTrigger") && c.ResetOnTrigger) {

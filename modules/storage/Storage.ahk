@@ -217,8 +217,72 @@ Storage_LoadProfile(name) {
             ; 可选：Diag_Log("AutoEnable in LoadProfile")
         }
     }
+    ; ----- Gates（条件跳轨，M2）-----
+    if !HasProp(rot, "Gates")
+        rot.Gates := []
+    rot.GatesEnabled := Integer(IniRead(file, "Rotation", "GatesEnabled", 0))
+    gcnt := Integer(IniRead(file, "Rotation", "GateCount", 0))
+    loop gcnt {
+        gi := A_Index
+        gsec := "Rotation.Gate" gi
+        kind := IniRead(file, gsec, "Kind", "")
+        if (kind = "")
+            continue
+        gate := {
+            Priority: Integer(IniRead(file, gsec, "Priority", gi))
+            , TargetTrackId: Integer(IniRead(file, gsec, "TargetTrackId", 0))
+            , Kind: kind
+            , RefType: IniRead(file, gsec, "RefType", "Skill")
+            , RefIndex: Integer(IniRead(file, gsec, "RefIndex", 0))
+            , Op: IniRead(file, gsec, "Op", "NEQ")   ; EQ/NEQ
+            , Color: IniRead(file, gsec, "Color", "0x000000")
+            , Tol: Integer(IniRead(file, gsec, "Tol", 16))
+            , RuleId: Integer(IniRead(file, gsec, "RuleId", 0))      ; RuleQuiet
+            , QuietMs: Integer(IniRead(file, gsec, "QuietMs", 0))    ; RuleQuiet
+            , Cmp: IniRead(file, gsec, "Cmp", "GE")                  ; Counter/Timer 扩展用
+            , Value: Integer(IniRead(file, gsec, "Value", 0))
+            , ElapsedMs: Integer(IniRead(file, gsec, "ElapsedMs", 0))
+        }
+        rot.Gates.Push(gate)
+    }
+    ; ----- Swap 验证（M2）-----
+    rot.VerifySwap   := Integer(IniRead(file, "Rotation", "VerifySwap", 0))
+    rot.SwapTimeoutMs:= Integer(IniRead(file, "Rotation", "SwapTimeoutMs", 800))
+    rot.SwapRetry    := Integer(IniRead(file, "Rotation", "SwapRetry", 0))
+    ; 验证像素（可选）
+    sv := {}
+    sv.RefType := IniRead(file, "Rotation.SwapVerify", "RefType", "Skill")
+    sv.RefIndex:= Integer(IniRead(file, "Rotation.SwapVerify", "RefIndex", 0))
+    sv.Op      := IniRead(file, "Rotation.SwapVerify", "Op", "NEQ")
+    sv.Color   := IniRead(file, "Rotation.SwapVerify", "Color", "0x000000")
+    sv.Tol     := Integer(IniRead(file, "Rotation.SwapVerify", "Tol", 16))
+    rot.SwapVerify := sv
 
-    data.Rotation := rot
+    ; ----- Opener Steps（M2）-----
+    if !HasProp(rot.Opener, "Steps")
+        rot.Opener.Steps := []
+    rot.Opener.StepsCount := Integer(IniRead(file, "Rotation.Opener", "StepsCount", 0))
+    if (rot.Opener.StepsCount > 0) {
+        rot.Opener.Steps := []
+        loop rot.Opener.StepsCount {
+            si := A_Index
+            ssec := "Rotation.Opener.Step" si
+            skind := IniRead(file, ssec, "Kind", "")
+            if (skind = "")
+                continue
+            stp := {
+                Kind: skind                     ; "Skill"/"Wait"/"Swap"/"Until"(M3)
+            , SkillIndex: Integer(IniRead(file, ssec, "SkillIndex", 0))
+            , RequireReady: Integer(IniRead(file, ssec, "RequireReady", 0))
+            , PreDelayMs: Integer(IniRead(file, ssec, "PreDelayMs", 0))
+            , HoldMs: Integer(IniRead(file, ssec, "HoldMs", 0))
+            , Verify: Integer(IniRead(file, ssec, "Verify", 0))
+            , TimeoutMs: Integer(IniRead(file, ssec, "TimeoutMs", 1200))
+            , DurationMs: Integer(IniRead(file, ssec, "DurationMs", 0))  ; Wait 用
+            }
+            rot.Opener.Steps.Push(stp)
+        }
+    }
     data.Rotation := rot
     return data
 }
