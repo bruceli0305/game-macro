@@ -70,7 +70,7 @@ UI_ToggleMainPage(vis) {
     global UI
     for ctl in [
         UI.GB_Profile, UI.ProfilesDD, UI.BtnNew, UI.BtnClone, UI.BtnDelete, UI.BtnExport, UI.GB_General, UI.LblStartStop,
-        UI.HkStart, UI.LblPoll, UI.PollEdit, UI.LblDelay, UI.CdEdit, UI.BtnApply, UI.LblPick, UI.ChkPick, UI.LblOffY,
+        UI.HkStart, UI.BtnCapStartMouse,UI.LblPoll, UI.PollEdit, UI.LblDelay, UI.CdEdit, UI.BtnApply, UI.LblPick, UI.ChkPick, UI.LblOffY,
         UI.OffYEdit, UI.LblDwell, UI.DwellEdit,, UI.LblPickKey, UI.DdPickKey, UI.GB_Auto, UI.BtnThreads, UI.BtnRules, UI.BtnBuffs, UI.BtnDefault, UI.BtnPaneSkills,
         UI.BtnPanePoints, UI.SkillLV, UI.BtnAddSkill, UI.BtnEditSkill, UI.BtnDelSkill, UI.BtnTestSkill, UI.BtnSaveSkill,
         UI.PointLV, UI.BtnAddPoint, UI.BtnEditPoint, UI.BtnDelPoint, UI.BtnTestPoint, UI.BtnSavePoint
@@ -129,7 +129,7 @@ UI_OnResize(gui, minmax, w, h) {
     pad := 10
 
     ; ---------- 第1页（配置）三大分组 ----------
-    profH := 80, genH := 116, autoH := 60, gapY := 10
+    profH := 80, genH := 152, autoH := 60, gapY := 10
     gbW := Max(rcTop.W - pad * 2, 420)
     x0 := rcTop.X + pad
     y0 := rcTop.Y + pad
@@ -165,7 +165,11 @@ UI_OnResize(gui, minmax, w, h) {
         _UI_Move(UI.HkStart, sx + sw + 6, line1Y - 4, 180, 24)
         UI.HkStart.GetPos(&hkx, &hky, &hkw, &hkh)
 
-        _UI_Move(UI.LblPoll, hkx + hkw + 18, line1Y)
+        ; 新增：捕获鼠标键按钮
+        _UI_Move(UI.BtnCapStartMouse, hkx + hkw + 6, line1Y - 6, 110, 28)
+        UI.BtnCapStartMouse.GetPos(&cx, &cy, &cw, &ch)
+
+        _UI_Move(UI.LblPoll, cx + cw + 18, line1Y)
         UI.LblPoll.GetPos(&plx, &ply, &plw, &plh)
         _UI_Move(UI.PollEdit, plx + plw + 6, line1Y - 2, 90, 24)
         UI.PollEdit.GetPos(&pex, &pey, &pew, &peh)
@@ -173,9 +177,6 @@ UI_OnResize(gui, minmax, w, h) {
         _UI_Move(UI.LblDelay, pex + pew + 18, line1Y)
         UI.LblDelay.GetPos(&dlx, &dly, &dlw, &dlh)
         _UI_Move(UI.CdEdit, dlx + dlw + 6, line1Y - 2, 100, 24)
-        UI.CdEdit.GetPos(&cdx, &cdy, &cdw, &cdh)
-
-        _UI_Move(UI.BtnApply, cdx + cdw + 18, line1Y - 6, 80, 28)
 
         ; 行2
         line2Y := line1Y + 34
@@ -196,6 +197,11 @@ UI_OnResize(gui, minmax, w, h) {
         _UI_Move(UI.LblPickKey, dwx + dww + 14, line2Y, 90, 24)
         UI.LblPickKey.GetPos(&pkx, &pky, &pkw, &pkh)
         _UI_Move(UI.DdPickKey, pkx + pkw + 6, line2Y - 2, 120, 24)
+
+        ; 行3：右侧“应用”按钮
+        line3Y := line2Y + 34
+        applyW := 80, applyH := 28
+        _UI_Move(UI.BtnApply, gx + gw - ip - applyW, line3Y - 6, applyW, applyH)
     }
 
     ; 自动化配置分组

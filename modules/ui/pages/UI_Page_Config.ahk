@@ -18,9 +18,13 @@ UI_Page_Config_Build() {
     UI.BtnExport.OnEvent("Click", (*) => UI_Page_Config_OnExport())
 
     ; ===== 热键与轮询 =====
-    UI.GB_General := UI.Main.Add("GroupBox", "xm y+10 w860 h116", T("group.general", "热键与轮询"))
+    UI.GB_General := UI.Main.Add("GroupBox", "xm y+10 w860 h152", T("group.general", "热键与轮询"))
     UI.LblStartStop := UI.Main.Add("Text", "xp+12 yp+50 Section", T("label.startStop", "开始/停止："))
     UI.HkStart := UI.Main.Add("Hotkey", "x+6 w180")
+    ; 新增：捕获鼠标键（中键/侧键）
+    UI.BtnCapStartMouse := UI.Main.Add("Button", "x+8 w110 h28", T("btn.captureMouse","捕获鼠标键"))
+    UI.BtnCapStartMouse.OnEvent("Click", (*) => UI_Page_Config_CaptureStartMouse())
+
     UI.LblPoll := UI.Main.Add("Text", "x+18", T("label.pollMs", "轮询(ms)："))
     UI.PollEdit := UI.Main.Add("Edit", "x+6 w90 Number Center")
     UI.LblDelay := UI.Main.Add("Text", "x+18", T("label.delayMs", "全局延迟(ms)："))
@@ -417,4 +421,32 @@ UI_Page_Config_ApplyGeneral() {
     App["ProfileData"].PickConfirmKey := UI.DdPickKey.Text  ; 新增
     Hotkeys_BindStartHotkey(App["ProfileData"].StartHotkey)
     UI_Page_Config_SaveProfile()
+}
+
+; 捕获开始/停止热键的鼠标键（XButton1/XButton2/MButton）
+UI_Page_Config_CaptureStartMouse() {
+    global UI
+    ToolTip "请按下 鼠标中键/侧键 作为开始/停止热键（Esc取消）"
+    key := ""
+    while true {
+        if GetKeyState("Esc","P")
+            break
+        for k in ["XButton1","XButton2","MButton"] {
+            if GetKeyState(k, "P") {
+                key := k
+                ; 等待释放，避免立即触发
+                while GetKeyState(k, "P")
+                    Sleep 20
+                break
+            }
+        }
+        if (key != "")
+            break
+        Sleep 20
+    }
+    ToolTip()
+    if (key != "") {
+        UI.HkStart.Value := key          ; 显示到输入框
+        try Hotkeys_BindStartHotkey(key) ; 立即重绑（用户也可点“应用”保存到配置）
+    }
 }
