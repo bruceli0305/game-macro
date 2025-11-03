@@ -4,6 +4,34 @@
 ; 全局
 global WP_LOG_DIR := A_ScriptDir "\Logs"
 global WorkerPool := { Mode: "FF_ONLY" }
+; —— 施法锁（按线程）：threadId -> lockUntilTick —— 
+global WP_Cast := { ByThread: Map() }
+
+WorkerPool_CastReset() {
+    global WP_Cast
+    WP_Cast.ByThread := Map()
+}
+
+WorkerPool_CastIsLocked(threadId) {
+    global WP_Cast
+    now := A_TickCount
+    if WP_Cast.ByThread.Has(threadId) {
+        lockUntil := WP_Cast.ByThread[threadId]
+        if (now < lockUntil) {
+            return { Locked: true, Remain: lockUntil - now, lockUntil: lockUntil }
+        }
+    }
+    return { Locked: false, Remain: 0, lockUntil: 0 }
+}
+
+WorkerPool_CastLock(threadId, durMs) {
+    global WP_Cast
+    if (durMs <= 0)
+        return
+    lockUntil := A_TickCount + durMs
+    WP_Cast.ByThread[threadId] := lockUntil
+    WP_Log(Format("CastLock set: thr={1} dur={2} until={3}", threadId, durMs, lockUntil))
+}
 
 ; 简单日志
 WP_Log(msg) {
@@ -16,10 +44,13 @@ WP_Log(msg) {
 WorkerPool_Rebuild() {
     global App, WorkerPool
     WorkerPool.Mode := "FF_ONLY"
-    WP_Log("Rebuild (FF-only): skip spawning workers; threads=" (HasProp(App["ProfileData"], "Threads") ? App["ProfileData"].Threads.Length : 0))
+    WorkerPool_CastReset()                                ; 新增：重置施法锁
+    WP_Log("Rebuild (FF-only): skip spawning workers; threads=" (HasProp(App["ProfileData"], "Threads") ? App[
+        "ProfileData"].Threads.Length : 0))
 }
 
 WorkerPool_Dispose() {
+    WorkerPool_CastReset()                                ; 新增：释放锁
     WP_Log("Dispose (FF-only): nothing to close")
 }
 
@@ -51,16 +82,70 @@ WorkerPool_CreateProcess(cmdLine) {
     return { pid: pid, hProcess: hProcess, hThread: hThread }
 }
 
-;================ 一次性发送（FF-ONLY 通道） ================
-; 直接启动 WorkerHost.ahk 的 --fire 模式；key 用双引号包裹并转义内部引号
+; ============== 宿主定位（优先 EXE，再 AHK） ==============
+; 查找 WorkerHost 宿主，返回 { Path, Kind:"exe"/"ahk" } 或 0
+WorkerPool_FindHost() {
+    global App
+    ; 1) App 配置覆写（可选）
+    try {
+        if IsObject(App) && App.Has("WorkerHostPath") {
+            p := App["WorkerHostPath"]
+            if (p != "" && FileExist(p)) {
+                ext := StrLower(RegExReplace(p, ".*\.", ""))
+                return { Path: p, Kind: (ext="exe" ? "exe" : "ahk") }
+            }
+        }
+    }
+
+    ; 2) 环境变量覆写（WORKERHOST_PATH）
+    try {
+        p := EnvGet("WORKERHOST_PATH")
+        if (p != "" && FileExist(p)) {
+            ext := StrLower(RegExReplace(p, ".*\.", ""))
+            return { Path: p, Kind: (ext="exe" ? "exe" : "ahk") }
+        }
+    }
+
+    ; 3) 常规候选路径（相对主程序目录）
+    candidates := [
+        A_ScriptDir "\modules\workers\WorkerHost.exe"
+      , A_ScriptDir "\modules\WorkerHost.exe"
+      , A_ScriptDir "\WorkerHost.exe"
+      , A_ScriptDir "\modules\workers\WorkerHost.ahk"
+      , A_ScriptDir "\modules\WorkerHost.ahk"
+      , A_ScriptDir "\WorkerHost.ahk"
+    ]
+    for _, p in candidates {
+        if FileExist(p) {
+            ext := StrLower(RegExReplace(p, ".*\.", ""))
+            return { Path: p, Kind: (ext="exe" ? "exe" : "ahk") }
+        }
+    }
+    return 0
+}
+
+; ============== 一次性发送（FF-only）：自动选择宿主 ==============
 WorkerPool_FireAndForget(key, delay := 0, hold := 0) {
-    host := A_ScriptDir "\modules\WorkerHost.ahk"
-    if !FileExist(host) {
-        WP_Log("Start one-shot FAIL: WorkerHost not found: " host)
+    host := WorkerPool_FindHost()
+    if !host {
+        WP_Log("Start one-shot FAIL: WorkerHost not found in candidates")
         return false
     }
+
+    ; 组装命令行（优先 EXE）
     qkey := '"' . StrReplace(key, '"', '""') . '"'
-    cmd := '"' . A_AhkPath . '" "' . host . '" --fire ' . qkey . ' ' . delay . ' ' . hold
+    if (host.Kind = "exe") {
+        cmd := '"' host.Path '" --fire ' . qkey . ' ' . delay . ' ' . hold
+    } else {
+        ; .ahk：依赖解释器
+        ip := A_AhkPath
+        if (ip = "" || !FileExist(ip)) {
+            WP_Log("Start one-shot FAIL: A_AhkPath invalid for .ahk host. Please deploy WorkerHost.exe")
+            return false
+        }
+        cmd := '"' ip '" "' host.Path '" --fire ' . qkey . ' ' . delay . ' ' . hold
+    }
+
     WP_Log("Start one-shot: " cmd)
 
     pr := WorkerPool_CreateProcess(cmd)
@@ -80,12 +165,18 @@ WorkerPool_SendSkillIndex(threadId, idx, src := "") {
     if (idx < 1 || idx > App["ProfileData"].Skills.Length)
         return false
     s := App["ProfileData"].Skills[idx]
-
-    ; 发送延迟（全局）
+    ; 新增：施法锁检查（按线程）
+    lk := WorkerPool_CastIsLocked(threadId)
+    if (lk.Locked) {
+        WP_Log(Format("CastLock BLOCK: thr={1} idx={2} key={3} remain={4}ms src={5}"
+            , threadId, idx, s.Key, lk.Remain, (src!="" ? src : "?")))
+        return false
+    }
+    ; 全局每次发送延迟（统一在 WorkerHost 内 Sleep）
     delay := 0
     try {
-        if HasProp(App, "ProfileData") && HasProp(App["ProfileData"], "SendCooldownMs")
-            delay := Integer(App["ProfileData"].SendCooldownMs)
+        if IsObject(App) && App.Has("ProfileData") && HasProp(App["ProfileData"], "SendCooldownMs")
+            delay := Max(0, Integer(App["ProfileData"].SendCooldownMs))
     } catch {
         delay := 0
     }
@@ -102,13 +193,21 @@ WorkerPool_SendSkillIndex(threadId, idx, src := "") {
     }
 
     WP_Log(Format("Send FF-only: thr={1} idx={2} key={3} delay={4} hold={5} src={6}"
-        , threadId, idx, s.Key, delay, hold, (src!="" ? src : "?")))
+        , threadId, idx, s.Key, delay, hold, (src != "" ? src : "?")))
 
     ok := WorkerPool_FireAndForget(s.Key, delay, hold)
 
     if (ok) {
         newCnt := Counters_Inc(idx)
         WP_Log("Counter inc: idx=" idx " key=" s.Key " count=" newCnt)
+        ; 新增：若配置了读条时间（CastMs），对该线程加锁
+        castMs := 0
+        try castMs := Max(0, Integer(HasProp(s, "CastMs") ? s.CastMs : 0))
+        if (castMs > 0) {
+            WorkerPool_CastLock(threadId, castMs)
+        }
+    } else {
+        WP_Log("Send FAIL -> no lock, no counter")
     }
 
     try {

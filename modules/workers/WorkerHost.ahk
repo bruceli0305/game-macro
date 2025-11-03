@@ -1,17 +1,68 @@
 #Requires AutoHotkey v2
 #SingleInstance Off
 #NoTrayIcon
+SendMode "Input"   ; 全局使用 SendInput（游戏环境更稳）
 OnExit (*) => ExitApp()
 
-;================ 日志工具（写到项目根 Logs） ================
+; 计算项目根目录：兼容 modules\ 或 modules\workers\
+Host_RootDir() {
+    dir := A_ScriptDir
+    if RegExMatch(dir, "i)\\modules\\workers$") {
+        return SubStr(dir, 1, StrLen(dir) - StrLen("\modules\workers"))
+    }
+    if RegExMatch(dir, "i)\\modules$") {
+        return SubStr(dir, 1, StrLen(dir) - StrLen("\modules"))
+    }
+    return dir
+}
+
+; 共享方式安全追加到文件（UTF-8，无 BOM）；失败返回 false
+Host_AppendShared(path, text) {
+    try {
+        ; FILE_APPEND_DATA(0x0004) + FILE_SHARE_READ|WRITE(0x1|0x2) + OPEN_ALWAYS(4)
+        h := DllCall("CreateFileW"
+            , "WStr", path, "UInt", 0x0004, "UInt", 0x0003
+            , "Ptr", 0, "UInt", 4, "UInt", 0x80, "Ptr", 0, "Ptr")
+        if (h = -1)
+            return false
+        ; UTF-8 编码，不写终止零
+        bytes := StrPut(text, "UTF-8") - 1
+        buf := Buffer(bytes, 0)
+        StrPut(text, buf, "UTF-8")
+        written := 0
+        ok := DllCall("WriteFile", "Ptr", h, "Ptr", buf.Ptr, "UInt", bytes, "UInt*", &written, "Ptr", 0, "Int")
+        DllCall("CloseHandle", "Ptr", h)
+        return ok != 0
+    } catch {
+        return false
+    }
+}
+
+; 日志：并发安全；失败则退到“每进程独立文件”
 Host_Log(title, msg) {
-    ; 从 modules 目录回到项目根
-    root := RegExReplace(A_ScriptDir, "\\modules$", "")
+    root := Host_RootDir()
     logDir := root "\Logs"
     DirCreate logDir
     ts := FormatTime(, "yyyy-MM-dd HH:mm:ss")
-    FileAppend ts " [WorkerHost " title "] " msg "`r`n"
-        , logDir "\workerhost_" title ".log", "UTF-8"
+    line := ts " [WorkerHost " title "] " msg "`r`n"
+    path := logDir "\workerhost_" title ".log"
+
+    ; 尝试共享追加 + 简单重试
+    ok := false
+    Loop 3 {
+        if Host_AppendShared(path, line) {
+            ok := true
+            break
+        }
+        Sleep 20
+    }
+    if ok
+        return
+
+    ; 退回当前进程独立日志（完全避免共享冲突）
+    pid := DllCall("Kernel32\GetCurrentProcessId", "UInt")
+    alt := logDir "\workerhost_" title "_" pid ".log"
+    Host_AppendShared(alt, line)
 }
 
 ;================ 一次性模式：--fire key delay hold ================
@@ -84,27 +135,46 @@ WorkerHost_SendKey(key, delay := 0, hold := 0) {
     if (key = "")
         return
 
-    ; 按住（down/up）优先，适配多数键名
+    mouseRe := "i)^(LButton|MButton|RButton|XButton1|XButton2|WheelUp|WheelDown|WheelLeft|WheelRight)$"
+
+    ; 按住优先：仅对功能/鼠标键做 down/up；其它复杂发送原样
     if (hold > 0) {
-        SendEvent "{" key " down}"
-        Sleep hold
-        SendEvent "{" key " up}"
+        if RegExMatch(key, "[\{\}\^\!\+#]") {
+            SendEvent key
+            return
+        }
+        if RegExMatch(key
+            , "i)^(F([1-9]|1[0-9]|2[0-4])|Tab|Enter|Space|Backspace|Delete|Insert|Home|End|PgUp|PgDn|Up|Down|Left|Right|Esc|Escape|AppsKey|PrintScreen|Pause|ScrollLock|CapsLock|NumLock|LWin|RWin|Numpad(Enter|Add|Sub|Mult|Div|\d+))$") {
+            SendEvent "{" key " down}"
+            Sleep hold
+            SendEvent "{" key " up}"
+            return
+        }
+        if RegExMatch(key, mouseRe) && !RegExMatch(key, "i)^Wheel") {
+            SendEvent "{" key " down}"
+            Sleep hold
+            SendEvent "{" key " up}"
+            return
+        }
+        ; 其它情况无法可靠 down/up，按一次
+        SendEvent "{" key "}"
         return
     }
 
-    ; 已含 {…} 或修饰 (^!+#) → 原样发送
+    ; 非按住
     if RegExMatch(key, "[\{\}\^\!\+#]") {
         SendEvent key
         return
     }
-
-    ; 功能键（F1、Tab、Enter、方向键、Numpad…）自动补花括号
     if RegExMatch(key
         , "i)^(F([1-9]|1[0-9]|2[0-4])|Tab|Enter|Space|Backspace|Delete|Insert|Home|End|PgUp|PgDn|Up|Down|Left|Right|Esc|Escape|AppsKey|PrintScreen|Pause|ScrollLock|CapsLock|NumLock|LWin|RWin|Numpad(Enter|Add|Sub|Mult|Div|\d+))$") {
         SendEvent "{" key "}"
         return
     }
+    if RegExMatch(key, mouseRe) {
+        SendEvent "{" key "}"
+        return
+    }
 
-    ; 普通字符（字母/数字/符号）
     SendEvent key
 }

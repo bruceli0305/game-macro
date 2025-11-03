@@ -1,9 +1,17 @@
 ; RuleEngine.ahk - 技能循环规则引擎（含日志、计数规则模式、发送回执校验、顺序优化）
 
 ; ========== 日志与调试开关 ==========
-global RE_Debug := true               ; 总开关：日志开/关
-global RE_DebugVerbose := true        ; 详细级：打印每个条件细节
+global RE_Debug := false               ; 总开关：日志开/关
+global RE_DebugVerbose := false        ; 详细级：打印每个条件细节
+global RE_ShowTips := false  ; 是否在屏幕弹提示（默认关）
 
+RE_Tip(msg, ms := 1000) {
+    global RE_ShowTips
+    if !RE_ShowTips
+        return
+    ToolTip msg
+    SetTimer () => ToolTip(), -ms
+}
 RE_LogFilePath() {
     return A_ScriptDir "\Logs\ruleengine.log"
 }
@@ -116,8 +124,7 @@ RuleEngine_RunTick() {
     now := A_TickCount
     if (prof.Rules.Length = 0) {
         RE_Log("Tick#" tick " no rules configured")
-        ToolTip "没有配置规则"
-        SetTimer () => ToolTip(), -1000
+        RE_Tip("没有配置规则", 1000)
         return false
     }
 
@@ -154,8 +161,7 @@ RuleEngine_RunTick() {
     }
 
     RE_Log("Tick#" tick " no rule matched")
-    ToolTip "没有符合条件的规则"
-    SetTimer () => ToolTip(), -1000
+    RE_Tip("没有符合条件的规则", 1000)
     return false
 }
 

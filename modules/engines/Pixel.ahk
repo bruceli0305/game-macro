@@ -28,28 +28,44 @@ global gPxFrame := { id: 0, cache: Map() }
 
 Pixel_FrameBegin() {
     global gPxFrame
+    try Dup_FrameBegin()          ; 新增：统计与日志（安全调用）
     gPxFrame.id += 1
     gPxFrame.cache := Map()
 }
 
-; 优先从 ROI 读取，不在 ROI 再走系统 PixelGetColor
+; 优先从 DXGI Dup -> ROI -> 系统取色
 Pixel_FrameGet(x, y) {
     global gPxFrame
     key := x "|" y
     if gPxFrame.cache.Has(key)
         return gPxFrame.cache[key]
 
+    ; 1) DXGI Dup 优先（仅当坐标落在当前输出）
+    try {
+        cdx := Dup_GetPixelAtScreen(x, y)    ; -1=不在输出或未就绪；0..=有效颜色
+        if (cdx != -1) {
+            gPxFrame.cache[key] := cdx
+            try Dup_NotifyPath("DX")         ; 新增
+            return cdx
+        }
+    } catch {
+        ; 忽略异常，继续回退路径
+    }
+
+    ; 2) ROI 缓存
     c := Pixel_ROI_GetIfInside(x, y)  ; -1 = 不在 ROI
     if (c != -1) {
         gPxFrame.cache[key] := c
+        try Dup_NotifyPath("ROI")            ; 新增
         return c
     }
 
+    ; 3) GDI 取色
     c := PixelGetColor(x, y, "RGB")
     gPxFrame.cache[key] := c
+    try Dup_NotifyPath("GDI")                ; 新增
     return c
 }
-; ------------------------------------------------
 
 ; ---------------- ROI 快照（单矩形） ----------------
 ; 说明：
@@ -100,8 +116,8 @@ Pixel_ROI_AddRect(l, t, w, h) {
 
     bmi := Buffer(40, 0) ; BITMAPINFOHEADER
     NumPut("UInt", 40, bmi, 0)           ; biSize
-    NumPut("Int",  w,  bmi, 4)           ; biWidth
-    NumPut("Int", -h,  bmi, 8)           ; biHeight (负数=top-down)
+    NumPut("Int", w, bmi, 4)           ; biWidth
+    NumPut("Int", -h, bmi, 8)           ; biHeight (负数=top-down)
     NumPut("UShort", 1, bmi, 12)         ; biPlanes
     NumPut("UShort", 32, bmi, 14)        ; biBitCount
     NumPut("UInt", 0, bmi, 16)           ; biCompression = BI_RGB
@@ -118,9 +134,8 @@ Pixel_ROI_AddRect(l, t, w, h) {
 
     hOld := DllCall("gdi32\SelectObject", "ptr", hDC, "ptr", hBmp, "ptr")
     rect := {
-        L:l, T:t, W:w, H:h, R:(l+w-1), B:(t+h-1)
-      , hDC:hDC, hBmp:hBmp, hOld:hOld, pBits:pBits
-      , stride:(w * 4)
+        L: l, T: t, W: w, H: h, R: (l + w - 1), B: (t + h - 1), hDC: hDC, hBmp: hBmp, hOld: hOld, pBits: pBits, stride: (
+            w * 4)
     }
     gROI.rects.Push(rect)
     return true
@@ -189,7 +204,7 @@ Pixel_ROI_SetAutoFromProfile(prof, pad := 8, includePoints := false, maxArea := 
         ; padding + 屏幕边界夹取
         l := Max(0, minX - pad)
         t := Max(0, minY - pad)
-        r := Min(A_ScreenWidth - 1,  maxX + pad)
+        r := Min(A_ScreenWidth - 1, maxX + pad)
         b := Min(A_ScreenHeight - 1, maxY + pad)
         w := r - l + 1
         h := b - t + 1
@@ -241,9 +256,9 @@ Pixel_ROI_GetIfInside(x, y) {
             dy := y - r.T
             off := dy * r.stride + dx * 4
             px := NumGet(r.pBits, off, "UInt")        ; BGRA
-            b :=  px        & 0xFF
-            g := (px >> 8)  & 0xFF
-            r8:= (px >> 16) & 0xFF
+            b := px & 0xFF
+            g := (px >> 8) & 0xFF
+            r8 := (px >> 16) & 0xFF
             return (r8 << 16) | (g << 8) | b          ; RGB
         }
     }
@@ -251,11 +266,24 @@ Pixel_ROI_GetIfInside(x, y) {
 }
 ; ------------------------------------------------
 
-; 支持避让参数的拾色对话：Pixel_PickPixel(parentGui?, offsetY?, dwellMs?)
-Pixel_PickPixel(parentGui := 0, offsetY := 0, dwellMs := 0) {
+; 支持避让参数与自定义确认键：Pixel_PickPixel(parentGui?, offsetY?, dwellMs?, confirmKey?)
+Pixel_PickPixel(parentGui := 0, offsetY := 0, dwellMs := 0, confirmKey := "") {
+    global App
+    if (confirmKey = "") {
+        try {
+            if IsObject(App) && App.Has("ProfileData") {           ; Map 检查用 Has
+                prof := App["ProfileData"]
+                if IsObject(prof) && HasProp(prof, "PickConfirmKey") && prof.PickConfirmKey != ""
+                    confirmKey := prof.PickConfirmKey              ; 对象用 HasProp
+            }
+        }
+        ; 兜底
+        if (confirmKey = "")
+            confirmKey := "LButton"
+    }
     if parentGui
         parentGui.Hide()
-    ToolTip "移动鼠标到目标像素，左键确认，Esc取消。"
+    ToolTip "移动鼠标到目标像素，按 [" confirmKey "] 确认，Esc 取消。"
         . (offsetY || dwellMs ? "`n提示：确认时将临时上移" offsetY "px，等待" dwellMs "ms后再取色" : "")
     local x, y, color
     while true {
@@ -265,20 +293,20 @@ Pixel_PickPixel(parentGui := 0, offsetY := 0, dwellMs := 0) {
                 parentGui.Show()
             return 0
         }
-        if GetKeyState("LButton", "P") {
+        if GetKeyState(confirmKey, "P") {
             Sleep 120
             MouseGetPos &x, &y
             color := Pixel_GetColorWithMouseAway(x, y, offsetY, dwellMs)
             ToolTip()
             if parentGui
                 parentGui.Show()
-            return {X: x, Y: y, Color: color}
+            return { X: x, Y: y, Color: color }
         }
         MouseGetPos &mx, &my
         c := PixelGetColor(mx, my, "RGB")
         ToolTip "X:" mx " Y:" my "`n颜色: " Pixel_ColorToHex(c)
-            . "`n左键确认 / Esc取消"
-            . (offsetY || dwellMs ? "`n将上移避让后再取色" : "")
+        . "`n确认键: " confirmKey " / Esc 取消"
+        . (offsetY || dwellMs ? "`n将上移避让后再取色" : "")
         Sleep 25
     }
 }

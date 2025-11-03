@@ -3,7 +3,7 @@
 SkillEditor_Open(skill, idx := 0, onSaved := 0) {
     isNew := (idx = 0)
 
-    defaults := Map("Name", "", "Key", "", "X", 0, "Y", 0, "Color", "0x000000", "Tol", 10)
+    defaults := Map("Name","", "Key","", "X",0, "Y",0, "Color","0x000000", "Tol",10, "CastMs",0)
     if !IsObject(skill)
         skill := {}
     for k, v in defaults
@@ -19,6 +19,8 @@ SkillEditor_Open(skill, idx := 0, onSaved := 0) {
 
     dlg.Add("Text", "xm w70", "键位：")
     hkKey := dlg.Add("Hotkey", "x+10 w160", skill.Key)
+    
+    btnMouseKey := dlg.Add("Button", "x+8 w110 h28", "捕获鼠标键")   ; 新增
 
     dlg.Add("Text", "xm w70", "坐标X：")
     tbX := dlg.Add("Edit", "x+10 w120 Number", skill.X)
@@ -30,6 +32,8 @@ SkillEditor_Open(skill, idx := 0, onSaved := 0) {
     tbColor := dlg.Add("Edit", "x+10 w160", skill.Color)
     dlg.Add("Text", "x+16 w70", "容差：")
     tbTol := dlg.Add("Edit", "x+10 w96 Number", skill.Tol)
+    dlg.Add("Text", "x+16 w70", "读条(ms)：")
+    tbCast := dlg.Add("Edit", "x+10 w96 Number", HasProp(skill,"CastMs") ? skill.CastMs : 0)
 
     btnSave := dlg.Add("Button", "xm w96 h30", "保存")
     btnCancel := dlg.Add("Button", "x+8 w96 h30", "取消")
@@ -37,6 +41,7 @@ SkillEditor_Open(skill, idx := 0, onSaved := 0) {
     btnPick.OnEvent("Click", OnPick)
     btnSave.OnEvent("Click", OnSave)
     btnCancel.OnEvent("Click", (*) => dlg.Destroy())
+    btnMouseKey.OnEvent("Click", OnCapMouse)                      ; 新增
 
     dlg.Show()
 
@@ -51,7 +56,30 @@ SkillEditor_Open(skill, idx := 0, onSaved := 0) {
             tbColor.Value := Pixel_ColorToHex(res.Color)
         }
     }
-
+    ; 新增：捕获 MButton / XButton1 / XButton2
+    OnCapMouse(*) {
+        ToolTip "请按下 鼠标中键/侧键（Esc 取消）"
+        key := ""
+        while true {
+            if GetKeyState("Esc","P")
+                break
+            for k in ["MButton","XButton1","XButton2"] {
+                if GetKeyState(k,"P") {
+                    key := k
+                    while GetKeyState(k,"P")
+                        Sleep 20
+                    break
+                }
+            }
+            if (key != "")
+                break
+            Sleep 20
+        }
+        ToolTip()
+        if (key != "")
+            hkKey.Value := key
+    }
+    
     OnSave(*) {
         name := Trim(tbName.Value)
         key := Trim(hkKey.Value)
@@ -75,7 +103,8 @@ SkillEditor_Open(skill, idx := 0, onSaved := 0) {
         }
 
         col := Pixel_ColorToHex(Pixel_HexToInt(col))
-        newSkill := { Name: name, Key: key, X: x, Y: y, Color: col, Tol: tol }
+        cast := (tbCast.Value != "") ? Integer(tbCast.Value) : 0
+        newSkill := { Name: name, Key: key, X: x, Y: y, Color: col, Tol: tol, CastMs: cast }
 
         if onSaved
             onSaved(newSkill, idx)

@@ -2,16 +2,49 @@
 ; 自适应布局与切页显隐（无内层 Tab，按钮切换两个面板）
 ; 修复：最小化/恢复后子控件未重绘 -> 在恢复时强制 RedrawWindow
 
-; 计算 Tab 当前页的内容矩形（父 GUI 坐标）
+; 获取窗口 DPI 缩放比（DPI/96.0）
+UI_GetScale(hwnd := 0) {
+    try {
+        if hwnd {
+            dpi := DllCall("user32\GetDpiForWindow", "ptr", hwnd, "uint")
+            if (dpi)
+                return dpi / 96.0
+        }
+    } catch {
+
+    }
+    hdc := DllCall("user32\GetDC", "ptr", hwnd, "ptr")
+    if (hdc) {
+        LOGPIXELSX := 88
+        dpi := DllCall("gdi32\GetDeviceCaps", "ptr", hdc, "int", LOGPIXELSX, "int")
+        DllCall("user32\ReleaseDC", "ptr", hwnd, "ptr", hdc)
+        if (dpi)
+            return dpi / 96.0
+    }
+    return 1.0
+}
+
+; 计算 Tab 当前页的内容矩形（返回 DIPs 坐标，供 Move 使用）
 UI_TabPageRect(tabCtrl) {
     rc := Buffer(16, 0)
     DllCall("user32\GetClientRect", "ptr", tabCtrl.Hwnd, "ptr", rc.Ptr)
-    ; TCM_ADJUSTRECT: 把客户区矩形转换为“显示矩形”
+    ; TCM_ADJUSTRECT: 把客户区矩形转换为“显示矩形”（px）
     DllCall("user32\SendMessage", "ptr", tabCtrl.Hwnd, "uint", 0x1328, "ptr", 0, "ptr", rc.Ptr)
     parent := DllCall("user32\GetParent", "ptr", tabCtrl.Hwnd, "ptr")
     DllCall("user32\MapWindowPoints", "ptr", tabCtrl.Hwnd, "ptr", parent, "ptr", rc.Ptr, "uint", 2)
-    x := NumGet(rc, 0, "Int"), y := NumGet(rc, 4, "Int")
-    w := NumGet(rc, 8, "Int") - x, h := NumGet(rc, 12, "Int") - y
+
+    ; 现在 rc 里的坐标是“物理像素”
+    x_px := NumGet(rc, 0, "Int")
+    y_px := NumGet(rc, 4, "Int")
+    w_px := NumGet(rc, 8, "Int") - x_px
+    h_px := NumGet(rc, 12, "Int") - y_px
+
+    ; 转为 DIPs（AHK Move 使用的坐标）
+    scale := UI_GetScale(tabCtrl.Hwnd)
+    x := Round(x_px / scale)
+    y := Round(y_px / scale)
+    w := Round(w_px / scale)
+    h := Round(h_px / scale)
     return { X: x, Y: y, W: w, H: h }
 }
 
@@ -37,8 +70,8 @@ UI_ToggleMainPage(vis) {
     global UI
     for ctl in [
         UI.GB_Profile, UI.ProfilesDD, UI.BtnNew, UI.BtnClone, UI.BtnDelete, UI.BtnExport, UI.GB_General, UI.LblStartStop,
-        UI.HkStart, UI.LblPoll, UI.PollEdit, UI.LblDelay, UI.CdEdit, UI.BtnApply, UI.LblPick, UI.ChkPick, UI.LblOffY,
-        UI.OffYEdit, UI.LblDwell, UI.DwellEdit, UI.GB_Auto, UI.BtnThreads, UI.BtnRules, UI.BtnBuffs, UI.BtnDefault, UI.BtnPaneSkills,
+        UI.HkStart, UI.BtnCapStartMouse,UI.LblPoll, UI.PollEdit, UI.LblDelay, UI.CdEdit, UI.BtnApply, UI.LblPick, UI.ChkPick, UI.LblOffY,
+        UI.OffYEdit, UI.LblDwell, UI.DwellEdit,, UI.LblPickKey, UI.DdPickKey, UI.GB_Auto, UI.BtnThreads, UI.BtnRules, UI.BtnBuffs, UI.BtnDefault, UI.BtnPaneSkills,
         UI.BtnPanePoints, UI.SkillLV, UI.BtnAddSkill, UI.BtnEditSkill, UI.BtnDelSkill, UI.BtnTestSkill, UI.BtnSaveSkill,
         UI.PointLV, UI.BtnAddPoint, UI.BtnEditPoint, UI.BtnDelPoint, UI.BtnTestPoint, UI.BtnSavePoint
     ] {
@@ -96,7 +129,7 @@ UI_OnResize(gui, minmax, w, h) {
     pad := 10
 
     ; ---------- 第1页（配置）三大分组 ----------
-    profH := 80, genH := 116, autoH := 60, gapY := 10
+    profH := 80, genH := 152, autoH := 60, gapY := 10
     gbW := Max(rcTop.W - pad * 2, 420)
     x0 := rcTop.X + pad
     y0 := rcTop.Y + pad
@@ -132,7 +165,11 @@ UI_OnResize(gui, minmax, w, h) {
         _UI_Move(UI.HkStart, sx + sw + 6, line1Y - 4, 180, 24)
         UI.HkStart.GetPos(&hkx, &hky, &hkw, &hkh)
 
-        _UI_Move(UI.LblPoll, hkx + hkw + 18, line1Y)
+        ; 新增：捕获鼠标键按钮
+        _UI_Move(UI.BtnCapStartMouse, hkx + hkw + 6, line1Y - 6, 110, 28)
+        UI.BtnCapStartMouse.GetPos(&cx, &cy, &cw, &ch)
+
+        _UI_Move(UI.LblPoll, cx + cw + 18, line1Y)
         UI.LblPoll.GetPos(&plx, &ply, &plw, &plh)
         _UI_Move(UI.PollEdit, plx + plw + 6, line1Y - 2, 90, 24)
         UI.PollEdit.GetPos(&pex, &pey, &pew, &peh)
@@ -140,9 +177,6 @@ UI_OnResize(gui, minmax, w, h) {
         _UI_Move(UI.LblDelay, pex + pew + 18, line1Y)
         UI.LblDelay.GetPos(&dlx, &dly, &dlw, &dlh)
         _UI_Move(UI.CdEdit, dlx + dlw + 6, line1Y - 2, 100, 24)
-        UI.CdEdit.GetPos(&cdx, &cdy, &cdw, &cdh)
-
-        _UI_Move(UI.BtnApply, cdx + cdw + 18, line1Y - 6, 80, 28)
 
         ; 行2
         line2Y := line1Y + 34
@@ -159,6 +193,15 @@ UI_OnResize(gui, minmax, w, h) {
         _UI_Move(UI.LblDwell, ox + ow + 14, line2Y)
         UI.LblDwell.GetPos(&dwx, &dwy, &dww, &dwh)
         _UI_Move(UI.DwellEdit, dwx + dww + 6, line2Y - 2, 90, 24)
+         UI.DwellEdit.GetPos(&dwx, &dwy, &dww, &dwh)
+        _UI_Move(UI.LblPickKey, dwx + dww + 14, line2Y, 90, 24)
+        UI.LblPickKey.GetPos(&pkx, &pky, &pkw, &pkh)
+        _UI_Move(UI.DdPickKey, pkx + pkw + 6, line2Y - 2, 120, 24)
+
+        ; 行3：右侧“应用”按钮
+        line3Y := line2Y + 34
+        applyW := 80, applyH := 28
+        _UI_Move(UI.BtnApply, gx + gw - ip - applyW, line3Y - 6, applyW, applyH)
     }
 
     ; 自动化配置分组

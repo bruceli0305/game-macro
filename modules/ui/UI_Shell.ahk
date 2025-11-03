@@ -2,10 +2,19 @@
 ; 顶层外壳：创建主窗体、顶层Tab，委托各页面构建，首屏布局与切页显隐
 
 global UI := Map()  ; 统一控件注册表
-
+UI_EnablePerMonitorDPI() {
+    ; 优先 Per-Monitor V2，失败回退到 Per-Monitor，再到 System DPI aware
+    try DllCall("user32\SetProcessDpiAwarenessContext", "ptr", -4, "ptr")  ; PER_MONITOR_AWARE_V2
+    catch {
+        try DllCall("shcore\SetProcessDpiAwareness", "int", 2, "int")      ; PROCESS_PER_MONITOR_DPI_AWARE
+        catch {
+            try DllCall("user32\SetProcessDPIAware")                        ; 老 API，System DPI
+        }
+    }
+}
 UI_ShowMain() {
     global UI
-
+    UI_EnablePerMonitorDPI()
     ; 语言兜底（若外部未初始化）
     try {
         if !(IsSet(gLang) && gLang.Has("Code"))
@@ -43,7 +52,7 @@ UI_ShowMain() {
     UI.TopTab.Value := 1
     UI.Main.Show("w890 h750 Hide")
     rc := Buffer(16, 0)
-    DllCall("GetClientRect", "ptr", UI.Main.Hwnd, "ptr", rc.Ptr)
+    DllCall("user32\GetClientRect", "ptr", UI.Main.Hwnd, "ptr", rc.Ptr)
     cw := NumGet(rc, 8, "Int"), ch := NumGet(rc, 12, "Int")
     UI_OnResize(UI.Main, 0, cw, ch)
     UI_ToggleSettingsPage(false)

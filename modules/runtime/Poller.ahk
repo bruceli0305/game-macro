@@ -2,10 +2,36 @@
 
 global gPoller := { running: false, timerBound: 0 }
 
+
+; 判定当前环境下是否能正确采样屏幕（独占全屏多数会失败）
+Poller_CaptureReady() {
+    ; 在屏幕四角采样一圈，若全为同色或返回异常，认为不可用
+    pts := [[10,10],[A_ScreenWidth-10,10],[10,A_ScreenHeight-10],[A_ScreenWidth-10,A_ScreenHeight-10]]
+    cols := []
+    try {
+        Pixel_FrameBegin()
+        for _, p in pts {
+            c := PixelGetColor(p[1], p[2], "RGB")
+            cols.Push(c)
+        }
+    } catch {
+        return false
+    }
+    ; 全相同/全黑可判为无效，但避免误判：允许有1~2个重复
+    uniq := Map()
+    for _, c in cols
+        uniq[c] := true
+    return uniq.Count > 2
+}
+; 在 Poller_Start 里加判定
 Poller_Start() {
     global App, gPoller
     if gPoller.running
         return
+    if !Poller_CaptureReady() {
+        Notify("检测到独占全屏或无法取色，请切换为“无边框窗口化”后再启动。")
+        return
+    }
     gPoller.running := true
     Notify("状态：运行中")
     gPoller.timerBound := Poller_Tick
@@ -30,9 +56,12 @@ Poller_Tick() {
     global App, gPoller
     if !gPoller.running
         return
-
+    ; 隐藏任何屏幕提示，避免轮询时在鼠标旁出现 ToolTip
+    try ToolTip()
     ; 先抓 ROI，再清帧缓存（如未启用 ROI，此步骤会自动跳过）
-    try Pixel_ROI_BeginSnapshot()
+    ; 先抓 ROI（DXGI 可用则跳过），再清帧缓存
+    try if !DX_IsReady()
+        Pixel_ROI_BeginSnapshot()
     try Pixel_FrameBegin()
 
     ; 1) BUFF 引擎（最高优先级）
@@ -99,8 +128,16 @@ Poller_TryDefaultSkill() {
     }
     return false
 }
-
-; 统一发键：改为走 WorkerPool 的一次性通道（不再本地 Sleep）
+; 统一发键：走 WorkerPool 的一次性通道（延迟下放到 WorkerHost）
 Poller_SendKey(keySpec, holdMs := 0) {
-    return WorkerPool_FireAndForget(Trim(keySpec), 0, Max(0, holdMs))
+    global App
+    s := Trim(keySpec)
+    if (s = "")
+        return false
+    delay := 0
+    try {
+        if IsObject(App) && App.Has("ProfileData") && HasProp(App["ProfileData"], "SendCooldownMs")
+            delay := Max(0, Integer(App["ProfileData"].SendCooldownMs))
+    }
+    return WorkerPool_FireAndForget(s, delay, Max(0, holdMs))
 }
