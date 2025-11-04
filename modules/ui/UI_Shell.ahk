@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+; UI_Shell.ahk
 ; 顶层外壳：创建主窗体、顶层Tab，委托各页面构建，首屏布局与切页显隐
 
 global UI := Map()  ; 统一控件注册表

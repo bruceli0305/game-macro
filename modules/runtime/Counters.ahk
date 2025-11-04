@@ -1,4 +1,4 @@
-; modules\Counters.ahk
+; Counters.ahk
 #Requires AutoHotkey v2
 
 global Counters := Map()

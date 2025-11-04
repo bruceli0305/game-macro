@@ -1,6 +1,6 @@
 #Requires AutoHotkey v2
 ; “配置”页：角色配置、热键与轮询、自动化配置、技能/点位两套面板（按钮切换）
-
+;UI_Page_Config.ahk
 UI_Page_Config_Build() {
     global UI
 

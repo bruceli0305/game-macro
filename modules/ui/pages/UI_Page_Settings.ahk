@@ -1,6 +1,6 @@
 #Requires AutoHotkey v2
 ; “设置”页：语言切换
-
+;UI_Page_Settings.ahk
 UI_Page_Settings_Build() {
     global UI
     UI.LblLang := UI.Main.Add("Text", "x12 y12 w120", T("label.language","界面语言："))

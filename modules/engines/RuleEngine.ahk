@@ -1,10 +1,14 @@
-; RuleEngine.ahk - 技能循环规则引擎（含日志、计数规则模式、发送回执校验、顺序优化）
+; RuleEngine.ahk - 技能循环规则引擎（日志/过滤/计数规则模式/发送回执校验）
+#Requires AutoHotkey v2
 
 ; ========== 日志与调试开关 ==========
-global RE_Debug := false               ; 总开关：日志开/关
-global RE_DebugVerbose := false        ; 详细级：打印每个条件细节
-global RE_ShowTips := false  ; 是否在屏幕弹提示（默认关）
+global RE_Debug := false                 ; 总开关：日志开/关
+global RE_DebugVerbose := false          ; 详细级：打印每个条件细节
+global RE_ShowTips := false              ; 屏幕提示（默认关）
+
+; 规则过滤（由 Rotation 设置，优先 AllowRuleIds，再用 AllowSkills）
 global RE_Filter := { Enabled:false, AllowSkills:0, AllowRuleIds:0 }
+
 ; 规则最后触发时间（供 Gate:RuleQuiet 使用）
 global RE_LastFireTick := Map()
 
@@ -27,25 +31,30 @@ RE_ClearFilter() {
 
 RE_Tip(msg, ms := 1000) {
     global RE_ShowTips
-    if !RE_ShowTips
+    if !RE_ShowTips {
         return
+    }
     ToolTip msg
     SetTimer () => ToolTip(), -ms
 }
+
 RE_LogFilePath() {
     return A_ScriptDir "\Logs\ruleengine.log"
 }
 RE_Log(msg, level := "INFO") {
-    if !RE_Debug
+    if !RE_Debug {
         return
+    }
     DirCreate(A_ScriptDir "\Logs")
     ts := FormatTime(, "yyyy-MM-dd HH:mm:ss")
     FileAppend ts " [RuleEngine] [" level "] " msg "`r`n", RE_LogFilePath(), "UTF-8"
 }
 RE_LogV(msg) {
-    if RE_DebugVerbose
+    if RE_DebugVerbose {
         RE_Log(msg, "VERB")
+    }
 }
+
 RE_SkillNameByIndex(prof, idx) {
     return (idx >= 1 && idx <= prof.Skills.Length) ? prof.Skills[idx].Name : ("技能#" idx)
 }
@@ -54,21 +63,22 @@ RE_ColorHex(n) {
 }
 RE_List(arr) {
     out := ""
-    for i, v in arr
+    for i, v in arr {
         out .= (i = 1 ? "" : ",") v
+    }
     return out
 }
 ; ====================================
 
-; ========== 发送回执校验（高延迟建议启用） ==========
+; ========== 发送回执校验（可选） ==========
 global RE_VerifySend := true              ; 是否启用发送后像素回执校验
 global RE_VerifyForCounterOnly := true    ; 仅对含计数条件的规则启用
-global RE_VerifyWaitMs := 150             ; 发送后等待首帧反馈的延时
+global RE_VerifyWaitMs := 150             ; 发送后等待首帧反馈延时
 global RE_VerifyTimeoutMs := 600          ; 在此时间内应看到像素由“就绪”变为“非就绪”
 global RE_VerifyRetry := 1                ; 失败重试次数（0=不重试）
 
 RuleEngine_SendVerified(thr, idx, ruleName) {
-    global App
+    global App, RE_VerifySend, RE_VerifyWaitMs, RE_VerifyTimeoutMs, RE_VerifyRetry
     s := App["ProfileData"].Skills[idx]
     ; 首发
     ok := WorkerPool_SendSkillIndex(thr, idx, "Rule:" ruleName)
@@ -76,8 +86,9 @@ RuleEngine_SendVerified(thr, idx, ruleName) {
         RE_Log("  Send initial FAIL for idx=" idx " name=" s.Name, "WARN")
         return false
     }
-    if !RE_VerifySend
+    if !RE_VerifySend {
         return true
+    }
 
     attempt := 0
     loop RE_VerifyRetry + 1 {
@@ -93,8 +104,7 @@ RuleEngine_SendVerified(thr, idx, ruleName) {
         tgt := Pixel_HexToInt(s.Color)
         success := false
         while (A_TickCount - t0 <= RE_VerifyTimeoutMs) {
-            ; 实时取色，避免帧缓存
-            cur := PixelGetColor(s.X, s.Y, "RGB")
+            cur := PixelGetColor(s.X, s.Y, "RGB")  ; 实时取色
             match := Pixel_ColorMatch(cur, tgt, s.Tol)
             if !match {
                 success := true
@@ -103,11 +113,13 @@ RuleEngine_SendVerified(thr, idx, ruleName) {
             Sleep 10
         }
         RE_Log("  Verify result -> " (success ? "OK" : "FAIL"))
-        if success
+        if success {
             return true
+        }
         attempt += 1
-        if (attempt > RE_VerifyRetry)
+        if (attempt > RE_VerifyRetry) {
             break
+        }
     }
     return false
 }
@@ -115,16 +127,19 @@ RuleEngine_SendVerified(thr, idx, ruleName) {
 
 ; 是否包含至少一个计数条件（启用“计数规则模式”）
 RuleEngine_HasCounterCond(rule) {
-    for _, c in rule.Conditions
-        if (HasProp(c, "Kind") && StrUpper(c.Kind) = "COUNTER")
+    for _, c in rule.Conditions {
+        if (HasProp(c, "Kind") && StrUpper(c.Kind) = "COUNTER") {
             return true
+        }
+    }
     return false
 }
 
 ; 检查某技能的像素就绪（按技能自身 X/Y/Color/Tol），使用帧缓存
 RuleEngine_CheckSkillReady(prof, idx) {
-    if (idx < 1 || idx > prof.Skills.Length)
+    if (idx < 1 || idx > prof.Skills.Length) {
         return false
+    }
     s := prof.Skills[idx]
     cur := Pixel_FrameGet(s.X, s.Y)
     tgt := Pixel_HexToInt(s.Color)
@@ -136,7 +151,7 @@ RuleEngine_CheckSkillReady(prof, idx) {
 
 ; 返回 true 表示本 Tick 已触发某规则（避免并发触发单技能扫描）
 RuleEngine_RunTick() {
-    global App
+    global App, RE_Filter
     prof := App["ProfileData"]
     static tick := 0
     tick++
@@ -156,33 +171,31 @@ RuleEngine_RunTick() {
             continue
         }
 
-        ; 由 Rotation 设置的按技能集合过滤：以第一个动作的 SkillIndex 为准（M1 简化）
-        try {
-            if RE_Filter.Enabled {
-                if (RE_Filter.AllowRuleIds) {
-                    if !RE_Filter.AllowRuleIds.Has(rIdx) {
-                        RE_LogV("filtered by RuleIds -> " r.Name)
-                        continue
-                    }
-                } else if (RE_Filter.AllowSkills) {
-                    if (r.Actions.Length = 0) {
-                        RE_LogV("filtered: no action -> " r.Name)
-                        continue
-                    }
-                    a1 := r.Actions[1]
-                    sIdx1 := HasProp(a1,"SkillIndex") ? a1.SkillIndex : 0
-                    if !(RE_Filter.AllowSkills.Has(sIdx1)) {
-                        RE_LogV("filtered by AllowSkills -> " r.Name)
-                        continue
-                    }
+        ; 过滤（优先 RuleIds，其次 AllowSkills）
+        if (RE_Filter.Enabled) {
+            if (RE_Filter.AllowRuleIds) {
+                if !RE_Filter.AllowRuleIds.Has(rIdx) {
+                    RE_LogV("filtered by RuleIds -> " r.Name)
+                    continue
+                }
+            } else if (RE_Filter.AllowSkills) {
+                if (r.Actions.Length = 0) {
+                    RE_LogV("filtered: no action -> " r.Name)
+                    continue
+                }
+                a1 := r.Actions[1]
+                sIdx1 := HasProp(a1,"SkillIndex") ? a1.SkillIndex : 0
+                if !(RE_Filter.AllowSkills.Has(sIdx1)) {
+                    RE_LogV("filtered by AllowSkills -> " r.Name)
+                    continue
                 }
             }
         }
+
         last := HasProp(r, "LastFire") ? r.LastFire : 0
         remain := r.CooldownMs - (now - last)
         if (remain > 0) {
-            RE_LogV("Tick#" tick " skip by cooldown: " r.Name " remain=" remain "ms (cd=" r.CooldownMs ", last=" last ")"
-            )
+            RE_LogV("Tick#" tick " skip by cooldown: " r.Name " remain=" remain "ms (cd=" r.CooldownMs ", last=" last ")")
             continue
         }
 
@@ -193,11 +206,13 @@ RuleEngine_RunTick() {
         }
 
         RE_Log("Tick#" tick " FIRE rule: " r.Name " thr=" (HasProp(r, "ThreadId") ? r.ThreadId : 1))
-        sent := RuleEngine_Fire(r, prof, rIdx)   ; 传 rIdx 给 Fire
+        sent := RuleEngine_Fire(r, prof, rIdx)   ; 传 rIdx 给 Fire（用于 RuleQuiet）
         if sent {
             r.LastFire := A_TickCount
             RE_Log("Tick#" tick " rule fired, set LastFire=" r.LastFire)
-            SetTimer () => ToolTip(), -1000
+            if RE_ShowTips {
+                SetTimer () => ToolTip(), -1000
+            }
             return true
         } else {
             RE_Log("Tick#" tick " rule matched but no action sent (no ready) -> no cooldown")
@@ -216,17 +231,22 @@ RuleEngine_EvalRule(rule, prof) {
         return false
     }
     logicAnd := (StrUpper(rule.Logic) = "AND")
-    any := false, all := true
+    anyHit := false
+    allTrue := true
     i := 0
 
     ; 两段：先 Counter，后 Pixel
     evalList := []
-    for _, c in rule.Conditions
-        if (HasProp(c, "Kind") && StrUpper(c.Kind) = "COUNTER")
+    for _, c in rule.Conditions {
+        if (HasProp(c, "Kind") && StrUpper(c.Kind) = "COUNTER") {
             evalList.Push(c)
-    for _, c in rule.Conditions
-        if !(HasProp(c, "Kind") && StrUpper(c.Kind) = "COUNTER")
+        }
+    }
+    for _, c in rule.Conditions {
+        if !(HasProp(c, "Kind") && StrUpper(c.Kind) = "COUNTER") {
             evalList.Push(c)
+        }
+    }
 
     for _, c in evalList {
         i++
@@ -260,14 +280,13 @@ RuleEngine_EvalRule(rule, prof) {
                     cur := Pixel_FrameGet(rx, ry)
                     match := Pixel_ColorMatch(cur, tgt, tol)
                     res := (op = "EQ") ? match : !match
-                    RE_LogV(Format(
-                        "Cond#{1} Pixel(Skill): idx={2} name={3} X={4} Y={5} cur={6} tgt={7} tol={8} op={9} -> match={10} res={11}"
+                    RE_LogV(Format("Cond#{1} Pixel(Skill): idx={2} name={3} X={4} Y={5} cur={6} tgt={7} tol={8} op={9} -> match={10} res={11}"
                         , i, refIdx, s.Name, rx, ry, RE_ColorHex(cur), RE_ColorHex(tgt), tol, op, match, res))
                 } else {
                     RE_LogV(Format("Cond#{1} Pixel(Skill): invalid ref idx={2} -> false", i, refIdx))
                     res := false
                 }
-            } else { ; POINT
+            } else {
                 if (refIdx >= 1 && refIdx <= prof.Points.Length) {
                     p := prof.Points[refIdx]
                     rx := p.X, ry := p.Y
@@ -276,8 +295,7 @@ RuleEngine_EvalRule(rule, prof) {
                     cur := Pixel_FrameGet(rx, ry)
                     match := Pixel_ColorMatch(cur, tgt, tol)
                     res := (op = "EQ") ? match : !match
-                    RE_LogV(Format(
-                        "Cond#{1} Pixel(Point): idx={2} name={3} X={4} Y={5} cur={6} tgt={7} tol={8} op={9} -> match={10} res={11}"
+                    RE_LogV(Format("Cond#{1} Pixel(Point): idx={2} name={3} X={4} Y={5} cur={6} tgt={7} tol={8} op={9} -> match={10} res={11}"
                         , i, refIdx, p.Name, rx, ry, RE_ColorHex(cur), RE_ColorHex(tgt), tol, op, match, res))
                 } else {
                     RE_LogV(Format("Cond#{1} Pixel(Point): invalid ref idx={2} -> false", i, refIdx))
@@ -286,26 +304,27 @@ RuleEngine_EvalRule(rule, prof) {
             }
         }
 
-        any := any || res
-        all := all && res
+        anyHit := anyHit || res
+        allTrue := allTrue && res
 
-        if (!logicAnd && any) {
+        if (!logicAnd && anyHit) {
             RE_LogV("Rule '" rule.Name "' logic=OR short-circuit -> true")
             return true
         }
-        if (logicAnd && !all) {
+        if (logicAnd && !allTrue) {
             RE_LogV("Rule '" rule.Name "' logic=AND short-circuit -> false")
             return false
         }
     }
 
-    final := logicAnd ? all : any
+    final := logicAnd ? allTrue : anyHit
     RE_Log("Rule '" rule.Name "' eval done: logic=" (logicAnd ? "AND" : "OR") " -> " final)
     return final
 }
 
 ; 返回是否真的发送了至少一个动作（用于决定是否进入冷却/清零计数）
 RuleEngine_Fire(rule, prof, ruleIndex := 0) {
+    global RE_VerifyForCounterOnly, RE_LastFireTick
     gap := HasProp(rule, "ActionGapMs") ? rule.ActionGapMs : 60
     thr := HasProp(rule, "ThreadId") ? rule.ThreadId : 1
     isCounterMode := RuleEngine_HasCounterCond(rule)
@@ -350,7 +369,7 @@ RuleEngine_Fire(rule, prof, ruleIndex := 0) {
         sname := prof.Skills[selIdx].Name
         ok := (RE_VerifyForCounterOnly
             ? RuleEngine_SendVerified(thr, selIdx, rule.Name)
-                : WorkerPool_SendSkillIndex(thr, selIdx, "Rule:" rule.Name))
+            : WorkerPool_SendSkillIndex(thr, selIdx, "Rule:" rule.Name))
         RE_Log("  Action#" selAi " send idx=" selIdx " name=" sname " -> " (ok ? "OK" : "FAIL"))
         if (ok) {
             anySent := true
@@ -369,8 +388,9 @@ RuleEngine_Fire(rule, prof, ruleIndex := 0) {
             if (a.SkillIndex >= 1 && a.SkillIndex <= prof.Skills.Length) {
                 sname := prof.Skills[a.SkillIndex].Name
                 RE_Log("  Action#" ai " send idx=" a.SkillIndex " name=" sname)
-                if WorkerPool_SendSkillIndex(thr, a.SkillIndex, "Rule:" rule.Name)
+                if WorkerPool_SendSkillIndex(thr, a.SkillIndex, "Rule:" rule.Name) {
                     anySent := true
+                }
             } else {
                 RE_Log("  Action#" ai " invalid skill index=" a.SkillIndex, "WARN")
             }
@@ -381,14 +401,20 @@ RuleEngine_Fire(rule, prof, ruleIndex := 0) {
         }
     }
 
-    ; 仅在“确实发出了至少一个动作”时，按条件配置清零计数
+    ; 仅在“确实发出了至少一个动作”时，按条件配置清零计数，并记录 lastFire
     if (anySent) {
-        try RE_LastFireTick[ruleIndex] := A_TickCount   ; 记录最后触发时间
+        try {
+            if (ruleIndex > 0) {
+                RE_LastFireTick[ruleIndex] := A_TickCount
+            }
+        }
         resetList := []
         for _, c in rule.Conditions {
-            if (HasProp(c, "Kind") && StrUpper(c.Kind) = "COUNTER" && HasProp(c, "ResetOnTrigger") && c.ResetOnTrigger) {
-                if HasProp(c, "SkillIndex")
+            if (HasProp(c, "Kind") && StrUpper(c.Kind) = "COUNTER"
+             && HasProp(c, "ResetOnTrigger") && c.ResetOnTrigger) {
+                if HasProp(c, "SkillIndex") {
                     resetList.Push(c.SkillIndex)
+                }
             }
         }
         if (resetList.Length) {

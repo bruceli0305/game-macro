@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+; UI_Layout.ahk
 ; 自适应布局与切页显隐（无内层 Tab，按钮切换两个面板）
 ; 修复：最小化/恢复后子控件未重绘 -> 在恢复时强制 RedrawWindow
 
