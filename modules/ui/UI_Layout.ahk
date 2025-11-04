@@ -213,9 +213,10 @@ UI_OnResize(gui, minmax, w, h) {
         inPad := 12, btnW := 100, btnH := 28, gap := 8
         btnY := ay + ah - inPad - btnH
         _UI_Move(UI.BtnThreads, ax + inPad, btnY, btnW, btnH)
-        _UI_Move(UI.BtnRules, ax + inPad + (btnW + gap) * 1, btnY, btnW, btnH)
-        _UI_Move(UI.BtnBuffs, ax + inPad + (btnW + gap) * 2, btnY, btnW, btnH)
+        _UI_Move(UI.BtnRules,   ax + inPad + (btnW + gap) * 1, btnY, btnW, btnH)
+        _UI_Move(UI.BtnBuffs,   ax + inPad + (btnW + gap) * 2, btnY, btnW, btnH) ; 若有typo修正 w->btnW
         _UI_Move(UI.BtnDefault, ax + inPad + (btnW + gap) * 3, btnY, btnW, btnH)
+        _UI_Move(UI.BtnRotation, ax + inPad + (btnW + gap) * 4, btnY, btnW, btnH)
     }
 
     ; ---------- 下方区域：按钮切换 + 两套面板 ----------

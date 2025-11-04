@@ -50,6 +50,8 @@ UI_Page_Config_Build() {
     UI.BtnRules := UI.Main.Add("Button", "x+8 w100 h28", T("btn.rules", "循环配置"))
     UI.BtnBuffs := UI.Main.Add("Button", "x+8 w100 h28", T("btn.buffs", "计时器配置"))
     UI.BtnDefault := UI.Main.Add("Button", "x+8 w100 h28", T("btn.default", "默认技能"))
+    UI.BtnRotation := UI.Main.Add("Button", "x+8 w100 h28", "轮换配置")
+    UI.BtnRotation.OnEvent("Click", (*) => RotationEditor_Show())
     UI.BtnThreads.OnEvent("Click", (*) => ThreadsManager_Show())
     UI.BtnRules.OnEvent("Click", (*) => RulesManager_Show())
     UI.BtnBuffs.OnEvent("Click", (*) => BuffsManager_Show())

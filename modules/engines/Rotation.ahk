@@ -1,14 +1,14 @@
 #Requires AutoHotkey v2
-; Rotation.ahk - M1/M2 集成：起手一次 + 轨道轮换（次数/黑框/超时）+ Gate 条件跳轨 + Swap 验证 + 起手步骤
-; - 规则仍由 RuleEngine 执行，本模块负责阶段/轨道切换与过滤
-; - 黑框防抖 BlackGuard：规避“被控全黑”误判，并与“我们发送的技能时间窗”对齐
-; - 规则过滤：优先 RuleRefs（按 RuleId），否则回退到“Watch 技能集合”
+; Rotation.ahk - M1/M2/M3 集成：起手 + 轨道轮换 + Gate + 多轨
+; - M1：黑框防抖/BusyWindow/规则过滤
+; - M2：Gate 条件跳轨、Swap 验证、起手步骤
+; - M3：Tracks[] 通用调度 + NextTrackId + Gate 多条件(AND/OR) + Priority
 
 global gRot := Map()             ; { Cfg, RT }
 global gRotInitBusy := false     ; 防并发 init
 global gRotInitialized := false  ; 防重复 init
 
-Rot_Log(msg, level:="INFO") {
+Rot_Log(msg, level := "INFO") {
     DirCreate(A_ScriptDir "\Logs")
     ts := FormatTime(, "yyyy-MM-dd HH:mm:ss")
     FileAppend(ts " [Rotation] [" level "] " msg "`r`n", A_ScriptDir "\Logs\rotengine.log", "UTF-8")
@@ -32,7 +32,7 @@ Rotation_IsBusyWindowActive() {
 
 Rotation_InitFromProfile() {
     global App, gRot, gRotInitBusy, gRotInitialized
-    if gRotInitBusy
+    if (gRotInitBusy)
         return
     gRotInitBusy := true
     try {
@@ -48,29 +48,38 @@ Rotation_InitFromProfile() {
             try hasWatch += (HasProp(cfg,"Opener") && HasProp(cfg.Opener,"Watch")) ? cfg.Opener.Watch.Length : 0
             try hasWatch += (HasProp(cfg,"Track1") && HasProp(cfg.Track1,"Watch")) ? cfg.Track1.Watch.Length : 0
             try hasWatch += (HasProp(cfg,"Track2") && HasProp(cfg.Track2,"Watch")) ? cfg.Track2.Watch.Length : 0
+            ; 若存在 Tracks[]，也统计
+            try {
+                if (HasProp(cfg, "Tracks") && IsObject(cfg.Tracks)) {
+                    for _, __t in cfg.Tracks {
+                        try hasWatch += (HasProp(__t,"Watch") ? __t.Watch.Length : 0)
+                    }
+                }
+            }
             if (!cfg.Enabled && hasWatch > 0) {
                 cfg.Enabled := 1
                 Rot_Log("AutoEnable at Init: Watch present, force Enabled=1")
             }
         }
 
-        Rot_Log(Format("Cfg: Enabled={1} T1W={2} T2W={3} OpW={4}"
+        Rot_Log(Format("Cfg: Enabled={1} T1W={2} T2W={3} OpW={4} TrackCount={5}"
             , (cfg.Enabled?1:0)
             , (HasProp(cfg,"Track1") && HasProp(cfg.Track1,"Watch")) ? cfg.Track1.Watch.Length : 0
             , (HasProp(cfg,"Track2") && HasProp(cfg.Track2,"Watch")) ? cfg.Track2.Watch.Length : 0
-            , (HasProp(cfg,"Opener")  && HasProp(cfg.Opener,"Watch")) ? cfg.Opener.Watch.Length  : 0))
+            , (HasProp(cfg,"Opener")  && HasProp(cfg.Opener,"Watch")) ? cfg.Opener.Watch.Length  : 0
+            , (HasProp(cfg,"Tracks")  && IsObject(cfg.Tracks)) ? cfg.Tracks.Length : 0))
 
         gRot["Cfg"] := cfg
         gRot["RT"]  := Rotation_NewRT(cfg)
 
-        if !cfg.Enabled {
+        if (!cfg.Enabled) {
             Rot_Log("Disabled")
             return
         }
         if (cfg.Opener.Enabled && !gRot["RT"].OpenerDone) {
             Rotation_EnterOpener()
         } else {
-            Rotation_EnterTrack(cfg.DefaultTrackId>0 ? cfg.DefaultTrackId : 1)
+            Rotation_EnterTrack(Rotation_GetDefaultTrackId())
         }
         Rot_Log(Format("Init -> Phase={1} Track={2}", gRot["RT"].Phase, gRot["RT"].TrackId))
         gRotInitialized := true
@@ -91,6 +100,7 @@ Rotation_NewRT(cfg) {
       , PhaseState: 0               ; { StartedAt, Baseline:Map, Items:[{si,need,verify,BlackSeen}] }
       , LastSent: Map()             ; SkillIndex -> last tick（用于黑框时间窗）
       , BlackoutUntil: 0            ; 全局黑忽略窗口截止（眩晕/击倒等）
+      , FreezeUntil: 0              ; 新增：黑屏后冻结（WindowMs）
       , OpStep: {
           Index: 1
         , StepStarted: 0
@@ -131,6 +141,76 @@ Rotation_ReadCfg(prof) {
     return cfg
 }
 
+; ---------- M3 轨道辅助 ----------
+Rotation_UseTracks() {
+    global gRot
+    try {
+        return HasProp(gRot["Cfg"], "Tracks")
+            && IsObject(gRot["Cfg"].Tracks)
+            && gRot["Cfg"].Tracks.Length > 0
+    } catch {
+        return false
+    }
+}
+Rotation_GetTrackById(id) {
+    global gRot
+    if (id <= 0)
+        return 0
+    if (Rotation_UseTracks()) {
+        for _, t in gRot["Cfg"].Tracks {
+            if (HasProp(t, "Id") && t.Id = id)
+                return t
+        }
+        try {
+            return gRot["Cfg"].Tracks[1]
+        } catch {
+            return 0
+        }
+    }
+    if (id = 1)
+        return gRot["Cfg"].Track1
+    if (id = 2)
+        return gRot["Cfg"].Track2
+    return 0
+}
+Rotation_GetDefaultTrackId() {
+    global gRot
+    try {
+        id := HasProp(gRot["Cfg"], "DefaultTrackId") ? gRot["Cfg"].DefaultTrackId : 1
+        if (Rotation_UseTracks()) {
+            if (id > 0 && Rotation_GetTrackById(id))
+                return id
+            return gRot["Cfg"].Tracks[1].Id
+        }
+        return (id > 0 ? id : 1)
+    } catch {
+        return 1
+    }
+}
+Rotation_GetNextTrackId(curId) {
+    global gRot
+    if (Rotation_UseTracks()) {
+        cur := Rotation_GetTrackById(curId)
+        if (cur && HasProp(cur, "NextTrackId") && cur.NextTrackId > 0 && Rotation_GetTrackById(cur.NextTrackId))
+            return cur.NextTrackId
+        arr := gRot["Cfg"].Tracks
+        pos := 1
+        for i, t in arr {
+            if (t.Id = curId) {
+                pos := i
+                break
+            }
+        }
+        nxt := (pos >= arr.Length) ? 1 : (pos + 1)
+        return arr[nxt].Id
+    }
+    return (curId = 1) ? 2 : 1
+}
+Rotation_CurrentTrackCfg() {
+    global gRot
+    return Rotation_GetTrackById(gRot["RT"].TrackId)
+}
+
 ; ========== 状态进入/构建 ==========
 Rotation_EnterOpener() {
     global gRot
@@ -161,13 +241,15 @@ Rotation_BuildPhaseState_Opener() {
 Rotation_BuildPhaseState_Track(trackId) {
     global gRot
     now := A_TickCount
-    tr := (trackId=1) ? gRot["Cfg"].Track1 : gRot["Cfg"].Track2
+    tr := Rotation_GetTrackById(trackId)
     st := { StartedAt: now, Baseline: Map(), Items: [] }
-    for _, w in tr.Watch {
-        si := w.SkillIndex, need := Max(1, (HasProp(w,"RequireCount") ? w.RequireCount : 1))
-        verify := (HasProp(w,"VerifyBlack") ? w.VerifyBlack : 0)
-        st.Baseline[si] := Counters_Get(si)
-        st.Items.Push({ SkillIndex: si, Require: need, VerifyBlack: verify ? 1 : 0, BlackSeen: false })
+    if (tr && HasProp(tr, "Watch") && IsObject(tr.Watch)) {
+        for _, w in tr.Watch {
+            si := w.SkillIndex, need := Max(1, (HasProp(w,"RequireCount") ? w.RequireCount : 1))
+            verify := (HasProp(w,"VerifyBlack") ? w.VerifyBlack : 0)
+            st.Baseline[si] := Counters_Get(si)
+            st.Items.Push({ SkillIndex: si, Require: need, VerifyBlack: verify ? 1 : 0, BlackSeen: false })
+        }
     }
     return st
 }
@@ -204,7 +286,14 @@ Rotation_DetectBlackout(phaseSt) {
     ratio := black / pts.Length
     if (ratio >= bg.BlackRatioThresh) {
         gRot["RT"].BlackoutUntil := now + bg.CooldownMs
-        Rot_Log(Format("BLACKOUT ratio={1:0.00} pts={2} until={3}", ratio, pts.Length, gRot["RT"].BlackoutUntil), "WARN")
+        ; 使用 WindowMs 作为“冻结期”，冻结期间不推进阶段/切轨/Gate
+        try {
+            win := HasProp(bg, "WindowMs") ? Integer(bg.WindowMs) : 0
+            if (win > 0)
+                gRot["RT"].FreezeUntil := Max(gRot["RT"].FreezeUntil, now + win)
+        }
+        Rot_Log(Format("BLACKOUT ratio={1:0.00} pts={2} blackoutUntil={3} freezeUntil={4}"
+            , ratio, pts.Length, gRot["RT"].BlackoutUntil, gRot["RT"].FreezeUntil), "WARN")
         return true
     }
     return false
@@ -246,13 +335,13 @@ Rotation_WatchEval() {
             if (A_TickCount < gRot["RT"].BlackoutUntil) {
                 blkOk := false
             } else {
-                if Rotation_TimeWindowAccept(si) {
+                if (Rotation_TimeWindowAccept(si)) {
                     if (si>=1 && si<=App["ProfileData"].Skills.Length) {
                         s := App["ProfileData"].Skills[si]
                         c := Pixel_FrameGet(s.X, s.Y)
                         if Rotation_IsBlack(c, tol) {
                             uniqOk := true
-                            if gRot["Cfg"].BlackGuard.UniqueRequired {
+                            if (gRot["Cfg"].BlackGuard.UniqueRequired) {
                                 uniqOk := false
                                 for _, it2 in st.Items {
                                     if (it2.SkillIndex = si)
@@ -267,7 +356,7 @@ Rotation_WatchEval() {
                                     }
                                 }
                             }
-                            if uniqOk
+                            if (uniqOk)
                                 it.BlackSeen := true
                         }
                     }
@@ -287,14 +376,15 @@ Rotation_WatchEval() {
 Rotation_RunRules_ForCurrentTrack() {
     global gRot
     cfg := gRot["Cfg"], rt := gRot["RT"]
-    tr := (rt.TrackId=1) ? cfg.Track1 : cfg.Track2
+    tr := Rotation_CurrentTrackCfg()
     acted := false
 
-    if HasProp(tr, "RuleRefs") && tr.RuleRefs.Length>0 {
+    if (tr && HasProp(tr, "RuleRefs") && tr.RuleRefs.Length > 0) {
         allow := Map()
-        for i, rid in tr.RuleRefs
+        for _, rid in tr.RuleRefs
             allow[rid] := true
         try {
+            Rot_Log("Track#" rt.TrackId " filter=RuleRefs count=" tr.RuleRefs.Length)
             RE_SetAllowedRules(allow)
             acted := RuleEngine_RunTick()
         } catch {
@@ -303,10 +393,13 @@ Rotation_RunRules_ForCurrentTrack() {
         }
     } else {
         allowS := Map()
-        for _, w in tr.Watch
-            if (w.SkillIndex>=1)
-                allowS[w.SkillIndex] := true
+        if (tr && HasProp(tr, "Watch")) {
+            for _, w in tr.Watch
+                if (w.SkillIndex>=1)
+                    allowS[w.SkillIndex] := true
+        }
         try {
+            Rot_Log("Track#" rt.TrackId " filter=AllowSkills count=" allowS.Count)
             RE_SetAllowedSkills(allowS)
             acted := RuleEngine_RunTick()
         } catch {
@@ -315,9 +408,84 @@ Rotation_RunRules_ForCurrentTrack() {
         }
     }
 
-    if acted
+    if (acted)
         gRot["RT"].BusyUntil := A_TickCount + cfg.BusyWindowMs
     return acted
+}
+
+; ---------- Gate 多条件求值 ----------
+Rotation_GateEval_Cond(c) {
+    if (!c || !HasProp(c, "Kind"))
+        return false
+    kind := StrUpper(c.Kind)
+    if (kind = "PIXELREADY") {
+        refType  := HasProp(c, "RefType")  ? c.RefType  : "Skill"
+        refIndex := HasProp(c, "RefIndex") ? c.RefIndex : 0
+        op       := HasProp(c, "Op")       ? c.Op       : "NEQ"
+        color    := HasProp(c, "Color")    ? c.Color    : "0x000000"
+        tol      := HasProp(c, "Tol")      ? c.Tol      : 16
+        ref := Rotation_ResolveRef(refType, refIndex)
+        if !ref
+            return false
+        cur := Pixel_FrameGet(ref.X, ref.Y)
+        return Rotation_PixelOpCompare(cur, color, tol, op)
+    } else if (kind = "RULEQUIET") {
+        rid := HasProp(c, "RuleId")  ? c.RuleId  : 0
+        qms := HasProp(c, "QuietMs") ? c.QuietMs : 0
+        return Rotation_GateEval_RuleQuiet({ RuleId: rid, QuietMs: qms })
+    }
+    ; 预留：Counter/Timer 等
+    return false
+}
+Rotation_GateEval(g) {
+    ; 兼容两种格式：
+    ; - M3: g.Conds[] + g.Logic
+    ; - M2: 单条件写在 g.Kind 等字段
+    if (HasProp(g, "Conds") && IsObject(g.Conds) && g.Conds.Length > 0) {
+        logicAnd := (StrUpper(HasProp(g, "Logic") ? g.Logic : "AND") = "AND")
+        anyHit := false
+        allTrue := true
+        for _, c in g.Conds {
+            res := Rotation_GateEval_Cond(c)
+            anyHit := anyHit || res
+            allTrue := allTrue && res
+            if (!logicAnd && anyHit)
+                return true
+            if (logicAnd && !allTrue)
+                return false
+        }
+        return logicAnd ? allTrue : anyHit
+    } else {
+        ; 旧式单条件
+        return Rotation_GateEval_Cond(g)
+    }
+}
+
+Rotation_GateFindMatch() {
+    global gRot
+    cfg := gRot["Cfg"]
+    if !HasProp(cfg,"GatesEnabled") || !cfg.GatesEnabled
+        return 0
+    if !HasProp(cfg,"Gates") || cfg.Gates.Length = 0
+        return 0
+
+    ; 按 Priority 升序评估（未设置 Priority 的按 0 处理，相当于靠前）
+    gates := []
+    for _, g in cfg.Gates
+        gates.Push(g)
+    gates.Sort((a, b, *) => ( (HasProp(a,"Priority")?a.Priority:0) - (HasProp(b,"Priority")?b.Priority:0) ))
+
+    for _, g in gates {
+        ok := Rotation_GateEval(g)
+        if (ok) {
+            tgt := HasProp(g, "TargetTrackId") ? g.TargetTrackId : 0
+            if (tgt > 0) {
+                Rot_Log("GATE hit -> Track#" tgt)
+                return tgt
+            }
+        }
+    }
+    return 0
 }
 
 ; ========== 主 Tick ==========
@@ -332,10 +500,10 @@ Rotation_Tick() {
     ; 起手阶段
     if (rt.Phase = "Opener") {
         opener := cfg.Opener
-        if Rotation_OpenerHasSteps() {
+        if (Rotation_OpenerHasSteps()) {
             res := Rotation_OpenerStepTick()
             if (res = -1) {
-                nextId := (cfg.DefaultTrackId > 0) ? cfg.DefaultTrackId : 1
+                nextId := Rotation_GetDefaultTrackId()
                 Rotation_EnterTrack(nextId)
                 Rot_Log("Opener(Steps) -> Track#" nextId)
                 return true
@@ -351,7 +519,7 @@ Rotation_Tick() {
                 return true
             }
             if (A_TickCount - rt.PhaseState.StartedAt >= opener.MaxDurationMs) {
-                nextId := (cfg.DefaultTrackId > 0) ? cfg.DefaultTrackId : 1
+                nextId := Rotation_GetDefaultTrackId()
                 Rotation_EnterTrack(nextId)
                 Rot_Log("Opener(Steps) timeout -> Track#" nextId)
                 return true
@@ -361,7 +529,7 @@ Rotation_Tick() {
             done := Rotation_WatchEval()
             timeout := (A_TickCount - rt.PhaseState.StartedAt >= opener.MaxDurationMs)
             if (done || timeout) {
-                nextId := (cfg.DefaultTrackId>0) ? cfg.DefaultTrackId : 1
+                nextId := Rotation_GetDefaultTrackId()
                 Rotation_EnterTrack(nextId)
                 Rot_Log("Opener -> Track#" nextId " by " (done?"allOk":"timeout"))
                 return true
@@ -378,33 +546,35 @@ Rotation_Tick() {
     }
 
     ; 轨道阶段
-    thr := ((rt.TrackId=1) ? cfg.Track1.ThreadId : cfg.Track2.ThreadId)
+    curTr := Rotation_CurrentTrackCfg()
+    thr := (curTr && HasProp(curTr,"ThreadId")) ? curTr.ThreadId : 1
     cast := WorkerPool_CastIsLocked(thr)
-    if (cast.Locked || now < rt.BusyUntil) {
+    freeze := (now < rt.FreezeUntil)
+    busy := (now < rt.BusyUntil)
+
+    ; RespectCastLock：=1 时，锁定期间仅允规则执行，不推进 Watch/Gate/切轨
+    if (HasProp(cfg,"RespectCastLock") && cfg.RespectCastLock && cast.Locked) {
         acted := Rotation_RunRules_ForCurrentTrack()
-        if acted
+        return acted
+    }
+
+    ; Busy / Freeze：不推进阶段，仅允规则执行
+    if (busy || freeze) {
+        acted := Rotation_RunRules_ForCurrentTrack()
+        if (acted)
             return true
-        if Rotation_WatchEval() {
-            prevId := rt.TrackId
-            nextId := (rt.TrackId=1) ? 2 : 1
-            Rotation_SwapAndEnter(nextId)
-            Rot_Log("Track#" prevId " -> Track#" nextId " by allOk")
-            return true
-        }
         return false
     }
 
-    ; Gate（非锁+非 BusyWindow，且满足 Gate 冷却与 MinStay）
+    ; Gate（非锁+非 Busy/Frozen，且满足 Gate 冷却与 MinStay）
     elapsed := now - st.StartedAt
-    curTr := (rt.TrackId=1) ? cfg.Track1 : cfg.Track2
-    minStay := HasProp(curTr,"MinStayMs") ? curTr.MinStayMs : 0
+    minStay := (curTr && HasProp(curTr,"MinStayMs")) ? curTr.MinStayMs : 0
     if (HasProp(cfg,"GatesEnabled") && cfg.GatesEnabled) {
         if (now >= rt.GateCooldownUntil && elapsed >= minStay) {
             target := Rotation_GateFindMatch()
             if (target > 0 && target != rt.TrackId) {
                 Rotation_TryEnterTrackWithSwap(target)
                 rt.GateCooldownUntil := now + (HasProp(cfg,"GateCooldownMs") ? cfg.GateCooldownMs : 0)
-                Rot_Log("GATE hit -> Track#" target)
                 return true
             }
         }
@@ -412,16 +582,17 @@ Rotation_Tick() {
 
     ; 执行当前轨规则
     acted := Rotation_RunRules_ForCurrentTrack()
-    if acted
+    if (acted)
         return true
 
-    ; 完成/超时 → 切轨
-    trCfg := (rt.TrackId=1) ? cfg.Track1 : cfg.Track2
+    ; 完成/超时 → 切轨（多轨/NextTrackId）
+    trCfg := curTr
+    maxDur := (trCfg && HasProp(trCfg,"MaxDurationMs")) ? trCfg.MaxDurationMs : 8000
     done := Rotation_WatchEval()
-    timeout := (now - st.StartedAt >= trCfg.MaxDurationMs)
+    timeout := (now - st.StartedAt >= maxDur)
     if (done || timeout) {
         prevId := rt.TrackId
-        nextId := (rt.TrackId=1) ? 2 : 1
+        nextId := Rotation_GetNextTrackId(prevId)
         Rotation_SwapAndEnter(nextId)
         Rot_Log("Track#" prevId " -> Track#" nextId " by " (done?"allOk":"timeout"))
         return true
@@ -433,7 +604,7 @@ Rotation_Tick() {
 Rotation_SwapAndEnter(trackId) {
     global gRot
     cfg := gRot["Cfg"]
-    if HasProp(cfg, "SwapKey") && cfg.SwapKey != "" {
+    if (HasProp(cfg, "SwapKey") && cfg.SwapKey != "") {
         Poller_SendKey(cfg.SwapKey)
         gRot["RT"].BusyUntil := A_TickCount + cfg.BusyWindowMs
     }
@@ -491,34 +662,10 @@ Rotation_GateEval_RuleQuiet(g) {
     last := (RE_LastFireTick.Has(rid) ? RE_LastFireTick[rid] : 0)
     return (A_TickCount - last >= quiet)
 }
-Rotation_GateFindMatch() {
-    global gRot
-    cfg := gRot["Cfg"]
-    if !HasProp(cfg,"GatesEnabled") || !cfg.GatesEnabled
-        return 0
-    if !HasProp(cfg,"Gates") || cfg.Gates.Length=0
-        return 0
-    for _, g in cfg.Gates {
-        kind := StrUpper(g.Kind)
-        ok := false
-        if (kind = "PIXELREADY") {
-            ok := Rotation_GateEval_PixelReady(g)
-            if ok
-                return (HasProp(g,"TargetTrackId") ? g.TargetTrackId : 0)
-        } else if (kind = "RULEQUIET") {
-            ok := Rotation_GateEval_RuleQuiet(g)
-            if ok
-                return (HasProp(g,"TargetTrackId") ? g.TargetTrackId : 0)
-        } else {
-            ; 扩展：Counter/Timer（M3+）
-        }
-    }
-    return 0
-}
 Rotation_TryEnterTrackWithSwap(trackId) {
     global gRot
     cfg := gRot["Cfg"]
-    if HasProp(cfg, "SwapKey") && cfg.SwapKey!="" {
+    if (HasProp(cfg, "SwapKey") && cfg.SwapKey!="") {
         Poller_SendKey(cfg.SwapKey)
         gRot["RT"].BusyUntil := A_TickCount + cfg.BusyWindowMs
         if (HasProp(cfg,"VerifySwap") && cfg.VerifySwap) {
@@ -567,7 +714,7 @@ Rotation_OpenerStepTick() {
     global gRot, App
     cfg := gRot["Cfg"], rt := gRot["RT"]
     steps := cfg.Opener.Steps
-    if !steps || steps.Length=0
+    if (!steps || steps.Length=0)
         return 0
     if !HasProp(rt, "OpStep") {
         rt.OpStep := { Index:1, StepStarted:0 }
@@ -589,7 +736,7 @@ Rotation_OpenerStepTick() {
         return 0
     } else if (stp.Kind = "Swap") {
         if (rt.OpStep.StepStarted = 0) {
-            if HasProp(cfg, "SwapKey") && cfg.SwapKey!="" {
+            if (HasProp(cfg, "SwapKey") && cfg.SwapKey!="") {
                 Poller_SendKey(cfg.SwapKey)
                 rt.BusyUntil := now + cfg.BusyWindowMs
                 if (HasProp(cfg,"VerifySwap") && cfg.VerifySwap)
@@ -617,11 +764,15 @@ Rotation_OpenerStepTick() {
         }
         if (HasProp(stp,"PreDelayMs") && stp.PreDelayMs > 0)
             Sleep stp.PreDelayMs
-        thr := (cfg.Track1.ThreadId)  ; 简化：用 Track1 线程；需要时可扩展 OpenerThreadId
-        ok := WorkerPool_SendSkillIndex(thr, si, "OpenerStep")
+        ; 使用默认轨道的线程（更合理）
+        defTid := 1
+        try {
+            defTid := Rotation_GetTrackById(Rotation_GetDefaultTrackId()).ThreadId
+        }
+        ok := WorkerPool_SendSkillIndex(defTid, si, "OpenerStep")
         if (ok) {
             if (HasProp(stp,"Verify") && stp.Verify) {
-                ; 可对接 RuleEngine_SendVerified 或轻量像素反馈
+                ; 可接 RuleEngine_SendVerified 或轻量像素反馈（留空，保持最小改动）
             }
             rt.BusyUntil := A_TickCount + cfg.BusyWindowMs
             rt.OpStep.Index := i + 1
