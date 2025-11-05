@@ -43,12 +43,27 @@ REUI_Page_Opener_Build(ctx) {
     }
     ddThr.Value := pos
 
-    ; Watch
-    dlg.Add("Text","xm y+12","Watch（技能计数/黑框确认）：")
-    lvOW := dlg.Add("ListView","xm w680 r8 +Grid", ["技能","Require","VerifyBlack"])
-    btnWAdd := dlg.Add("Button","x+10 w80","新增")
-    btnWEdit:= dlg.Add("Button","x+8 w80","编辑")
-    btnWDel := dlg.Add("Button","x+8 w80","删除")
+    ; 计算 Tab 页内容矩形（有 UI_TabPageRect 则用之，失败则用兜底宽度）
+    rc := { X: 12, Y: 12, W: 820, H: 520 }
+    try {
+        r := UI_TabPageRect(tab)  ; 来自 UI_Layout.ahk
+        if (IsObject(r))
+            rc := r
+    }
+    btnW := 84       ; 右侧按钮列宽
+    gap := 8         ; 列表与按钮列间距
+    minW := 560      ; 列表最小宽度，避免过窄
+    listW := Max(minW, rc.W - btnW - gap - 20)  ; 预留右列空间
+
+    ;================ Watch ==================
+    dlg.Add("Text","xm y+16","Watch（技能计数/黑框确认）：")
+    lvOW := dlg.Add("ListView", Format("xm y+6 w{} r7 +Grid", listW), ["技能","Require","VerifyBlack"])
+    ; 右侧按钮列：按列表左上角绝对定位
+    lvOW.GetPos(&lx, &ly, &lw, &lh)
+    btnX := lx + lw + gap
+    btnWAdd := dlg.Add("Button", Format("x{} y{} w{}", btnX, ly, btnW), "新增")
+    btnWEdit:= dlg.Add("Button", Format("x{} y{} w{}", btnX, ly + 34, btnW), "编辑")
+    btnWDel := dlg.Add("Button", Format("x{} y{} w{}", btnX, ly + 68, btnW), "删除")
 
     REUI_Opener_FillWatch(lvOW, cfg)
     btnWAdd.OnEvent("Click", (*) => REUI_Opener_WatchAdd(dlg, cfg, lvOW))
@@ -56,15 +71,19 @@ REUI_Page_Opener_Build(ctx) {
     btnWDel.OnEvent("Click", (*) => REUI_Opener_WatchDel(cfg, lvOW))
     lvOW.OnEvent("DoubleClick", (*) => REUI_Opener_WatchEdit(dlg, cfg, lvOW))
 
-    ; Steps
-    dlg.Add("Text","xm y+12","Steps（按序执行）：")
-    lvS := dlg.Add("ListView","xm w820 r9 +Grid", ["序","类型","详情","就绪","预延时","按住","验证","超时","时长"])
-    btnSAdd  := dlg.Add("Button","xm y+8 w90","新增")
-    btnSEdit := dlg.Add("Button","x+8 w90","编辑")
-    btnSDel  := dlg.Add("Button","x+8 w90","删除")
-    btnSUp   := dlg.Add("Button","x+8 w90","上移")
-    btnSDn   := dlg.Add("Button","x+8 w90","下移")
-    btnSave  := dlg.Add("Button","x+20 w120","保存起手")
+    ;================ Steps ==================
+    ; 在 Watch 列表下方，使用同样宽度与按钮列
+    stepsLabelY := ly + lh + 16
+    dlg.Add("Text", Format("x{} y{}", lx, stepsLabelY), "Steps（按序执行）：")
+    lvS := dlg.Add("ListView", Format("x{} y{} w{} r8 +Grid", lx, stepsLabelY + 16, listW)
+        , ["序","类型","详情","就绪","预延时","按住","验证","超时","时长"])
+
+    lvS.GetPos(&sx, &sy, &sw, &sh)
+    btnSAdd  := dlg.Add("Button", Format("x{} y{} w{}", btnX, sy, btnW), "新增")
+    btnSEdit := dlg.Add("Button", Format("x{} y{} w{}", btnX, sy + 34, btnW), "编辑")
+    btnSDel  := dlg.Add("Button", Format("x{} y{} w{}", btnX, sy + 68, btnW), "删除")
+    btnSUp   := dlg.Add("Button", Format("x{} y{} w{}", btnX, sy + 102, btnW), "上移")
+    btnSDn   := dlg.Add("Button", Format("x{} y{} w{}", btnX, sy + 136, btnW), "下移")
 
     REUI_Opener_FillSteps(lvS, cfg)
     btnSAdd.OnEvent("Click", (*) => REUI_Opener_StepAdd(dlg, cfg, lvS))
@@ -74,7 +93,9 @@ REUI_Page_Opener_Build(ctx) {
     btnSDn.OnEvent("Click", (*) => REUI_Opener_StepMove(cfg, lvS, 1))
     lvS.OnEvent("DoubleClick", (*) => REUI_Opener_StepEdit(dlg, cfg, lvS))
 
-    btnSave.OnEvent("Click", SaveOpener)
+    ; 底部保存按钮：显式放在 Steps 列表下方左侧
+    btnSave := dlg.Add("Button", Format("x{} y{} w120", sx, sy + sh + 12), "保存起手")
+    btnSave.OnEvent("Click", SaveOpener)  ; 保持你原来的保存函数
 
     SaveOpener(*) {
         cfg.Opener.Enabled := cbEnable.Value ? 1 : 0
@@ -170,60 +191,6 @@ REUI_Opener_WatchDel(cfg, lv) {
     cfg.Opener.Watch.RemoveAt(row)
     REUI_Opener_FillWatch(lv, cfg)
 }
-REUI_Opener_WatchEditor_Open(owner, w, idx := 0, onSaved := 0) {
-    if !IsObject(w)
-        w := { SkillIndex:1, RequireCount:1, VerifyBlack:0 }
-    g2 := Gui("+Owner" owner.Hwnd, (idx=0) ? "新增 Watch" : "编辑 Watch")
-    g2.MarginX := 12, g2.MarginY := 10
-    g2.SetFont("s10","Segoe UI")
-
-    g2.Add("Text","w70 Right","技能：")
-    ddS := g2.Add("DropDownList","x+6 w260")
-    cnt := 0
-    try cnt := App["ProfileData"].Skills.Length
-    if (cnt>0) {
-        names := []
-        for _, s in App["ProfileData"].Skills {
-            names.Push(s.Name)
-        }
-        ddS.Add(names)
-        defIdx := HasProp(w,"SkillIndex") ? w.SkillIndex : 1
-        ddS.Value := REUI_IndexClamp(defIdx, names.Length)
-        ddS.Enabled := true
-    } else {
-        ddS.Add(["（无技能）"])
-        ddS.Value := 1
-        ddS.Enabled := false
-    }
-
-    g2.Add("Text","xm y+8 w80 Right","Require：")
-    edReq := g2.Add("Edit","x+6 w120 Number Center", HasProp(w,"RequireCount")?w.RequireCount:1)
-
-    cbVB := g2.Add("CheckBox","xm y+8","VerifyBlack")
-    cbVB.Value := HasProp(w,"VerifyBlack") ? (w.VerifyBlack?1:0) : 0
-
-    btnOK := g2.Add("Button","xm y+12 w90","确定")
-    btnCA := g2.Add("Button","x+8 w90","取消")
-
-    btnOK.OnEvent("Click", SaveWatch)
-    btnCA.OnEvent("Click", (*) => g2.Destroy())
-    g2.OnEvent("Close", (*) => g2.Destroy())
-    g2.Show()
-
-    SaveWatch(*) {
-        if (!ddS.Enabled) {
-            MsgBox "当前没有可引用的技能。"
-            return
-        }
-        si := ddS.Value ? ddS.Value : 1
-        req := (edReq.Value!="") ? Integer(edReq.Value) : 1
-        vb  := cbVB.Value ? 1 : 0
-        nw := { SkillIndex: si, RequireCount: req, VerifyBlack: vb }
-        if onSaved
-            onSaved(nw, idx)
-        g2.Destroy()
-    }
-}
 
 REUI_Opener_FillSteps(lv, cfg) {
     lv.Opt("-Redraw")
@@ -307,6 +274,7 @@ REUI_Opener_StepMove(cfg, lv, dir) {
     REUI_Opener_FillSteps(lv, cfg)
     lv.Modify(to, "Select Focus Vis")
 }
+
 REUI_Opener_StepEditor_Open(owner, st, idx := 0, onSaved := 0) {
     if !IsObject(st)
         st := { Kind:"Skill" }
@@ -415,5 +383,59 @@ REUI_Opener_StepEditor_Open(owner, st, idx := 0, onSaved := 0) {
         if onSaved
             onSaved(ns, (idx=0?0:idx))
         g3.Destroy()
+    }
+}
+REUI_Opener_WatchEditor_Open(owner, w, idx := 0, onSaved := 0) {
+    if !IsObject(w)
+        w := { SkillIndex:1, RequireCount:1, VerifyBlack:0 }
+    g2 := Gui("+Owner" owner.Hwnd, (idx=0) ? "新增 Watch" : "编辑 Watch")
+    g2.MarginX := 12, g2.MarginY := 10
+    g2.SetFont("s10","Segoe UI")
+
+    g2.Add("Text","w70 Right","技能：")
+    ddS := g2.Add("DropDownList","x+6 w260")
+    cnt := 0
+    try cnt := App["ProfileData"].Skills.Length
+    if (cnt>0) {
+        names := []
+        for _, s in App["ProfileData"].Skills {
+            names.Push(s.Name)
+        }
+        ddS.Add(names)
+        defIdx := HasProp(w,"SkillIndex") ? w.SkillIndex : 1
+        ddS.Value := REUI_IndexClamp(defIdx, names.Length)
+        ddS.Enabled := true
+    } else {
+        ddS.Add(["（无技能）"])
+        ddS.Value := 1
+        ddS.Enabled := false
+    }
+
+    g2.Add("Text","xm y+8 w80 Right","Require：")
+    edReq := g2.Add("Edit","x+6 w120 Number Center", HasProp(w,"RequireCount")?w.RequireCount:1)
+
+    cbVB := g2.Add("CheckBox","xm y+8","VerifyBlack")
+    cbVB.Value := HasProp(w,"VerifyBlack") ? (w.VerifyBlack?1:0) : 0
+
+    btnOK := g2.Add("Button","xm y+12 w90","确定")
+    btnCA := g2.Add("Button","x+8 w90","取消")
+
+    btnOK.OnEvent("Click", SaveWatch)
+    btnCA.OnEvent("Click", (*) => g2.Destroy())
+    g2.OnEvent("Close", (*) => g2.Destroy())
+    g2.Show()
+
+    SaveWatch(*) {
+        if (!ddS.Enabled) {
+            MsgBox "当前没有可引用的技能。"
+            return
+        }
+        si := ddS.Value ? ddS.Value : 1
+        req := (edReq.Value!="") ? Integer(edReq.Value) : 1
+        vb  := cbVB.Value ? 1 : 0
+        nw := { SkillIndex: si, RequireCount: req, VerifyBlack: vb }
+        if onSaved
+            onSaved(nw, idx)
+        g2.Destroy()
     }
 }
