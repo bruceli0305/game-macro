@@ -1,44 +1,51 @@
 ; modules\ui\rotation\RE_UI_Page_Gates.ahk
 #Requires AutoHotkey v2
-#Include "RE_UI_Common.ahk"
+#Include "..\shell_v2\UIX_Common.ahk"
 
-; 构建“跳轨”页（完整：列表 + Gate 编辑器 + 条件编辑器），无逗号链、无单行多语句
+; 跳轨页（完整）：顶部工具条 + 满宽列表；含 Gate 编辑器与 条件编辑器
+; Build(ctx) => { Save: Func }
 REUI_Page_Gates_Build(ctx) {
     dlg := ctx.dlg
     tab := ctx.tab
     cfg := ctx.cfg
 
-    tab.UseTab(3)
+    tab.UseTab(1)
     REUI_Gates_Ensure(&cfg)
 
-    lv := dlg.Add("ListView", "xm y+8 w820 r12 +Grid", ["优先级","目标轨","逻辑","条件数"])
-    btnAdd  := dlg.Add("Button", "xm y+8 w90", "新增")
-    btnEdit := dlg.Add("Button", "x+8 w90", "编辑")
-    btnDel  := dlg.Add("Button", "x+8 w90", "删除")
-    btnUp   := dlg.Add("Button", "x+8 w90", "上移")
-    btnDn   := dlg.Add("Button", "x+8 w90", "下移")
-    btnSave := dlg.Add("Button", "x+20 w110", "保存跳轨")
+    rc := UIX_PageRect(ctx.dlg)
+
+    ; 顶部工具条（横向按钮）
+    btnY := rc.Y + 8
+    x := rc.X
+    btnAdd  := dlg.Add("Button", Format("x{} y{} w70", x, btnY), "新增"), x += 70 + 8
+    btnEdit := dlg.Add("Button", Format("x{} y{} w70", x, btnY), "编辑"), x += 70 + 8
+    btnDel  := dlg.Add("Button", Format("x{} y{} w70", x, btnY), "删除"), x += 70 + 8
+    btnUp   := dlg.Add("Button", Format("x{} y{} w70", x, btnY), "上移"),  x += 70 + 8
+    btnDn   := dlg.Add("Button", Format("x{} y{} w70", x, btnY), "下移"),  x += 70 + 8
+    btnSave := dlg.Add("Button", Format("x{} y{} w70", x, btnY), "保存")
+
+    ; 列表：占满右侧内容区
+    lvY := btnY + 34 + 6
+    lvH := Max(120, rc.H - (lvY - rc.Y) - 12)
+    lv := dlg.Add("ListView"
+        , Format("x{} y{} w{} h{} +Grid", rc.X, lvY, rc.W, lvH)
+        , ["优先级","目标轨","逻辑","条件数"])
 
     REUI_Gates_FillList(lv, cfg)
 
+    ; 事件
     btnAdd.OnEvent("Click", (*) => REUI_Gates_OnAdd(cfg, dlg, lv))
     btnEdit.OnEvent("Click", (*) => REUI_Gates_OnEdit(lv, cfg, dlg))
-    btnDel.OnEvent("Click", (*) => REUI_Gates_OnDel(lv, cfg, dlg))
-    btnUp.OnEvent("Click", (*) => REUI_Gates_OnMove(lv, cfg, -1))
-    btnDn.OnEvent("Click", (*) => REUI_Gates_OnMove(lv, cfg, 1))
+    btnDel.OnEvent("Click", (*) => REUI_Gates_OnDel(lv, cfg))
+    btnUp .OnEvent("Click", (*) => REUI_Gates_OnMove(lv, cfg, -1))
+    btnDn .OnEvent("Click", (*) => REUI_Gates_OnMove(lv, cfg,  1))
+    btnSave.OnEvent("Click", (*) => (Storage_SaveProfile(App["ProfileData"]), Notify("跳轨已保存")))
     lv.OnEvent("DoubleClick", (*) => REUI_Gates_OnEdit(lv, cfg, dlg))
-    btnSave.OnEvent("Click", SaveGates)
-
-    SaveGates(*) {
-        Storage_SaveProfile(App["ProfileData"])
-        Notify("跳轨已保存")
-    }
 
     return { Save: () => 0 }
 }
 
-;------------------------------ 列表/数据 ------------------------------
-; 替换整个函数：REUI_Gates_Ensure(&cfg)
+;========================== 列表/数据 ==========================
 REUI_Gates_Ensure(&cfg) {
     if (!HasProp(cfg, "Gates") || !IsObject(cfg.Gates)) {
         cfg.Gates := []
@@ -73,9 +80,8 @@ REUI_Gates_FillList(lv, cfg) {
             lv.Add("", pri, tgt, lgc, cnt)
         }
     }
-    Loop 4 {
+    Loop 4
         lv.ModifyCol(A_Index, "AutoHdr")
-    }
     lv.Opt("+Redraw")
 }
 REUI_Gates_Renum(cfg) {
@@ -85,7 +91,8 @@ REUI_Gates_Renum(cfg) {
     }
 }
 REUI_Gates_OnAdd(cfg, owner, lv) {
-    g := { Priority: (HasProp(cfg,"Gates")?cfg.Gates.Length:0)+1, TargetTrackId: 0, Logic:"AND", Conds:[] }
+    g := { Priority: (HasProp(cfg,"Gates")?cfg.Gates.Length:0)+1
+         , TargetTrackId: 0, Logic:"AND", Conds:[] }
     REUI_GateEditor_Open(owner, cfg, g, 0, OnSaved)
     OnSaved(ng, idx) {
         cfg.Gates.Push(ng)
@@ -109,7 +116,7 @@ REUI_Gates_OnEdit(lv, cfg, owner) {
         REUI_Gates_FillList(lv, cfg)
     }
 }
-REUI_Gates_OnDel(lv, cfg, owner) {
+REUI_Gates_OnDel(lv, cfg) {
     row := lv.GetNext(0, "Focused")
     if !row {
         MsgBox "请选择一个跳轨规则"
@@ -136,7 +143,7 @@ REUI_Gates_OnMove(lv, cfg, dir) {
     lv.Modify(to, "Select Focus Vis")
 }
 
-;------------------------------ Gate 编辑器 ------------------------------
+;========================== Gate 编辑器 ==========================
 REUI_GateEditor_Open(owner, cfg, g, idx := 0, onSaved := 0) {
     isNew := (idx=0)
     if !IsObject(g) g := {}
@@ -154,7 +161,7 @@ REUI_GateEditor_Open(owner, cfg, g, idx := 0, onSaved := 0) {
 
     ge.Add("Text","xm y+8 w100 Right","目标轨：")
     ddTarget := ge.Add("DropDownList","x+6 w160")
-    trackIds := REUI_ListTrackIds(cfg)
+    trackIds := REUI_Gates_ListTrackIds(cfg)
     arrTargets := ["0"]
     for _, id in trackIds
         arrTargets.Push(id)
@@ -213,13 +220,11 @@ REUI_GateEditor_FillConds(lv, g) {
     lv.Opt("-Redraw")
     lv.Delete()
     if HasProp(g,"Conds") && IsObject(g.Conds) {
-        for _, c in g.Conds {
+        for _, c in g.Conds
             lv.Add("", HasProp(c,"Kind")?c.Kind:"?", REUI_GateCond_Summary(c))
-        }
     }
-    Loop 2 {
-        lv.ModifyCol(A_Index, "AutoHdr")
-    }
+    Loop 2
+        lv.ModifyCol(A_Index,"AutoHdr")
     lv.Opt("+Redraw")
 }
 REUI_GateCond_Summary(c) {
@@ -248,7 +253,7 @@ REUI_GateCond_Summary(c) {
     return "?"
 }
 
-;------------------------------ 条件编辑器 ------------------------------
+;========================== 条件编辑器 ==========================
 REUI_CondEditor_OnAdd(lv, owner, cfg, g) {
     nc := {}
     REUI_CondEditor_Open(owner, cfg, nc, 0, OnSaved)
@@ -330,21 +335,19 @@ REUI_CondEditor_Open(owner, cfg, c, idx := 0, onSaved := 0) {
     edEMs := ge2.Add("Edit","x+6 w140 Number", HasProp(c,"ElapsedMs")?c.ElapsedMs:0)
     ddECmp.Value := (StrUpper(HasProp(c,"Cmp")?c.Cmp:"GE")="GE")?1:(StrUpper(c.Cmp)="EQ")?2:(StrUpper(c.Cmp)="GT")?3:(StrUpper(c.Cmp)="LE")?4:(StrUpper(c.Cmp)="LT")?5:1
 
-    ; 事件
     ddKind.OnEvent("Change", (*) => ToggleKind())
     ddRefType.OnEvent("Change", (*) => FillRefObj())
     btnAuto.OnEvent("Click", (*) => AutoColor())
-
-    FillRules()
-    FillSkills()
-    FillRefObj()
-    ToggleKind()
-
     btnOK := ge2.Add("Button","xm y+12 w90","确定")
     btnCA := ge2.Add("Button","x+8 w90","取消")
     btnOK.OnEvent("Click", (*) => SaveCond())
     btnCA.OnEvent("Click", (*) => ge2.Destroy())
     ge2.OnEvent("Close", (*) => ge2.Destroy())
+
+    FillRules()
+    FillSkills()
+    FillRefObj()
+    ToggleKind()
     ge2.Show()
 
     ToggleKind() {
@@ -375,7 +378,7 @@ REUI_CondEditor_Open(owner, cfg, c, idx := 0, onSaved := 0) {
                     names.Push(p.Name)
                 ddRefObj.Add(names)
                 defIdx := HasProp(c,"RefIndex") ? c.RefIndex : 1
-                ddRefObj.Value := REUI_IndexClamp(defIdx, names.Length)
+                ddRefObj.Value := UIX_IndexClamp(defIdx, names.Length)
                 ddRefObj.Enabled := true
             } else {
                 ddRefObj.Add(["（无点位）"])
@@ -391,7 +394,7 @@ REUI_CondEditor_Open(owner, cfg, c, idx := 0, onSaved := 0) {
                     names.Push(s.Name)
                 ddRefObj.Add(names)
                 defIdx := HasProp(c,"RefIndex") ? c.RefIndex : 1
-                ddRefObj.Value := REUI_IndexClamp(defIdx, names.Length)
+                ddRefObj.Value := UIX_IndexClamp(defIdx, names.Length)
                 ddRefObj.Enabled := true
             } else {
                 ddRefObj.Add(["（无技能）"])
@@ -410,7 +413,7 @@ REUI_CondEditor_Open(owner, cfg, c, idx := 0, onSaved := 0) {
                 names.Push(i " - " r.Name)
             ddRule.Add(names)
             defIdx := HasProp(c,"RuleId") ? c.RuleId : 1
-            ddRule.Value := REUI_IndexClamp(defIdx, names.Length)
+            ddRule.Value := UIX_IndexClamp(defIdx, names.Length)
             ddRule.Enabled := true
         } else {
             ddRule.Add(["（无规则）"])
@@ -428,7 +431,7 @@ REUI_CondEditor_Open(owner, cfg, c, idx := 0, onSaved := 0) {
                 names.Push(s.Name)
             ddCSkill.Add(names)
             defIdx := HasProp(c,"RefIndex") ? c.RefIndex : 1
-            ddCSkill.Value := REUI_IndexClamp(defIdx, names.Length)
+            ddCSkill.Value := UIX_IndexClamp(defIdx, names.Length)
             ddCSkill.Enabled := true
         } else {
             ddCSkill.Add(["（无技能）"])
@@ -442,14 +445,14 @@ REUI_CondEditor_Open(owner, cfg, c, idx := 0, onSaved := 0) {
             if (idxP>=1 && idxP<=App["ProfileData"].Points.Length) {
                 p := App["ProfileData"].Points[idxP]
                 edColor.Value := p.Color
-                edTol.Value := p.Tol
+                edTol.Value   := p.Tol
             }
         } else {
             idxS := ddRefObj.Value
             if (idxS>=1 && idxS<=App["ProfileData"].Skills.Length) {
                 s := App["ProfileData"].Skills[idxS]
                 edColor.Value := s.Color
-                edTol.Value := s.Tol
+                edTol.Value   := s.Tol
             }
         }
     }
@@ -463,11 +466,12 @@ REUI_CondEditor_Open(owner, cfg, c, idx := 0, onSaved := 0) {
                 return
             }
             refType := (ddRefType.Value=2) ? "Point" : "Skill"
-            refIdx := ddRefObj.Value
-            opKey := (ddOp.Value=1) ? "EQ" : "NEQ"
-            col := Trim(edColor.Value)
-            tol := (edTol.Value!="") ? Integer(edTol.Value) : 16
-            nc := { Kind:kindKey, RefType:refType, RefIndex:refIdx, Op:opKey, Color:(col!=""?col:"0x000000"), Tol:tol }
+            refIdx  := ddRefObj.Value ? ddRefObj.Value : 1
+            opKey   := (ddOp.Value=1) ? "EQ" : "NEQ"
+            col     := Trim(edColor.Value)
+            tol     := (edTol.Value!="") ? Integer(edTol.Value) : 16
+            nc := { Kind:kindKey, RefType:refType, RefIndex:refIdx
+                  , Op:opKey, Color:(col!=""?col:"0x000000"), Tol:tol }
             if onSaved
                 onSaved(nc, idx)
             ge2.Destroy()
@@ -510,4 +514,18 @@ REUI_CondEditor_Open(owner, cfg, c, idx := 0, onSaved := 0) {
             onSaved(nc, idx)
         ge2.Destroy()
     }
+}
+
+;========================== 工具 ==========================
+REUI_Gates_ListTrackIds(cfg) {
+    ids := []
+    try {
+        if HasProp(cfg, "Tracks") && IsObject(cfg.Tracks) && cfg.Tracks.Length>0 {
+            for _, t in cfg.Tracks
+                ids.Push(t.Id)
+            return ids
+        }
+    }
+    ids.Push(1), ids.Push(2)
+    return ids
 }

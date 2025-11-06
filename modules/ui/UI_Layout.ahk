@@ -287,5 +287,6 @@ UI_OnResize(gui, minmax, w, h) {
         _UI_Move(UI.BtnApplyLang, x0, y0 + 40, 120, 28)
         _UI_Move(UI.BtnOpenLang, x0 + 120 + 8, y0 + 40, 140, 28)
         _UI_Move(UI.LblNote, x0, y0 + 78, Max(gbW, 200), 24)
+        _UI_Move(UI.BtnOpenV2, x0, y0 + 108, 160, 28)
     }
 }

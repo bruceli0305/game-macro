@@ -1,0 +1,217 @@
+; modules\ui\shell_v2\UIX_Common.ahk
+#Requires AutoHotkey v2
+
+; ---------- 日志 ----------
+UIX_Log(msg) {
+    try {
+        DirCreate(A_ScriptDir "\Logs")
+        FileAppend(FormatTime(, "yyyy-MM-dd HH:mm:ss") " [ShellV2] " msg "`r`n"
+            , A_ScriptDir "\Logs\ui_shellv2.log", "UTF-8")
+    }
+}
+
+; ---------- DPI ----------
+UIX_EnablePerMonitorDPI() {
+    try DllCall("user32\SetProcessDpiAwarenessContext", "ptr", -4, "ptr") ; PER_MONITOR_AWARE_V2
+    catch {
+        try DllCall("shcore\SetProcessDpiAwareness", "int", 2, "int")
+        catch {
+            try DllCall("user32\SetProcessDPIAware")
+        }
+    }
+}
+UIX_GetScale(hwnd) {
+    try {
+        if (hwnd) {
+            dpi := DllCall("user32\GetDpiForWindow", "ptr", hwnd, "uint")
+            if (dpi)
+                return dpi / 96.0
+        }
+    }
+    hdc := DllCall("user32\GetDC", "ptr", hwnd, "ptr")
+    if (hdc) {
+        dpi := DllCall("gdi32\GetDeviceCaps", "ptr", hdc, "int", 88, "int")
+        DllCall("user32\ReleaseDC", "ptr", hwnd, "ptr", hdc)
+        if (dpi)
+            return dpi / 96.0
+    }
+    return 1.0
+}
+
+; ---------- 通用 Owner ----------
+UIX_CreateOwnedGui(title := "", owned := true) {
+    if (owned) {
+        try {
+            if IsSet(UI) && IsObject(UI) && UI.Has("Main") && UI.Main && UI.Main.Hwnd
+                return Gui("+Owner" UI.Main.Hwnd, title)
+        }
+    }
+    return Gui(, title)
+}
+
+; ---------- 页面矩形（Tab 或 子Gui 客户区） ----------
+UIX_PageRect(ctrl) {
+    try {
+        if (IsObject(ctrl) && HasProp(ctrl, "Hwnd")) {
+            try {
+                r := UI_TabPageRect(ctrl) ; 若是 Tab 控件
+                if IsObject(r)
+                    return r
+            }
+            rc := Buffer(16, 0)
+            DllCall("user32\GetClientRect", "ptr", ctrl.Hwnd, "ptr", rc.Ptr)
+            wpx := NumGet(rc, 8, "Int")
+            hpx := NumGet(rc, 12, "Int")
+            s := UIX_GetScale(ctrl.Hwnd)
+            w := Round(wpx / s), h := Round(hpx / s)
+            return { X: 12, Y: 12, W: Max(60, w - 24), H: Max(60, h - 24) }
+        }
+    }
+    return { X: 12, Y: 12, W: 820, H: 520 }
+}
+
+; ---------- 枚举子窗口 ----------
+; 同时把 UIX_EnumChildHwnds() 也改成块级 finally（避免单行 finally 造成解析歧义）
+UIX_EnumChildHwnds(hwndParent) {
+    arr := []
+    cb := CallbackCreate((h, lParam) => (arr.Push(h), 1), "Fast")
+    try {
+        DllCall("user32\EnumChildWindows", "ptr", hwndParent, "ptr", cb, "ptr", 0)
+    } finally {
+        try CallbackFree(cb)
+    }
+    return arr
+}
+
+; ---------- 左侧导航（分组不可选） ----------
+; items = [{type:"sep",text:"配置"},{key:"general",text:"常规设置"},...]
+; 请用以下版本替换 modules\ui\shell_v2\UIX_Common.ahk 中的 UIX_Nav_Build()
+; 以及 UIX_EnumChildHwnds()（严格 v2：catch/ finally 都使用块级大括号）
+
+UIX_Nav_Build(gui, x, y, w, h, items) {
+    lb := gui.Add("ListBox", Format("x{} y{} w{} h{}", x, y, w, h))
+    map := []
+    lastSelectable := 0
+    onChanged := 0
+
+    ; 适配不同 v2 版本：优先数组，失败回退字符串（块级 try/catch）
+    AddItem(text) {
+        try {
+            lb.Add([text])            ; 新版 v2 需要数组
+        } catch {
+            lb.Add(text)              ; 兼容旧版 v2
+        }
+    }
+
+    ; 填充行
+    for _, it in items {
+        if (HasProp(it, "type") && it.type = "sep") {
+            AddItem("— " it.text " —")
+            map.Push("")
+        } else {
+            AddItem("  " it.text)
+            map.Push(HasProp(it, "key") ? it.key : "")
+            lastSelectable := map.Length
+        }
+    }
+
+    lb.OnEvent("Change", (*) => NavChange())
+
+    NavChange() {
+        idx := lb.Value
+        if (idx < 1 || idx > map.Length)
+            return
+        if (map[idx] = "") {
+            left := idx - 1, right := idx + 1, moved := false
+            while (left >= 1 || right <= map.Length) {
+                if (left >= 1 && map[left] != "") {
+                    lb.Value := left, moved := true
+                    break
+                }
+                if (right <= map.Length && map[right] != "") {
+                    lb.Value := right, moved := true
+                    break
+                }
+                left -= 1, right += 1
+            }
+            if (!moved && lastSelectable)
+                lb.Value := lastSelectable
+        }
+        if (onChanged) {
+            try {
+                onChanged.Call(UIX_Nav_GetKey())
+            } catch as e {
+                ; 可选：日志/提示
+            }
+        }
+    }
+
+    ; 这三个函数使用可变参形式，允许点号调用时传入多余参数
+    UIX_Nav_GetKey(*) {
+        idx := lb.Value
+        if (idx >= 1 && idx <= map.Length)
+            return map[idx]
+        return ""
+    }
+    UIX_Nav_SelectKey(key, *) {
+        if (key = "")
+            return
+        for i, k in map {
+            if (k = key) {
+                lb.Value := i
+                if (onChanged) {
+                    try onChanged.Call(key)
+                }
+                return
+            }
+        }
+    }
+    UIX_Nav_SetOnChange(cb, *) {
+        onChanged := cb
+    }
+
+    return { Ctrl: lb
+           , Map: map
+           , GetKey: UIX_Nav_GetKey
+           , SelectKey: UIX_Nav_SelectKey
+           , SetOnChange: UIX_Nav_SetOnChange }
+}
+
+; ---------- 列表 + 右侧按钮列（保留，以便需要时使用） ----------
+UIX_ListWithButtonColumn(gui, baseX, baseY, totalW, rows, columns, btnW := 82, gap := 8) {
+    listW := totalW - btnW - gap
+    if (listW < 360)
+        listW := 360
+    lv := gui.Add("ListView", Format("x{} y{} w{} r{} +Grid", baseX, baseY, listW, rows), columns)
+    lv.GetPos(&lx, &ly, &lw, &lh)
+    btnX := lx + lw + gap
+    btnY := ly
+    nextY := ly + lh + 12
+    return { lv: lv, btnX: btnX, btnY: btnY, btnW: btnW, nextY: nextY, listW: lw }
+}
+
+; ---------- 两列区域 & 安全 Move ----------
+UIX_Cols2(rc, leftRatio := 0.58, gutter := 12) {
+    lr := Max(0.3, Min(0.75, leftRatio))
+    Lw := Round(rc.W * lr) - gutter
+    Rw := rc.W - Lw - gutter
+    L := { X: rc.X,           Y: rc.Y, W: Lw, H: rc.H }
+    R := { X: rc.X + Lw + gutter, Y: rc.Y, W: Rw, H: rc.H }
+    return { L: L, R: R }
+}
+UIX_Move(ctrl, x, y, w := "", h := "") {
+    try {
+        if (w = "" && h = "")
+            ctrl.Move(x, y)
+        else if (h = "")
+            ctrl.Move(x, y, w)
+        else
+            ctrl.Move(x, y, w, h)
+    }
+}
+; modules\ui\shell_v2\UIX_Common.ahk
+UIX_IndexClamp(v, max) {
+    v := Integer(v)
+    max := Integer(max)
+    return (max <= 0) ? 0 : Min(Max(v, 1), max)
+}

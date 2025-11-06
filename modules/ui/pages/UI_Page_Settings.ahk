@@ -24,6 +24,9 @@ UI_Page_Settings_Build() {
     UI.BtnApplyLang := UI.Main.Add("Button", "xm y+10 w120", T("btn.applyLang","应用语言"))
     UI.BtnOpenLang  := UI.Main.Add("Button", "x+8 w140", T("btn.openLangDir","打开语言目录"))
     UI.LblNote      := UI.Main.Add("Text", "xm y+8", T("label.noteRestart","应用后将重建界面"))
+    UI.BtnOpenV2 := UI.Main.Add("Button", "xm y+10 w160", "打开新界面（实验）")
+
+    UI.BtnOpenV2.OnEvent("Click", (*) => UI_Page_Settings_OpenV2())
     UI.BtnApplyLang.OnEvent("Click", (*) => UI_Page_Settings_ApplyLang(UI.DdLang, packs))
     UI.BtnOpenLang.OnEvent("Click", (*) => Run(A_ScriptDir "\Languages"))
 }
@@ -40,4 +43,13 @@ UI_Page_Settings_ApplyLang(dd, packs) {
     try UI.Main.Destroy()
     UI_ShowMain()
     Notify("Language: " code)
+}
+
+UI_Page_Settings_OpenV2() {
+    try {
+        UI_ShowMainV2(false)  ; 独立打开
+    } catch as e {
+        MsgBox Format("打开新界面失败：{1}`nFile: {2}`nLine: {3}`nWhat: {4}"
+            , e.Message, e.File, e.Line, e.What)
+    }
 }

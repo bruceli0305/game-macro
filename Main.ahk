@@ -39,8 +39,10 @@ CoordMode "Pixel", "Screen"
 #Include "modules\ui\dialogs\GUI_RuleEditor.ahk"
 #Include "modules\ui\dialogs\GUI_BuffEditor.ahk"
 #Include "modules\ui\dialogs\GUI_Threads.ahk"
+#Include "modules\ui\shell_v2\UI_ShellV2.ahk"
 #Include "modules\ui\UI_Layout.ahk"
 #Include "modules\ui\UI_Shell.ahk"
+
 ; ========= Bootstrap =========
 AppConfig_Init()
 Lang_Init(AppConfig_Get("Language","zh-CN"))

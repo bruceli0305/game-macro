@@ -1,107 +1,142 @@
 ; modules\ui\rotation\RE_UI_Page_General.ahk
 #Requires AutoHotkey v2
+#Include "..\shell_v2\UIX_Common.ahk"
 
-; 返回 { Save: Func }
 REUI_Page_General_Build(ctx) {
     dlg := ctx.dlg
+    tab := ctx.tab
     cfg := ctx.cfg
 
-    tab := ctx.tab
     tab.UseTab(1)
+    rc := UIX_PageRect(dlg)
+    cols := UIX_Cols2(rc, 0.58, 12)
+    L := cols.L, R := cols.R
 
-    ; 文案为纯中文
-    cbEnable := dlg.Add("CheckBox", "xm y+10 w160", "启用轮换")
-    cbEnable.Value := cfg.Enabled ? 1 : 0
-
-    dlg.Add("Text", "xm y+8 w100 Right", "默认轨道：")
-    ddDefTrack := dlg.Add("DropDownList", "x+6 w160")
-    ids := REUI_ListTrackIds(cfg)
-    if ids.Length {
-        ddDefTrack.Add(ids)
-        pos := 1
-        for i, v in ids
-            if (Integer(v) = Integer(cfg.DefaultTrackId)) {
-                pos := i
-                break
-            }
-        ddDefTrack.Value := pos
+    ; 取轨道ID列表
+    ids := []
+    try {
+        if HasProp(cfg,"Tracks") && IsObject(cfg.Tracks) && cfg.Tracks.Length>0 {
+            for _, t in cfg.Tracks
+                ids.Push(t.Id)
+        } else {
+            ids := [1,2]
+        }
     }
 
-    dlg.Add("Text", "xm y+8 w100 Right", "忙窗(ms)：")
-    edBusy := dlg.Add("Edit", "x+6 w120 Number Center", cfg.BusyWindowMs)
+    y := L.Y
+    cbEnable := dlg.Add("CheckBox", Format("x{} y{} w160", L.X, y), "启用轮换")
+    cbEnable.Value := HasProp(cfg,"Enabled") ? (cfg.Enabled?1:0) : 0
 
-    dlg.Add("Text", "x+20 w110 Right", "黑色容差：")
-    edTol := dlg.Add("Edit", "x+6 w120 Number Center", cfg.ColorTolBlack)
+    y += 34
+    dlg.Add("Text", Format("x{} y{} w100 Right", L.X, y), "默认轨道：")
+    ddDef := dlg.Add("DropDownList", Format("x{} y{} w160", L.X + 100 + 6, y), ids)
+    if (ids.Length) {
+        pos := 1
+        defId := HasProp(cfg,"DefaultTrackId") ? cfg.DefaultTrackId : 1
+        for i, v in ids
+            if (Integer(v) = Integer(defId)) { 
+                pos := i
+                break 
+            }
+        ddDef.Value := pos
+    }
 
-    cbCast := dlg.Add("CheckBox", "xm y+8 w200", "尊重施法锁")
-    cbCast.Value := cfg.RespectCastLock ? 1 : 0
+    y += 34
+    dlg.Add("Text", Format("x{} y{} w100 Right", L.X, y), "忙窗(ms)：")
+    edBusy := dlg.Add("Edit", Format("x{} y{} w120", L.X + 100 + 6, y), HasProp(cfg,"BusyWindowMs") ? cfg.BusyWindowMs : 200)
 
-    dlg.Add("Text", "xm y+8 w100 Right", "切换键：")
-    hkSwap := dlg.Add("Hotkey", "x+6 w160", cfg.SwapKey)
-    cbVerifySwap := dlg.Add("CheckBox", "x+12 w120", "验证切换")
-    cbVerifySwap.Value := cfg.VerifySwap ? 1 : 0
+    dlg.Add("Text", Format("x{} y{} w110 Right", L.X + 100 + 6 + 120 + 18, y), "黑色容差：")
+    edTol := dlg.Add("Edit", Format("x{} y{} w120", L.X + 100 + 6 + 120 + 18 + 110 + 6, y)
+        , HasProp(cfg,"ColorTolBlack") ? cfg.ColorTolBlack : 16)
 
-    dlg.Add("Text", "xm y+8 w100 Right", "切换超时(ms)：")
-    edSwapTO := dlg.Add("Edit", "x+6 w120 Number Center", cfg.SwapTimeoutMs)
-    dlg.Add("Text", "x+20 w100 Right", "重试次数：")
-    edSwapRetry := dlg.Add("Edit", "x+6 w120 Number Center", cfg.SwapRetry)
+    y += 34
+    cbCast := dlg.Add("CheckBox", Format("x{} y{} w180", L.X, y), "尊重施法锁")
+    cbCast.Value := HasProp(cfg,"RespectCastLock") ? (cfg.RespectCastLock?1:0) : 1
 
-    cbGates := dlg.Add("CheckBox", "xm y+8 w200", "启用跳轨")
-    cbGates.Value := cfg.GatesEnabled ? 1 : 0
-    dlg.Add("Text", "x+12 w100 Right", "跳轨冷却(ms)：")
-    edGateCd := dlg.Add("Edit", "x+6 w120 Number Center", cfg.GateCooldownMs)
+    y += 34
+    dlg.Add("Text", Format("x{} y{} w100 Right", L.X, y), "切换键：")
+    hkSwap := dlg.Add("Hotkey", Format("x{} y{} w160", L.X + 100 + 6, y), HasProp(cfg,"SwapKey") ? cfg.SwapKey : "")
+    cbVerify := dlg.Add("CheckBox", Format("x{} y{} w120", L.X + 100 + 6 + 160 + 12, y), "验证切换")
+    cbVerify.Value := HasProp(cfg,"VerifySwap") ? (cfg.VerifySwap?1:0) : 0
 
-    ; 黑框防抖
-    gb := dlg.Add("GroupBox", "xm y+12 w820 h150", "黑框防抖")
-    cbBG := dlg.Add("CheckBox", "xp+12 yp+26 w80", "启用")
-    cbBG.Value := cfg.BlackGuard.Enabled ? 1 : 0
-    dlg.Add("Text", "x+10 w70 Right", "采样数：")
-    edBG_Samp := dlg.Add("Edit", "x+6 w80 Number Center", cfg.BlackGuard.SampleCount)
+    y += 34
+    dlg.Add("Text", Format("x{} y{} w100 Right", L.X, y), "切换超时(ms)：")
+    edTO := dlg.Add("Edit", Format("x{} y{} w120", L.X + 100 + 6, y), HasProp(cfg,"SwapTimeoutMs") ? cfg.SwapTimeoutMs : 800)
+    dlg.Add("Text", Format("x{} y{} w100 Right", L.X + 100 + 6 + 120 + 18, y), "重试次数：")
+    edRetry := dlg.Add("Edit", Format("x{} y{} w120", L.X + 100 + 6 + 120 + 18 + 100 + 6, y)
+        , HasProp(cfg,"SwapRetry") ? cfg.SwapRetry : 0)
 
-    dlg.Add("Text", "x+16 w110 Right", "黑像素阈值：")
-    ratio := Round(HasProp(cfg.BlackGuard, "BlackRatioThresh") ? cfg.BlackGuard.BlackRatioThresh : 0.7, 2)
-    edBG_Ratio := dlg.Add("Edit", "x+6 w100 Center", ratio)
+    y += 34
+    cbGates := dlg.Add("CheckBox", Format("x{} y{} w160", L.X, y), "启用跳轨")
+    cbGates.Value := HasProp(cfg,"GatesEnabled") ? (cfg.GatesEnabled?1:0) : 0
+    dlg.Add("Text", Format("x{} y{} w100 Right", L.X + 160 + 12, y), "跳轨冷却(ms)：")
+    edGate := dlg.Add("Edit", Format("x{} y{} w120", L.X + 160 + 12 + 100 + 6, y)
+        , HasProp(cfg,"GateCooldownMs") ? cfg.GateCooldownMs : 0)
 
-    dlg.Add("Text", "x+16 w100 Right", "冻结窗(ms)：")
-    edBG_Win := dlg.Add("Edit", "x+6 w100 Number Center", cfg.BlackGuard.WindowMs)
+    ; BlackGuard 分组
+    gy := y + 46
+    gb := dlg.Add("GroupBox", Format("x{} y{} w{} h150", L.X, gy, L.W), "黑框防抖")
+    cbBG := dlg.Add("CheckBox", Format("x{} y{} w80", L.X + 12, gy + 26), "启用")
+    cbBG.Value := (HasProp(cfg,"BlackGuard") && HasProp(cfg.BlackGuard,"Enabled")) ? (cfg.BlackGuard.Enabled?1:0) : 1
 
-    dlg.Add("Text", "xm y+10 w100 Right", "冷却(ms)：")
-    edBG_Cool := dlg.Add("Edit", "x+6 w100 Number Center", cfg.BlackGuard.CooldownMs)
+    dlg.Add("Text", Format("x{} y{} w70 Right", L.X + 12 + 80 + 10, gy + 26), "采样数：")
+    edSamp := dlg.Add("Edit", Format("x{} y{} w80", L.X + 12 + 80 + 10 + 70 + 6, gy + 26)
+        , (HasProp(cfg,"BlackGuard") && HasProp(cfg.BlackGuard,"SampleCount")) ? cfg.BlackGuard.SampleCount : 5)
 
-    dlg.Add("Text", "x+16 w120 Right", "黑窗最小延迟(ms)：")
-    edBG_Min := dlg.Add("Edit", "x+6 w100 Number Center", cfg.BlackGuard.MinAfterSendMs)
+    dlg.Add("Text", Format("x{} y{} w110 Right", L.X + 12 + 80 + 10 + 70 + 6 + 80 + 16, gy + 26), "黑像素阈值：")
+    ratio := (HasProp(cfg,"BlackGuard") && HasProp(cfg.BlackGuard,"BlackRatioThresh")) ? cfg.BlackGuard.BlackRatioThresh : 0.7
+    edRatio := dlg.Add("Edit", Format("x{} y{} w100", L.X + 12 + 80 + 10 + 70 + 6 + 80 + 16 + 110 + 6, gy + 26)
+        , Round(ratio, 2))
 
-    dlg.Add("Text", "x+16 w120 Right", "黑窗最大延迟(ms)：")
-    edBG_Max := dlg.Add("Edit", "x+6 w100 Number Center", cfg.BlackGuard.MaxAfterSendMs)
+    dlg.Add("Text", Format("x{} y{} w100 Right", L.X + 12, gy + 26 + 40), "冷却(ms)：")
+    edCool := dlg.Add("Edit", Format("x{} y{} w100", L.X + 12 + 100 + 6, gy + 26 + 40)
+        , (HasProp(cfg,"BlackGuard") && HasProp(cfg.BlackGuard,"CooldownMs")) ? cfg.BlackGuard.CooldownMs : 600)
 
-    cbBG_Uniq := dlg.Add("CheckBox", "x+16 w140", "需要唯一黑框")
-    cbBG_Uniq.Value := cfg.BlackGuard.UniqueRequired ? 1 : 0
+    dlg.Add("Text", Format("x{} y{} w140 Right", L.X + 12 + 100 + 6 + 100 + 16, gy + 26 + 40), "黑窗最小延迟(ms)：")
+    edMin := dlg.Add("Edit", Format("x{} y{} w100", L.X + 12 + 100 + 6 + 100 + 16 + 140 + 6, gy + 26 + 40)
+        , (HasProp(cfg,"BlackGuard") && HasProp(cfg.BlackGuard,"MinAfterSendMs")) ? cfg.BlackGuard.MinAfterSendMs : 60)
 
-    ; 返回保存函数
-    Save := () => (
+    dlg.Add("Text", Format("x{} y{} w140 Right", L.X + 12, gy + 26 + 40 + 34), "黑窗最大延迟(ms)：")
+    edMax := dlg.Add("Edit", Format("x{} y{} w100", L.X + 12 + 140 + 6, gy + 26 + 40 + 34)
+        , (HasProp(cfg,"BlackGuard") && HasProp(cfg.BlackGuard,"MaxAfterSendMs")) ? cfg.BlackGuard.MaxAfterSendMs : 800)
+
+    cbUniq := dlg.Add("CheckBox", Format("x{} y{}", L.X + 12 + 140 + 6 + 100 + 16, gy + 26 + 40 + 34), "需要唯一黑框")
+    cbUniq.Value := (HasProp(cfg,"BlackGuard") && HasProp(cfg.BlackGuard,"UniqueRequired")) ? (cfg.BlackGuard.UniqueRequired?1:0) : 1
+
+    ; 保存
+    btnSave := dlg.Add("Button", Format("x{} y{} w120", L.X, gy + 150 + 16), "保存")
+    btnSave.OnEvent("Click", Save)
+
+    Save(*) {
         cfg.Enabled := cbEnable.Value ? 1 : 0
-      , (idsNow := REUI_ListTrackIds(cfg))
-      , (cfg.DefaultTrackId := (ddDefTrack.Value>=1 && ddDefTrack.Value<=idsNow.Length) ? Integer(idsNow[ddDefTrack.Value]) : 1)
-      , (cfg.BusyWindowMs := (edBusy.Value!="") ? Integer(edBusy.Value) : 200)
-      , (cfg.ColorTolBlack := (edTol.Value!="") ? Integer(edTol.Value) : 16)
-      , (cfg.RespectCastLock := cbCast.Value ? 1 : 0)
-      , (cfg.SwapKey := Trim(hkSwap.Value))
-      , (cfg.VerifySwap := cbVerifySwap.Value ? 1 : 0)
-      , (cfg.SwapTimeoutMs := (edSwapTO.Value!="") ? Integer(edSwapTO.Value) : 800)
-      , (cfg.SwapRetry := (edSwapRetry.Value!="") ? Integer(edSwapRetry.Value) : 0)
-      , (cfg.GatesEnabled := cbGates.Value ? 1 : 0)
-      , (cfg.GateCooldownMs := (edGateCd.Value!="") ? Integer(edGateCd.Value) : 0)
-      , (bg := cfg.BlackGuard)
-      , (bg.Enabled := cbBG.Value ? 1 : 0)
-      , (bg.SampleCount := (edBG_Samp.Value!="") ? Integer(edBG_Samp.Value) : 5)
-      , (bg.BlackRatioThresh := (edBG_Ratio.Value!="") ? (edBG_Ratio.Value+0) : 0.7)
-      , (bg.WindowMs := (edBG_Win.Value!="") ? Integer(edBG_Win.Value) : 120)
-      , (bg.CooldownMs := (edBG_Cool.Value!="") ? Integer(edBG_Cool.Value) : 600)
-      , (bg.MinAfterSendMs := (edBG_Min.Value!="") ? Integer(edBG_Min.Value) : 60)
-      , (bg.MaxAfterSendMs := (edBG_Max.Value!="") ? Integer(edBG_Max.Value) : 800)
-      , (bg.UniqueRequired := cbBG_Uniq.Value ? 1 : 0)
-      , (cfg.BlackGuard := bg)
-    )
+        if (ddDef.Value>=1 && ddDef.Value<=ids.Length)
+            cfg.DefaultTrackId := Integer(ids[ddDef.Value])
+        cfg.BusyWindowMs := (edBusy.Value!="") ? Integer(edBusy.Value) : 200
+        cfg.ColorTolBlack := (edTol.Value!="") ? Integer(edTol.Value) : 16
+        cfg.RespectCastLock := cbCast.Value ? 1 : 0
+        cfg.SwapKey := Trim(hkSwap.Value)
+        cfg.VerifySwap := cbVerify.Value ? 1 : 0
+        cfg.SwapTimeoutMs := (edTO.Value!="") ? Integer(edTO.Value) : 800
+        cfg.SwapRetry := (edRetry.Value!="") ? Integer(edRetry.Value) : 0
+        cfg.GatesEnabled := cbGates.Value ? 1 : 0
+        cfg.GateCooldownMs := (edGate.Value!="") ? Integer(edGate.Value) : 0
 
-    return { Save: Save }
+        if !HasProp(cfg,"BlackGuard")
+            cfg.BlackGuard := {}
+        bg := cfg.BlackGuard
+        bg.Enabled := cbBG.Value ? 1 : 0
+        bg.SampleCount := (edSamp.Value!="") ? Integer(edSamp.Value) : 5
+        try bg.BlackRatioThresh := (edRatio.Value!="") ? (edRatio.Value+0) : 0.7
+        bg.CooldownMs := (edCool.Value!="") ? Integer(edCool.Value) : 600
+        bg.MinAfterSendMs := (edMin.Value!="") ? Integer(edMin.Value) : 60
+        bg.MaxAfterSendMs := (edMax.Value!="") ? Integer(edMax.Value) : 800
+        bg.UniqueRequired := cbUniq.Value ? 1 : 0
+        cfg.BlackGuard := bg
+
+        App["ProfileData"].Rotation := cfg
+        Storage_SaveProfile(App["ProfileData"])
+        Notify("常规设置已保存")
+    }
+
+    return { Save: (*) => 0 }
 }
