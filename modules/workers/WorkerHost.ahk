@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+;WorkerHost.ahk
 #SingleInstance Off
 #NoTrayIcon
 SendMode "Input"

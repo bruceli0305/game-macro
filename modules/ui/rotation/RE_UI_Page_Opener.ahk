@@ -3,8 +3,6 @@
 #Requires AutoHotkey v2
 #Include "..\shell_v2\UIX_Common.ahk"
 
-; 起手页：顶部表单（启用/时长/线程）+ 右列 Watch/Steps（工具条 + 满宽列表）
-; Build(ctx) => { Save: Func }
 REUI_Page_Opener_Build(ctx) {
     dlg := ctx.dlg
     tab := ctx.tab
@@ -31,6 +29,7 @@ REUI_Page_Opener_Build(ctx) {
             thrNames.Push(th.Name)
             thrIds.Push(th.Id)
         }
+    } catch {
     }
     if (thrNames.Length) {
         ddThr.Add(thrNames)
@@ -45,22 +44,34 @@ REUI_Page_Opener_Build(ctx) {
     }
     ddThr.Value := sel
 
-    ; 求表单底部 y
+    ; 顶部表单底部 y
     ddThr.GetPos(&tx, &ty, &tw, &th)
     yFormBottom := ty + th
 
-    ; 两列区域：右侧用于列表
-    cols := UIX_Cols2(rc, 0.58, 12)
+    ; 内容区（为底部“保存”预留高度）
+    toolH := 34
+    gap  := 6
+    saveH := 28
+    saveGapTop := 12
+    reservedBottom := saveH + saveGapTop
+
+    cont := { X: rc.X, Y: yFormBottom + 12
+            , W: rc.W
+            , H: Max(120, rc.H - ((yFormBottom + 12) - rc.Y) - reservedBottom - 12) }
+
+    ; 两列布局：左侧 Watch，右侧 Steps
+    cols := UIX_Cols2(cont, 0.42, 12)
+    L := cols.L
     R := cols.R
 
-    ; 右列：Watch 工具条 + 列表
-    btnWAdd  := dlg.Add("Button", Format("x{} y{} w70", R.X, yFormBottom + 12), "新增")
+    ; -------- 左列：Watch 工具条 + 列表 --------
+    btnWAdd  := dlg.Add("Button", Format("x{} y{} w70", L.X, L.Y), "新增")
     btnWEdit := dlg.Add("Button", "x+6 w70", "编辑")
     btnWDel  := dlg.Add("Button", "x+6 w70", "删除")
 
-    watchY := yFormBottom + 12 + 34 + 6
-    watchH := Round(R.H * 0.38)
-    lvOW   := dlg.Add("ListView", Format("x{} y{} w{} h{} +Grid", R.X, watchY, R.W, watchH)
+    watchY := L.Y + toolH + gap
+    watchH := Max(120, L.H - toolH - gap)
+    lvOW   := dlg.Add("ListView", Format("x{} y{} w{} h{} +Grid", L.X, watchY, L.W, watchH)
                      , ["技能","Require","VerifyBlack"])
     REUI_Opener_FillWatch(lvOW, cfg)
     btnWAdd.OnEvent("Click", (*) => REUI_Opener_WatchAdd(dlg, cfg, lvOW))
@@ -71,16 +82,15 @@ REUI_Page_Opener_Build(ctx) {
         lvOW.ModifyCol(A_Index, "AutoHdr")
     }
 
-    ; 右列：Steps 工具条 + 列表
-    stepsToolY := watchY + watchH + 12
-    btnSAdd  := dlg.Add("Button", Format("x{} y{} w70", R.X, stepsToolY), "新增")
+    ; -------- 右列：Steps 工具条 + 列表 --------
+    btnSAdd  := dlg.Add("Button", Format("x{} y{} w70", R.X, R.Y), "新增")
     btnSEdit := dlg.Add("Button", "x+6 w70", "编辑")
     btnSDel  := dlg.Add("Button", "x+6 w70", "删除")
     btnSUp   := dlg.Add("Button", "x+18 w70", "上移")
     btnSDn   := dlg.Add("Button", "x+6 w70", "下移")
 
-    stepsY := stepsToolY + 34 + 6
-    stepsH := Max(120, R.H - (stepsY - rc.Y) - 56)
+    stepsY := R.Y + toolH + gap
+    stepsH := Max(120, R.H - toolH - gap)
     lvS    := dlg.Add("ListView", Format("x{} y{} w{} h{} +Grid", R.X, stepsY, R.W, stepsH)
                     , ["序","类型","详情","就绪","预延时","按住","验证","超时","时长"])
     REUI_Opener_FillSteps(lvS, cfg)
@@ -93,8 +103,9 @@ REUI_Page_Opener_Build(ctx) {
         lvS.ModifyCol(A_Index, "AutoHdr")
     }
 
-    ; 底部保存
-    btnSave := dlg.Add("Button", Format("x{} y{} w120", R.X, stepsY + stepsH + 12), "保存起手")
+    ; 底部保存（与左列对齐）
+    ySave := cont.Y + cont.H + saveGapTop
+    btnSave := dlg.Add("Button", Format("x{} y{} w120", L.X, ySave), "保存起手")
     btnSave.OnEvent("Click", SaveOpener)
 
     ; 保存函数（给 Build 返回调用）

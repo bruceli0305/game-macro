@@ -9,35 +9,80 @@ UIX_Log(msg) {
             , A_ScriptDir "\Logs\ui_shellv2.log", "UTF-8")
     }
 }
-
 ; ---------- DPI ----------
 UIX_EnablePerMonitorDPI() {
-    try DllCall("user32\SetProcessDpiAwarenessContext", "ptr", -4, "ptr") ; PER_MONITOR_AWARE_V2
-    catch {
-        try DllCall("shcore\SetProcessDpiAwareness", "int", 2, "int")
-        catch {
-            try DllCall("user32\SetProcessDPIAware")
+    try {
+        DllCall("user32\SetProcessDpiAwarenessContext", "ptr", -4, "ptr")  ; PER_MONITOR_AWARE_V2
+    } catch {
+        try {
+            DllCall("shcore\SetProcessDpiAwareness", "int", 2, "int")      ; PROCESS_PER_MONITOR_DPI_AWARE
+        } catch {
+            try {
+                DllCall("user32\SetProcessDPIAware")                        ; System DPI aware
+            } catch {
+            }
         }
     }
 }
+
 UIX_GetScale(hwnd) {
     try {
         if (hwnd) {
             dpi := DllCall("user32\GetDpiForWindow", "ptr", hwnd, "uint")
-            if (dpi)
+            if (dpi) {
                 return dpi / 96.0
+            }
         }
+    } catch {
     }
     hdc := DllCall("user32\GetDC", "ptr", hwnd, "ptr")
     if (hdc) {
         dpi := DllCall("gdi32\GetDeviceCaps", "ptr", hdc, "int", 88, "int")
         DllCall("user32\ReleaseDC", "ptr", hwnd, "ptr", hdc)
-        if (dpi)
+        if (dpi) {
             return dpi / 96.0
+        }
     }
     return 1.0
 }
 
+; ---------- 判断是否为 Tab 控件 ----------
+UIX_IsTab(hwnd) {
+    if (!hwnd) {
+        return 0
+    }
+    buf := Buffer(512, 0)  ; 256 个 UTF-16 字符
+    len := DllCall("user32\GetClassNameW", "ptr", hwnd, "ptr", buf.Ptr, "int", buf.Size // 2, "int")
+    if (len <= 0) {
+        return 0
+    }
+    cls := StrGet(buf.Ptr, len, "UTF-16")
+    return (cls = "SysTabControl32") ? 1 : 0
+}
+
+; ---------- 页面矩形（Tab 用 UI_TabPageRect；普通子 Gui 用自身 ClientRect） ----------
+UIX_PageRect(ctrl) {
+    try {
+        if (IsObject(ctrl) && HasProp(ctrl, "Hwnd")) {
+            if (UIX_IsTab(ctrl.Hwnd)) {
+                r := UI_TabPageRect(ctrl)
+                if (IsObject(r)) {
+                    return r
+                }
+            }
+            rc := Buffer(16, 0)
+            DllCall("user32\GetClientRect", "ptr", ctrl.Hwnd, "ptr", rc.Ptr)
+            wpx := NumGet(rc, 8, "Int")
+            hpx := NumGet(rc, 12, "Int")
+            s := UIX_GetScale(ctrl.Hwnd)
+            w := Round(wpx / s)
+            h := Round(hpx / s)
+            return { X: 12, Y: 12, W: Max(60, w - 24), H: Max(60, h - 24) }
+        }
+    } catch {
+    }
+    return { X: 12, Y: 12, W: 820, H: 520 }
+}
 ; ---------- 通用 Owner ----------
 UIX_CreateOwnedGui(title := "", owned := true) {
     if (owned) {
@@ -47,27 +92,6 @@ UIX_CreateOwnedGui(title := "", owned := true) {
         }
     }
     return Gui(, title)
-}
-
-; ---------- 页面矩形（Tab 或 子Gui 客户区） ----------
-UIX_PageRect(ctrl) {
-    try {
-        if (IsObject(ctrl) && HasProp(ctrl, "Hwnd")) {
-            try {
-                r := UI_TabPageRect(ctrl) ; 若是 Tab 控件
-                if IsObject(r)
-                    return r
-            }
-            rc := Buffer(16, 0)
-            DllCall("user32\GetClientRect", "ptr", ctrl.Hwnd, "ptr", rc.Ptr)
-            wpx := NumGet(rc, 8, "Int")
-            hpx := NumGet(rc, 12, "Int")
-            s := UIX_GetScale(ctrl.Hwnd)
-            w := Round(wpx / s), h := Round(hpx / s)
-            return { X: 12, Y: 12, W: Max(60, w - 24), H: Max(60, h - 24) }
-        }
-    }
-    return { X: 12, Y: 12, W: 820, H: 520 }
 }
 
 ; ---------- 枚举子窗口 ----------
