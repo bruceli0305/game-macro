@@ -239,3 +239,150 @@ UIX_IndexClamp(v, max) {
     max := Integer(max)
     return (max <= 0) ? 0 : Min(Max(v, 1), max)
 }
+
+; ---------- 创建真正的子面板（WS_CHILD） ----------
+UIX_CreateChildPanel(mainHwnd, rect) {
+    panel := Gui()
+    panel.MarginX := 10
+    panel.MarginY := 10
+    panel.Opt("-Caption -SysMenu -MinimizeBox -MaximizeBox -Border +Theme")
+
+    DllCall("user32\SetParent", "ptr", panel.Hwnd, "ptr", mainHwnd)
+
+    GWL_STYLE := -16
+    WS_CHILD := 0x40000000
+    WS_POPUP := 0x80000000
+    WS_CLIPCHILDREN := 0x02000000
+    WS_CLIPSIBLINGS := 0x04000000
+
+    style := DllCall("user32\GetWindowLongPtr", "ptr", panel.Hwnd, "int", GWL_STYLE, "ptr")
+    style := (style & ~WS_POPUP) | WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS
+    DllCall("user32\SetWindowLongPtr", "ptr", panel.Hwnd, "int", GWL_STYLE, "ptr", style)
+
+    SWP_NOZORDER := 0x0004
+    SWP_FRAMECHANGED := 0x0020
+    SWP_SHOWWINDOW := 0x0040
+    DllCall("user32\SetWindowPos", "ptr", panel.Hwnd, "ptr", 0
+        , "int", rect.x, "int", rect.y, "int", rect.w, "int", rect.h
+        , "uint", SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW)
+    return panel
+}
+
+; ---------- 安全调用（避免 Method 不存在时报错） ----------
+UIX_SafeCall(obj, method, args*) {
+    try {
+        if (UIX_ObjHasMethod(obj, method)) {
+            return obj.%method%(args*)
+        }
+    } catch {
+    }
+    return 0
+}
+
+; 注意：改名为 UIX_ObjHasMethod，避免与其他模块的 HasMethod 冲突
+UIX_ObjHasMethod(obj, name) {
+    try {
+        return IsObject(obj) && ObjHasOwnProp(obj, name) && IsObject(obj.%name%)
+    } catch {
+        return false
+    }
+}
+; ---------- 深色导航（ListView 版，带自适应列宽） ----------
+UIX_Nav_BuildLV(gui, x, y, w, h, items, theme := 0) {
+    if (!theme) {
+        try theme := UIX_Theme_Get()
+    }
+    lv := gui.Add("ListView", Format("x{} y{} w{} h{} -Hdr +Report", x, y, w, h), ["页"])
+    try UIX_Theme_SkinListView(lv, theme, true)
+    try lv.SetFont("s10")
+
+    ; 列表 EX 样式（整行/双缓冲/去网格）
+    LVM_GETEXTENDEDLISTVIEWSTYLE := 0x1037
+    LVM_SETEXTENDEDLISTVIEWSTYLE := 0x1036
+    LVS_EX_GRIDLINES := 0x0001
+    LVS_EX_FULLROWSELECT := 0x0020
+    LVS_EX_DOUBLEBUFFER  := 0x10000
+    curEx := SendMessage(LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0, lv)
+    newEx := (curEx | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER) & ~LVS_EX_GRIDLINES
+    if (newEx != curEx) {
+        SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, newEx, lv)
+    }
+
+    map := []
+    for _, it in items {
+        if (HasProp(it, "type") && it.type = "sep") {
+            lv.Add("", "— " it.text " —")
+            map.Push("")
+        } else {
+            txt := HasProp(it, "text") ? it.text : ""
+            lv.Add("", "  " txt)
+            map.Push(HasProp(it, "key") ? it.key : "")
+        }
+    }
+    ; 首次列宽
+    lv.ModifyCol(1, Max(60, w - 8))
+
+    onChanged := 0
+    lv.OnEvent("Click", NavChange)
+    lv.OnEvent("ItemFocus", NavChange)
+
+    NavChange(*) {
+        row := lv.GetNext(0, "Focused")
+        if (row < 1 || row > map.Length)
+            return
+        if (map[row] = "") {
+            left := row - 1, right := row + 1, moved := false
+            while (left >= 1 || right <= map.Length) {
+                if (left >= 1 && map[left] != "") {
+                    lv.Modify(left, "Select Focus Vis")
+                    moved := true
+                    break
+                }
+                if (right <= map.Length && map[right] != "") {
+                    lv.Modify(right, "Select Focus Vis")
+                    moved := true
+                    break
+                }
+                left -= 1
+                right += 1
+            }
+            if (!moved)
+                return
+            row := lv.GetNext(0, "Focused")
+        }
+        if (onChanged) {
+            try onChanged.Call(map[row])
+        }
+    }
+
+    UIX_NavLV_Reflow(nx, ny, nw, nh, *) {
+        lv.Move(nx, ny, nw, nh)
+        lv.ModifyCol(1, Max(60, nw - 8))
+    }
+    UIX_NavLV_SetOnChange(cb, *) {
+        onChanged := cb
+    }
+    UIX_NavLV_SelectKey(key, *) {
+        if (key = "")
+            return
+        for i, k in map {
+            if (k = key) {
+                lv.Modify(i, "Select Focus Vis")
+                if (onChanged) {
+                    try onChanged.Call(key)
+                }
+                return
+            }
+        }
+    }
+    UIX_NavLV_GetKey(*) {
+        row := lv.GetNext(0, "Focused")
+        return (row>=1 && row<=map.Length) ? map[row] : ""
+    }
+
+    return { Ctrl: lv
+           , Reflow: UIX_NavLV_Reflow
+           , SetOnChange: UIX_NavLV_SetOnChange
+           , SelectKey: UIX_NavLV_SelectKey
+           , GetKey: UIX_NavLV_GetKey }
+}
