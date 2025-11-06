@@ -268,13 +268,26 @@ UIX_CreateChildPanel(mainHwnd, rect) {
     return panel
 }
 
-; ---------- 安全调用（避免 Method 不存在时报错） ----------
+; 安全调用：取出函数对象再 .Call，避免隐式多传 this
+; 若目标原型不匹配，退回无参调用，绝不把异常抛出
 UIX_SafeCall(obj, method, args*) {
     try {
-        if (UIX_ObjHasMethod(obj, method)) {
-            return obj.%method%(args*)
+        if (IsObject(obj) && ObjHasOwnProp(obj, method)) {
+            fn := obj.%method%
+            if (IsObject(fn)) {
+                return fn.Call(args*)
+            }
         }
     } catch {
+        try {
+            if (IsObject(obj) && ObjHasOwnProp(obj, method)) {
+                fn2 := obj.%method%
+                if (IsObject(fn2)) {
+                    return fn2.Call()
+                }
+            }
+        } catch {
+        }
     }
     return 0
 }

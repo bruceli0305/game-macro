@@ -89,7 +89,8 @@ UI_ShowMainV2(owned := true, startKey := "skills") {
                 obj := builders[name].Call(ctx)
                 state.pageObj := obj
             } catch as e {
-                MsgBox "加载页面失败：" e.Message
+                UIX_Log("Builder error: " e.Message " @ " e.File ":" e.Line)
+                MsgBox Format("加载页面失败：{1}`nFile: {2}`nLine: {3}`nWhat: {4}", e.Message, e.File, e.Line, e.What)
             }
         } else {
             panel.Add("Text", "xm ym", "页面未实现：" name)

@@ -52,94 +52,98 @@ UIX_GetWndText(hwnd) {
     return StrGet(buf, "UTF-16")
 }
 
-; WM_DRAWITEM 回调
 UIX_OD_OnDrawItem(wParam, lParam, msg, hwnd) {
-    global UIX_OD
-    ; DRAWITEMSTRUCT 解析
-    CtlType   := NumGet(lParam, 0, "UInt")                         ; 4=ODT_BUTTON
-    itemState := NumGet(lParam, 16, "UInt")
-    offH := (A_PtrSize = 8) ? 24 : 20
-    offD := (A_PtrSize = 8) ? 32 : 24
-    hwndItem := NumGet(lParam, offH, "Ptr")
-    hDC      := NumGet(lParam, offD, "Ptr")
-    rcL := NumGet(lParam, (A_PtrSize=8)?40:28, "Int")
-    rcT := NumGet(lParam, (A_PtrSize=8)?44:32, "Int")
-    rcR := NumGet(lParam, (A_PtrSize=8)?48:36, "Int")
-    rcB := NumGet(lParam, (A_PtrSize=8)?52:40, "Int")
+    try {
+        ; --- 结构解析 ---
+        CtlType   := NumGet(lParam, 0, "UInt")                         ; 4=ODT_BUTTON
+        itemState := NumGet(lParam, 16, "UInt")
+        offH := (A_PtrSize = 8) ? 24 : 20
+        offD := (A_PtrSize = 8) ? 32 : 24
+        hwndItem := NumGet(lParam, offH, "Ptr")
+        hDC      := NumGet(lParam, offD, "Ptr")
+        rcL := NumGet(lParam, (A_PtrSize=8)?40:28, "Int")
+        rcT := NumGet(lParam, (A_PtrSize=8)?44:32, "Int")
+        rcR := NumGet(lParam, (A_PtrSize=8)?48:36, "Int")
+        rcB := NumGet(lParam, (A_PtrSize=8)?52:40, "Int")
 
-    if (CtlType != 4) {      ; 仅处理按钮
-        return 0
-    }
-    if !UIX_OD.Map.Has(hwndItem) {
-        return 0
-    }
-    info := UIX_OD.Map[hwndItem]
-    theme := info.theme
-    kind  := info.kind
-    data  := info.data
+        if (CtlType != 4) {
+            return 0
+        }
+        global UIX_OD
+        if !UIX_OD.Map.Has(hwndItem) {
+            return 0
+        }
+        info := UIX_OD.Map[hwndItem]
+        theme := info.theme
+        kind  := info.kind
+        data  := info.data
+        if !IsObject(data) {
+            data := Map()
+        }
 
-    ; 背景/文字/边框
-    active := (kind = "pill") ? (data.Has("Active") ? (data.Active ? 1 : 0) : 0) : 0
-    pressed := (itemState & 0x0001) ? 1 : 0          ; ODS_SELECTED
-    disabled := (itemState & 0x0004) ? 1 : 0         ; ODS_DISABLED
-    hover := (itemState & 0x0040) ? 1 : 0            ; ODS_HOTLIGHT（可能不可用）
+        ; --- 状态 ---
+        active := 0
+        if (kind = "pill") {
+            if (data.Has("Active")) {
+                try active := data["Active"] ? 1 : 0
+            }
+        }
+        pressed  := (itemState & 0x0001) ? 1 : 0
+        disabled := (itemState & 0x0004) ? 1 : 0
 
-    bg := theme.HeaderBg
-    fg := theme.Text
-    bd := theme.Border
-    rad := theme.Radius
-
-    if (kind = "primary") {
-        bg := pressed ? UIX_RGB_Shade(theme.Accent, -10) : theme.Accent
-        fg := theme.AccentText
-        bd := UIX_RGB_Shade(theme.Accent, -20)
-    } else if (kind = "secondary") {
-        bg := pressed ? UIX_RGB_Shade(theme.HeaderBg, -10) : theme.HeaderBg
-        fg := theme.Text
-        bd := UIX_RGB_Shade(theme.Border, -10)
-    } else if (kind = "pill") {
-        if (active) {
+        ; --- 颜色 ---
+        bg := theme.HeaderBg, fg := theme.Text, bd := theme.Border, rad := theme.Radius
+        if (kind = "primary") {
             bg := pressed ? UIX_RGB_Shade(theme.Accent, -10) : theme.Accent
             fg := theme.AccentText
             bd := UIX_RGB_Shade(theme.Accent, -20)
-        } else {
+        } else if (kind = "secondary") {
             bg := pressed ? UIX_RGB_Shade(theme.HeaderBg, -10) : theme.HeaderBg
             fg := theme.Text
             bd := UIX_RGB_Shade(theme.Border, -10)
+        } else if (kind = "pill") {
+            if (active) {
+                bg := pressed ? UIX_RGB_Shade(theme.Accent, -10) : theme.Accent
+                fg := theme.AccentText
+                bd := UIX_RGB_Shade(theme.Accent, -20)
+            } else {
+                bg := pressed ? UIX_RGB_Shade(theme.HeaderBg, -10) : theme.HeaderBg
+                fg := theme.Text
+                bd := UIX_RGB_Shade(theme.Border, -10)
+            }
         }
+        if (disabled) {
+            fg := UIX_RGB_Shade(fg, -40)
+            bd := UIX_RGB_Shade(bd, -30)
+            bg := UIX_RGB_Shade(bg, -20)
+        }
+
+        ; --- 绘制 ---
+        br := DllCall("gdi32\CreateSolidBrush", "uint", UIX_Theme_ColorRef(bg), "ptr")
+        pn := DllCall("gdi32\CreatePen", "int", 0, "int", 1, "uint", UIX_Theme_ColorRef(bd), "ptr")
+        oldPn := DllCall("gdi32\SelectObject", "ptr", hDC, "ptr", pn, "ptr")
+        oldBr := DllCall("gdi32\SelectObject", "ptr", hDC, "ptr", br, "ptr")
+        left := rcL + 1, top := rcT + 1, right := rcR - 1, bottom := rcB - 1
+        DllCall("gdi32\RoundRect", "ptr", hDC, "int", left, "int", top, "int", right, "int", bottom, "int", rad*2, "int", rad*2)
+
+        text := UIX_GetWndText(hwndItem)
+        DllCall("gdi32\SetBkMode", "ptr", hDC, "int", 1)
+        DllCall("gdi32\SetTextColor", "ptr", hDC, "int", UIX_Theme_ColorRef(fg))
+        rc := Buffer(16, 0)
+        NumPut("Int", rcL, rc, 0), NumPut("Int", rcT, rc, 4), NumPut("Int", rcR, rc, 8), NumPut("Int", rcB, rc, 12)
+        DT_CENTER := 0x00000001, DT_VCENTER := 0x00000004, DT_SINGLELINE := 0x00000020
+        DllCall("user32\DrawTextW", "ptr", hDC, "wstr", text, "int", StrLen(text), "ptr", rc.Ptr, "uint", DT_CENTER | DT_VCENTER | DT_SINGLELINE)
+
+        DllCall("gdi32\SelectObject", "ptr", hDC, "ptr", oldPn)
+        DllCall("gdi32\SelectObject", "ptr", hDC, "ptr", oldBr)
+        DllCall("gdi32\DeleteObject", "ptr", pn)
+        DllCall("gdi32\DeleteObject", "ptr", br)
+        return 1
+    } catch as e {
+        ; 不让异常冒到 Builder，避免“加载页面失败”
+        try UIX_Log("OD_OnDraw error: " e.Message " @ " e.File ":" e.Line)
+        return 0
     }
-
-    if (disabled) {
-        fg := UIX_RGB_Shade(fg, -40)
-        bd := UIX_RGB_Shade(bd, -30)
-        bg := UIX_RGB_Shade(bg, -20)
-    }
-
-    ; GDI 画圆角矩形
-    br := DllCall("gdi32\CreateSolidBrush", "uint", UIX_Theme_ColorRef(bg), "ptr")
-    pn := DllCall("gdi32\CreatePen", "int", 0, "int", 1, "uint", UIX_Theme_ColorRef(bd), "ptr")
-    oldPn := DllCall("gdi32\SelectObject", "ptr", hDC, "ptr", pn, "ptr")
-    oldBr := DllCall("gdi32\SelectObject", "ptr", hDC, "ptr", br, "ptr")
-    ; 内缩 1px，避免边缘锯齿
-    left := rcL + 1, top := rcT + 1, right := rcR - 1, bottom := rcB - 1
-    DllCall("gdi32\RoundRect", "ptr", hDC, "int", left, "int", top, "int", right, "int", bottom, "int", rad*2, "int", rad*2)
-
-    ; 文本
-    text := UIX_GetWndText(hwndItem)
-    DllCall("gdi32\SetBkMode", "ptr", hDC, "int", 1) ; TRANSPARENT
-    DllCall("gdi32\SetTextColor", "ptr", hDC, "int", UIX_Theme_ColorRef(fg))
-    rc := Buffer(16, 0)
-    NumPut("Int", rcL, rc, 0), NumPut("Int", rcT, rc, 4), NumPut("Int", rcR, rc, 8), NumPut("Int", rcB, rc, 12)
-    DT_CENTER := 0x00000001, DT_VCENTER := 0x00000004, DT_SINGLELINE := 0x00000020
-    DllCall("user32\DrawTextW", "ptr", hDC, "wstr", text, "int", StrLen(text), "ptr", rc.Ptr, "uint", DT_CENTER | DT_VCENTER | DT_SINGLELINE)
-
-    ; 清理
-    DllCall("gdi32\SelectObject", "ptr", hDC, "ptr", oldPn)
-    DllCall("gdi32\SelectObject", "ptr", hDC, "ptr", oldBr)
-    DllCall("gdi32\DeleteObject", "ptr", pn)
-    DllCall("gdi32\DeleteObject", "ptr", br)
-
-    return 1    ; 我们已绘制
 }
 
 ; ------------------ 胶囊页签（Pill Tabs） ------------------
@@ -157,7 +161,9 @@ UIX_Pills_Create(dlg, x, y, labels, theme := 0, w := 110, h := 28, gap := 8) {
         bx := x
         for i, t in labels {
             btn := dlg.Add("Button", Format("x{} y{} w{} h{}", bx, y, w, h), t)
-            UIX_OD_Register(btn, "pill", theme, Map("Active", (i=active ? 1 : 0)))
+            d := Map()
+            d["Active"] := (i = active ? 1 : 0)
+            UIX_OD_Register(btn, "pill", theme, d)
             btn.OnEvent("Click", (*) => OnClick(i))
             btns.Push(btn)
             bx += w + gap
@@ -174,10 +180,14 @@ UIX_Pills_Create(dlg, x, y, labels, theme := 0, w := 110, h := 28, gap := 8) {
     SetActive(i) {
         active := Max(1, Min(labels.Length, i))
         for idx, b in btns {
-            info := UIX_OD.Map[b.Hwnd]
-            info.data["Active"] := (idx = active ? 1 : 0)
-            UIX_OD.Map[b.Hwnd] := info
-            DllCall("user32\InvalidateRect", "ptr", b.Hwnd, "ptr", 0, "int", 1)
+            if UIX_OD.Map.Has(b.Hwnd) {
+                info := UIX_OD.Map[b.Hwnd]
+                if !IsObject(info.data)
+                    info.data := Map()
+                info.data["Active"] := (idx = active ? 1 : 0)
+                UIX_OD.Map[b.Hwnd] := info
+                DllCall("user32\InvalidateRect", "ptr", b.Hwnd, "ptr", 0, "int", 1)
+            }
         }
     }
 
