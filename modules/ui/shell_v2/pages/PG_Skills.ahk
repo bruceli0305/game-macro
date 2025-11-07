@@ -34,56 +34,55 @@ PG_Skills_Build(ctx, theme := 0) {
         tabs.SetOnChange.Call(OnTabsChanged)
     }
 
-    ; ===== 右侧卡片容器 =====
-    headerH  := 32      ; 伪表头高度
-    topSpace := 44 + 40 ; 标题+胶囊下的留白
-    actionW  := 118     ; 右上“添加技能”操作区宽
-    actionGap:= 12      ; 表格与按钮间隙
-    rowH     := 40      ; 行高
+    ; ===== 布局常量 =====
+    topSpace := 44 + 40     ; 标题 + 胶囊下方留白
+    toolH    := 36          ; 顶部工具栏高度（放“添加技能”）
+    bottomH  := 40          ; 底部按钮区高度（放“删除技能”）
+    rowH     := 40          ; 行高
+    safePad  := 6           ; 列宽安全边距（避免水平滚动条）
 
-    cardRect := { x: rc.X, y: rc.Y + topSpace, w: rc.W, h: Max(260, rc.H - topSpace - 60) }
-    card := UIX_Theme_CreateCardPanel(dlg.Hwnd, cardRect, theme, theme.Radius)
-
-    ; 伪表头（深色底 + 灰色底线）
-    hbBg := card.Add("Text", Format("x12 y12 w{} h{}", Max(200, cardRect.w - 24), headerH), "")
+    ; ===== 背景铺底（同一 Gui，不再用子 Gui 卡片） =====
+    bg := dlg.Add("Text", Format("x{} y{} w{} h{}", rc.X, rc.Y + topSpace, rc.W, Max(220, rc.H - topSpace)), "")
     try {
-        hbBg.BackColor := Format("0x{:06X}", theme.HeaderBg)
+        bg.BackColor := Format("0x{:06X}", theme.CardBg)
+    } catch {
     }
-    hbLine := card.Add("Text", Format("x12 y{} w{} h1", 12 + headerH - 1, Max(200, cardRect.w - 24)), "")
+
+    ; ===== 工具栏铺底（与卡片一致） =====
+    toolBar := dlg.Add("Text", Format("x{} y{} w{} h{}", rc.X + 12, rc.Y + topSpace + 12, Max(200, rc.W - 24), toolH), "")
     try {
-        hbLine.BackColor := Format("0x{:06X}", theme.Border)
+        toolBar.BackColor := Format("0x{:06X}", theme.CardBg)
+    } catch {
     }
 
-    ; 5 个列头文本（与列宽同步）
-    hdrId   := card.Add("Text", "x12 y12 w60  h" headerH " +0x200 cDCDCDC", "ID")
-    hdrName := card.Add("Text", "x12 y12 w100 h" headerH " +0x200 cDCDCDC", "名称")
-    hdrKey  := card.Add("Text", "x12 y12 w100 h" headerH " +0x200 cDCDCDC", "快捷键")
-    hdrHex  := card.Add("Text", "x12 y12 w100 h" headerH " +0x200 cDCDCDC", "颜色")
-    hdrTol  := card.Add("Text", "x12 y12 w100 h" headerH " +0x200 cDCDCDC", "容差")
-    for ctl in [hdrId, hdrName, hdrKey, hdrHex, hdrTol] {
-        ctl.SetFont("s10 Bold", "Segoe UI")
-        try {
-            ctl.BackColor := Format("0x{:06X}", theme.HeaderBg)
-        }
-    }
-
-    ; 按钮（统一宿主背景为 HeaderBg，消除边缘色差）
-    btnAdd := UIX_Button_Primary(card, 0, 0, actionW, 32, "添加技能", theme)
+    ; ===== 添加按钮（OwnerDraw，HostBg=CardBg） =====
+    btnAdd := UIX_Button_Primary(dlg, 0, 0, 118, 32, "添加技能", theme)
     try {
         info := UIX_OD.Map[btnAdd.Hwnd]
         if !IsObject(info.data) {
             info.data := Map()
         }
-        info.data["HostBg"] := theme.HeaderBg
+        info.data["HostBg"] := theme.CardBg
         UIX_OD.Map[btnAdd.Hwnd] := info
+    } catch {
     }
-    btnDel := UIX_Button_Secondary(card, 0, 0, 118, 32, "删除技能", theme)
 
-    ; ===== ListView：隐藏原生表头、深色、去网格 =====
-    lv := card.Add("ListView", "x12 y" (12 + headerH) " w760 h360 -Hdr +Report", ["ID","名称","快捷键","颜色","容差"])
+    ; ===== ListView：原生表头 +Hdr，深色皮肤，去网格 =====
+    lv := dlg.Add("ListView", "x12 y" (rc.Y + topSpace + 12 + toolH) " w760 h360 +Hdr +Report", ["ID","名称","快捷键","颜色","容差"])
     UIX_Theme_SkinListView(lv, theme, true)
 
-    ; 行高 = rowH（通过小图像列表）
+    ; 确保整行选择 + 双缓冲
+    LVM_GETEXTENDEDLISTVIEWSTYLE := 0x1037
+    LVM_SETEXTENDEDLISTVIEWSTYLE := 0x1036
+    LVS_EX_FULLROWSELECT := 0x0020
+    LVS_EX_DOUBLEBUFFER  := 0x10000
+    curEx := SendMessage(LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0, lv)
+    newEx := (curEx | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER)
+    if (newEx != curEx) {
+        SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, newEx, lv)
+    }
+
+    ; 行高：用小图像列表撑高
     try {
         hILRows := DllCall("comctl32\ImageList_Create", "int", 16, "int", rowH, "uint", 0x00000020, "int", 8, "int", 8, "ptr")
         if (hILRows) {
@@ -109,39 +108,38 @@ PG_Skills_Build(ctx, theme := 0) {
         }
     }
 
-    ; 行间横线（本页闭包绑定 OnMessage，避免全局依赖）
-    DrawHLineCB := (wParam, lParam, msg, hwnd) => PG_Skills_DrawLines(lv.Hwnd, lParam, theme.Border)
-    OnMessage(0x004E, DrawHLineCB)
+    ; 行间横线（全局分发器，页面销毁时 Detach）
+    try UIX_LV_RowLines_Attach(lv, theme.Border)
 
-    ; ===== 数据填充/列宽布局/交互：顶层函数 + Bind =====
+    ; ===== 底部删除按钮 =====
+    btnDel := UIX_Button_Secondary(dlg, 0, 0, 118, 32, "删除技能", theme)
+
+    ; ===== 数据填充与列宽布局 =====
     FillFn   := PG_Skills_Fill.Bind(lv, ctx)
-    LayoutFn := PG_Skills_LayoutCols.Bind(lv, hdrId, hdrName, hdrKey, hdrHex, hdrTol, headerH)
+    LayoutFn := PG_Skills_LayoutCols.Bind(lv)
 
     btnAdd.OnEvent("Click", PG_Skills_OnAdd.Bind(ctx, FillFn))
     btnDel.OnEvent("Click", PG_Skills_OnDel.Bind(ctx, lv, FillFn))
     lv.OnEvent("DoubleClick", PG_Skills_OnEdit.Bind(ctx, lv))
 
-    ReflowFn := PG_Skills_Reflow.Bind(dlg, tabs, card
-        , hbBg, hbLine
-        , hdrId, hdrName, hdrKey, hdrHex, hdrTol
+    ; ===== Reflow：统一铺底，绝不重叠 =====
+    ReflowFn := PG_Skills_Reflow.Bind(dlg, tabs
+        , bg, toolBar
         , lv, btnAdd, btnDel
-        , theme, headerH, topSpace, actionW, actionGap
+        , theme, topSpace, toolH, bottomH, safePad
         , LayoutFn)
 
     FillFn.Call()
     ReflowFn.Call()
 
     Destroy(*) {
-        ; 解除本页的 OnMessage 绑定
-        OnMessage(0x004E, 0)
+        try UIX_LV_RowLines_Detach(lv)
         return 0
     }
     return { Reflow: (p*) => ReflowFn.Call(), Save: (p*) => 0, Destroy: Destroy }
 }
 
-; ================== 子函数（顶层，避免 nonlocal） ==================
-
-; 数据填充（第一列显示 ID）
+; ---- 填充数据（第一列显示 ID）----
 PG_Skills_Fill(lv, ctx) {
     try {
         lv.Opt("-Redraw")
@@ -155,17 +153,21 @@ PG_Skills_Fill(lv, ctx) {
         }
     } catch {
     } finally {
-        try {
-            lv.Opt("+Redraw")
-        } catch {
+        try lv.Opt("+Redraw")
+        catch {
+            
         }
     }
 }
 
-; 列宽布局：固定 ID=64，其余按比例 40/18/24/18（最小值保障）
-PG_Skills_LayoutCols(lv, hdrId, hdrName, hdrKey, hdrHex, hdrTol, headerH, lvW) {
+; ---- 列宽布局：固定 ID=64，剩余 40/18/24/18，最后一列吃余宽 ----
+PG_Skills_LayoutCols(lv, lvW) {
     idW := 64
-    restW := Max(160, lvW - idW)
+    restW := lvW - idW
+    if (restW < 160) {
+        restW := 160
+    }
+
     wName := Floor(restW * 0.40)
     wKey  := Floor(restW * 0.18)
     wHex  := Floor(restW * 0.24)
@@ -179,12 +181,18 @@ PG_Skills_LayoutCols(lv, hdrId, hdrName, hdrKey, hdrHex, hdrTol, headerH, lvW) {
         } else if (wHex > need + 80) {
             wHex := wHex - need
         } else {
-            temp := wKey - need
-            if (temp < 60) {
-                temp := 60
+            tmp := wKey - need
+            if (tmp < 60) {
+                tmp := 60
             }
-            wKey := temp
+            wKey := tmp
         }
+    }
+
+    ; 最后一列吃余宽
+    sum := idW + wName + wKey + wHex + wTol
+    if (sum < lvW) {
+        wTol := wTol + (lvW - sum)
     }
 
     try {
@@ -193,110 +201,45 @@ PG_Skills_LayoutCols(lv, hdrId, hdrName, hdrKey, hdrHex, hdrTol, headerH, lvW) {
         lv.ModifyCol(3, wKey)
         lv.ModifyCol(4, wHex)
         lv.ModifyCol(5, wTol)
-    } catch {
     }
-
-    baseX := 12
-    hdrId.Move(  baseX,                              12, idW,   headerH)
-    hdrName.Move(baseX + idW,                        12, wName, headerH)
-    hdrKey.Move( baseX + idW + wName,                12, wKey,  headerH)
-    hdrHex.Move( baseX + idW + wName + wKey,         12, wHex,  headerH)
-    hdrTol.Move( baseX + idW + wName + wKey + wHex,  12, wTol,  headerH)
 }
 
-; 布局：为按钮预留操作区，表格不重叠
-PG_Skills_Reflow(dlg, tabs, card, hbBg, hbLine
-    , hdrId, hdrName, hdrKey, hdrHex, hdrTol
-    , lv, btnAdd, btnDel, theme, headerH, topSpace, actionW, actionGap, LayoutFn) {
-    r := UIX_PageRect(dlg)
+; ---- Reflow：背景/工具栏铺底、按钮/表格不重叠 ----
+PG_Skills_Reflow(dlg, tabs, bg, toolBar
+    , lv, btnAdd, btnDel, theme, topSpace, toolH, bottomH, safePad, LayoutFn) {
 
+    r := UIX_PageRect(dlg)
     if (IsObject(tabs) && ObjHasOwnProp(tabs, "Reflow") && IsObject(tabs.Reflow)) {
         tabs.Reflow.Call(r.X, r.Y + 44)
     }
 
-    cRect := { x: r.X, y: r.Y + topSpace, w: r.W, h: Max(220, r.H - topSpace) }
-    card.Move(cRect.x, cRect.y, cRect.w, cRect.h)
-    UIX_Theme_RoundWindow(card.Hwnd, theme.Radius)
+    ; 背景铺底
+    bg.Move(r.X, r.Y + topSpace, r.W, Max(220, r.H - topSpace))
 
-    hbW := Max(200, cRect.w - 24)
-    hbBg.Move(12, 12, hbW, headerH)
-    hbLine.Move(12, 12 + headerH - 1, hbW, 1)
-
-    ; 表格可视宽度（扣掉右上按钮操作区）
-    lvW := Max(320, cRect.w - 24 - actionW - actionGap - 1)
-    lvH := cRect.h - (12 + headerH) - (12 + 40)
+    ; 工具栏铺满
+    toolBar.Move(r.X + 12, r.Y + topSpace + 12, Max(200, r.W - 24), toolH)
 
     ; 右上按钮
-    btnAdd.Move(12 + lvW + actionGap, 12, actionW, 32)
-    ; 表格区域（不与按钮重叠）
-    lv.Move(12, 12 + headerH, lvW, Max(120, lvH))
-    ; 右下按钮
-    btnDel.Move(cRect.w - 12 - 118, cRect.h - 32 - 12, 118, 32)
+    btnAdd.Move(r.X + r.W - 12 - 118, r.Y + topSpace + 12 + (toolH - 32)//2, 118, 32)
 
-    LayoutFn.Call(lvW)
-}
-
-; —— 本页自带的行间横线绘制（闭包 OnMessage 使用） ——
-PG_Skills_DrawLines(targetHwnd, lParam, borderRGB) {
-    try {
-        hwndFrom := NumGet(lParam, 0, "ptr")
-        code     := NumGet(lParam, 2*A_PtrSize, "UInt")
-        if (code != 0xFFFFFFF4) {
-            return 0
-        }
-        stage := NumGet(lParam, 2*A_PtrSize + 4, "UInt")
-        hdc   := NumGet(lParam, 2*A_PtrSize + 8, "ptr")
-        if (hwndFrom != targetHwnd) {
-            return 0
-        }
-        CDDS_PREPAINT  := 0x00000001
-        CDDS_POSTPAINT := 0x00000002
-        if (stage = CDDS_PREPAINT) {
-            return 0x00000010  ; CDRF_NOTIFYPOSTPAINT
-        }
-        if (stage = CDDS_POSTPAINT) {
-            LVM_GETTOPINDEX     := 0x1027
-            LVM_GETCOUNTPERPAGE := 0x1028
-            LVM_GETITEMCOUNT    := 0x1004
-            LVM_GETITEMRECT     := 0x100E
-            LVIR_BOUNDS := 0
-
-            top := SendMessage(LVM_GETTOPINDEX, 0, 0, "ahk_id " targetHwnd)
-            per := SendMessage(LVM_GETCOUNTPERPAGE, 0, 0, "ahk_id " targetHwnd)
-            cnt := SendMessage(LVM_GETITEMCOUNT, 0, 0, "ahk_id " targetHwnd)
-            if (cnt <= 0) {
-                return 0
-            }
-            last := Min(cnt - 1, top + per + 1)
-
-            pen := DllCall("gdi32\CreatePen", "int", 0, "int", 1, "uint", UIX_Theme_ColorRef(borderRGB), "ptr")
-            old := DllCall("gdi32\SelectObject", "ptr", hdc, "ptr", pen, "ptr")
-
-            i := top
-            while (i <= last) {
-                rc := Buffer(16, 0)
-                NumPut("Int", LVIR_BOUNDS, rc, 0)
-                SendMessage(LVM_GETITEMRECT, i, rc.Ptr, "ahk_id " targetHwnd)
-                l := NumGet(rc, 0, "Int")
-                t := NumGet(rc, 4, "Int")
-                r := NumGet(rc, 8, "Int")
-                b := NumGet(rc, 12, "Int")
-                y := b - 1
-                DllCall("gdi32\MoveToEx", "ptr", hdc, "int", l + 1, "int", y, "ptr", 0)
-                DllCall("gdi32\LineTo",   "ptr", hdc, "int", r - 1, "int", y)
-                i += 1
-            }
-
-            DllCall("gdi32\SelectObject", "ptr", hdc, "ptr", old)
-            DllCall("gdi32\DeleteObject", "ptr", pen)
-            return 0
-        }
-    } catch {
+    ; ListView 可视区（扣工具栏与底部按钮）
+    lvX := r.X + 12
+    lvY := r.Y + topSpace + 12 + toolH
+    lvW := r.W - 24
+    lvH := r.H - (lvY - r.Y) - (bottomH + 12)
+    if (lvH < 120) {
+        lvH := 120
     }
-    return 0
+    lv.Move(lvX, lvY, lvW, lvH)
+
+    ; 列宽（留出 safePad 确保不出水平滚动）
+    LayoutFn.Call(lvW - safePad)
+
+    ; 右下按钮
+    btnDel.Move(r.X + r.W - 12 - 118, r.Y + r.H - 12 - 32, 118, 32)
 }
 
-; ===== 行为：按钮/列表事件（顶层） =====
+; ---- 行点击/编辑/新增/删除 ----
 PG_Skills_OnAdd(ctx, FillFn, ctrl, info) {
     SkillEditor_Open({}, 0, PG_Skills_OnSavedNew.Bind(ctx, FillFn))
 }

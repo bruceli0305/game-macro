@@ -484,3 +484,111 @@ UIX_Nav_BuildLV(gui, x, y, w, h, items, theme := 0, rowH := 52) {
            , SelectKey: UIX_NavLV_SelectKey
            , GetKey: UIX_NavLV_GetKey }
 }
+
+; ========== ListView 横线绘制：全局分发器 ==========
+global UIX_LV_RL := { Inited: false, Map: Map() }
+
+UIX_IsWindow(hwnd) {
+    ok := 0
+    try ok := DllCall("user32\IsWindow", "ptr", hwnd, "int")
+    return ok != 0
+}
+
+UIX_LV_RowLines_InitOnce() {
+    global UIX_LV_RL
+    if (!UIX_LV_RL.Inited) {
+        OnMessage(0x004E, UIX_LV_RowLines_Dispatch)  ; WM_NOTIFY
+        UIX_LV_RL.Inited := true
+    }
+}
+
+; 绑定某个 ListView 让其显示行间横线（borderRGB=0xRRGGBB）
+UIX_LV_RowLines_Attach(lvOrHwnd, borderRGB := 0x2A313B) {
+    global UIX_LV_RL
+    UIX_LV_RowLines_InitOnce()
+    hwnd := IsObject(lvOrHwnd) ? lvOrHwnd.Hwnd : lvOrHwnd
+    if (!UIX_IsWindow(hwnd)) {
+        return 0
+    }
+    UIX_LV_RL.Map[hwnd] := { Color: borderRGB }
+    return 1
+}
+
+; 解除绑定
+UIX_LV_RowLines_Detach(lvOrHwnd) {
+    global UIX_LV_RL
+    hwnd := IsObject(lvOrHwnd) ? lvOrHwnd.Hwnd : lvOrHwnd
+    if (UIX_LV_RL.Map.Has(hwnd)) {
+        UIX_LV_RL.Map.Delete(hwnd)
+    }
+}
+
+; 关闭主窗时清空（避免关窗后还有回调）
+UIX_LV_RowLines_Clear() {
+    global UIX_LV_RL
+    UIX_LV_RL.Map := Map()
+}
+
+; 分发器：只对已绑定的 LV 处理，绝不抛异常
+UIX_LV_RowLines_Dispatch(wParam, lParam, msg, hwnd) {
+    try {
+        hwndFrom := NumGet(lParam, 0, "ptr")
+        code     := NumGet(lParam, 2*A_PtrSize, "UInt")
+        if !UIX_LV_RL.Map.Has(hwndFrom)
+            return 0
+        if (!UIX_IsWindow(hwndFrom)) {
+            UIX_LV_RL.Map.Delete(hwndFrom)
+            return 0
+        }
+        if (code != 0xFFFFFFF4) {  ; NM_CUSTOMDRAW = -12
+            return 0
+        }
+        stage := NumGet(lParam, 2*A_PtrSize + 4, "UInt")
+        hdc   := NumGet(lParam, 2*A_PtrSize + 8, "ptr")
+        CDDS_PREPAINT  := 0x00000001
+        CDDS_POSTPAINT := 0x00000002
+        if (stage = CDDS_PREPAINT) {
+            return 0x00000010  ; CDRF_NOTIFYPOSTPAINT
+        }
+        if (stage = CDDS_POSTPAINT) {
+            LVM_GETTOPINDEX     := 0x1027
+            LVM_GETCOUNTPERPAGE := 0x1028
+            LVM_GETITEMCOUNT    := 0x1004
+            LVM_GETITEMRECT     := 0x100E
+            LVIR_BOUNDS := 0
+
+            top := SendMessage(LVM_GETTOPINDEX, 0, 0, "ahk_id " hwndFrom)
+            per := SendMessage(LVM_GETCOUNTPERPAGE, 0, 0, "ahk_id " hwndFrom)
+            cnt := SendMessage(LVM_GETITEMCOUNT, 0, 0, "ahk_id " hwndFrom)
+            if (cnt <= 0)
+                return 0
+            last := Min(cnt - 1, top + per + 1)
+
+            c := UIX_LV_RL.Map[hwndFrom].Color
+            pen := DllCall("gdi32\CreatePen", "int", 0, "int", 1, "uint", UIX_Theme_ColorRef(c), "ptr")
+            old := DllCall("gdi32\SelectObject", "ptr", hdc, "ptr", pen, "ptr")
+
+            i := top
+            while (i <= last) {
+                rc := Buffer(16, 0)
+                NumPut("Int", LVIR_BOUNDS, rc, 0)
+                SendMessage(LVM_GETITEMRECT, i, rc.Ptr, "ahk_id " hwndFrom)
+                l := NumGet(rc, 0, "Int")
+                t := NumGet(rc, 4, "Int")
+                r := NumGet(rc, 8, "Int")
+                b := NumGet(rc, 12, "Int")
+                y := b - 1
+                DllCall("gdi32\MoveToEx", "ptr", hdc, "int", l + 1, "int", y, "ptr", 0)
+                DllCall("gdi32\LineTo",   "ptr", hdc, "int", r - 1, "int", y)
+                i += 1
+            }
+
+            DllCall("gdi32\SelectObject", "ptr", hdc, "ptr", old)
+            DllCall("gdi32\DeleteObject", "ptr", pen)
+            return 0
+        }
+    } catch {
+        ; 不抛异常，不弹窗
+    }
+    return 0
+}

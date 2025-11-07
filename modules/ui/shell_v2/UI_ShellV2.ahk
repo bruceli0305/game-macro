@@ -127,8 +127,14 @@ UI_ShowMainV2(owned := true, startKey := "skills") {
         (IsObject(state.panel) && state.panel) ? state.panel.Move(panelRect.x, panelRect.y, panelRect.w, panelRect.h) : 0,
         UIX_SafeCall(state.pageObj, "Reflow", { dlg: state.panel, rect: panelRect, prof: App["ProfileData"], cfg: App["ProfileData"].Rotation, theme: theme })
     ))
-    main.OnEvent("Close", (*) => (UI_ShellV2_Main := 0))
+    main.OnEvent("Close", MainClose)
 
+    MainClose(*) {
+        global UI_ShellV2_Main
+        UI_ShellV2_Main := 0
+        UIX_LV_RowLines_Clear()
+    }
+    
     (nav.SetOnChange).Call((key) => LoadPage(key))
     (nav.SelectKey).Call(startKey)
 
