@@ -9,6 +9,13 @@ UIX_Log(msg) {
             , A_ScriptDir "\Logs\ui_shellv2.log", "UTF-8")
     }
 }
+; 记录异常细节到 ui_shellv2.log
+UIX_LogExc(e, where := "") {
+    try {
+        UIX_Log(Format("EXC[{1}] {2} @ {3}:{4} What={5}", where, e.Message, e.File, e.Line, e.What))
+    } catch {
+    }
+}
 ; ---------- DPI ----------
 UIX_EnablePerMonitorDPI() {
     try {
@@ -268,8 +275,7 @@ UIX_CreateChildPanel(mainHwnd, rect) {
     return panel
 }
 
-; 安全调用：取出函数对象再 .Call，避免隐式多传 this
-; 若目标原型不匹配，退回无参调用，绝不把异常抛出
+; 安全调用：函数对象 .Call，避免隐式多传 this
 UIX_SafeCall(obj, method, args*) {
     try {
         if (IsObject(obj) && ObjHasOwnProp(obj, method)) {
@@ -278,7 +284,9 @@ UIX_SafeCall(obj, method, args*) {
                 return fn.Call(args*)
             }
         }
-    } catch {
+    } catch as e {
+        UIX_LogExc(e, "SafeCall-Call")
+        ; 回退：无参调用（比如页对象 Reflow() 不接参数）
         try {
             if (IsObject(obj) && ObjHasOwnProp(obj, method)) {
                 fn2 := obj.%method%
@@ -286,7 +294,8 @@ UIX_SafeCall(obj, method, args*) {
                     return fn2.Call()
                 }
             }
-        } catch {
+        } catch as e2 {
+            UIX_LogExc(e2, "SafeCall-Call0")
         }
     }
     return 0
@@ -300,16 +309,48 @@ UIX_ObjHasMethod(obj, name) {
         return false
     }
 }
-; ---------- 深色导航（ListView 版，带自适应列宽） ----------
-UIX_Nav_BuildLV(gui, x, y, w, h, items, theme := 0) {
+; 深色导航（ListView 版）：去边框 + 行高 + 自适应列宽 + 右侧双遮罩 + 隐藏焦点
+UIX_Nav_BuildLV(gui, x, y, w, h, items, theme := 0, rowH := 52) {
     if (!theme) {
-        try theme := UIX_Theme_Get()
+        try {
+            theme := UIX_Theme_Get()
+        } catch {
+            theme := { CardBg: 0x1C222B, Text: 0xE6E6E6 }
+        }
     }
-    lv := gui.Add("ListView", Format("x{} y{} w{} h{} -Hdr +Report", x, y, w, h), ["页"])
-    try UIX_Theme_SkinListView(lv, theme, true)
-    try lv.SetFont("s10")
 
-    ; 列表 EX 样式（整行/双缓冲/去网格）
+    ; 导航 LV：隐藏表头 + 报告视图
+    lv := gui.Add("ListView", Format("x{} y{} w{} h{} -Hdr +Report", x, y, w, h), ["页"])
+    ; 字体与行高匹配
+    try {
+        if (rowH >= 52) {
+            lv.SetFont("s12 Bold")
+        } else if (rowH >= 44) {
+            lv.SetFont("s11 Bold")
+        } else {
+            lv.SetFont("s10 Bold")
+        }
+    }
+
+    ; 去控件边框与凹陷边（白边来源）
+    try {
+        GWL_STYLE   := -16
+        GWL_EXSTYLE := -20
+        WS_BORDER       := 0x00800000
+        WS_EX_CLIENTEDGE:= 0x00000200
+        style := DllCall("user32\GetWindowLongPtr", "ptr", lv.Hwnd, "int", GWL_STYLE,   "ptr")
+        exsty := DllCall("user32\GetWindowLongPtr", "ptr", lv.Hwnd, "int", GWL_EXSTYLE, "ptr")
+        style := style & ~WS_BORDER
+        exsty := exsty & ~WS_EX_CLIENTEDGE
+        DllCall("user32\SetWindowLongPtr", "ptr", lv.Hwnd, "int", GWL_STYLE,   "ptr", style)
+        DllCall("user32\SetWindowLongPtr", "ptr", lv.Hwnd, "int", GWL_EXSTYLE, "ptr", exsty)
+        SWP_NOMOVE:=0x0002, SWP_NOSIZE:=0x0001, SWP_NOZORDER:=0x0004, SWP_FRAMECHANGED:=0x0020, SWP_SHOWWINDOW:=0x0040
+        DllCall("user32\SetWindowPos", "ptr", lv.Hwnd, "ptr", 0, "int", 0, "int", 0, "int", 0, "int", 0
+            , "uint", SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_FRAMECHANGED|SWP_SHOWWINDOW)
+    }
+
+    ; 深色皮肤 + 去网格 + 整行选择 + 双缓冲
+    UIX_Theme_SkinListView(lv, theme, true)
     LVM_GETEXTENDEDLISTVIEWSTYLE := 0x1037
     LVM_SETEXTENDEDLISTVIEWSTYLE := 0x1036
     LVS_EX_GRIDLINES := 0x0001
@@ -317,24 +358,66 @@ UIX_Nav_BuildLV(gui, x, y, w, h, items, theme := 0) {
     LVS_EX_DOUBLEBUFFER  := 0x10000
     curEx := SendMessage(LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0, lv)
     newEx := (curEx | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER) & ~LVS_EX_GRIDLINES
-    if (newEx != curEx) {
+    if (newEx != curEx)
         SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, newEx, lv)
+
+    ; 隐藏焦点虚线（避免选中边框感）
+    try {
+        WM_CHANGEUISTATE := 0x0127, UIS_SET := 1, UISF_HIDEFOCUS := 0x0001
+        wParam := UIS_SET | (UISF_HIDEFOCUS << 16)
+        SendMessage(WM_CHANGEUISTATE, wParam, 0, lv)
     }
 
-    map := []
-    for _, it in items {
-        if (HasProp(it, "type") && it.type = "sep") {
-            lv.Add("", "— " it.text " —")
-            map.Push("")
-        } else {
-            txt := HasProp(it, "text") ? it.text : ""
-            lv.Add("", "  " txt)
-            map.Push(HasProp(it, "key") ? it.key : "")
+    ; 用小图像列表把行高撑到 rowH
+    try {
+        hIL := DllCall("comctl32\ImageList_Create", "int", 16, "int", rowH, "uint", 0x00000020, "int", 8, "int", 8, "ptr")
+        if (hIL) {
+            bmi := Buffer(40, 0)
+            NumPut("UInt", 40, bmi, 0), NumPut("Int", 1, bmi, 4), NumPut("Int", -rowH, bmi, 8)
+            NumPut("UShort", 1, bmi, 12), NumPut("UShort", 32, bmi, 14)
+            hdc := DllCall("gdi32\CreateCompatibleDC", "ptr", 0, "ptr"), pBits := 0
+            hBmp := DllCall("gdi32\CreateDIBSection", "ptr", hdc, "ptr", bmi.Ptr, "uint", 0, "ptr*", &pBits, "ptr", 0, "uint", 0, "ptr")
+            if (hBmp) {
+                DllCall("comctl32\ImageList_Add", "ptr", hIL, "ptr", hBmp, "ptr", 0)
+                DllCall("gdi32\DeleteObject", "ptr", hBmp)
+            }
+            if (hdc)
+                DllCall("gdi32\DeleteDC", "ptr", hdc)
+            LVM_SETIMAGELIST := 0x1003, LVSIL_SMALL := 1
+            SendMessage(LVM_SETIMAGELIST, LVSIL_SMALL, hIL, lv)
         }
     }
-    ; 首次列宽
-    lv.ModifyCol(1, Max(60, w - 8))
 
+    ; 数据
+    map := []
+    for _, it in items {
+        if (HasProp(it,"type") && it.type="sep") {
+            lv.Add("", "— " it.text " —"), map.Push("")
+        } else {
+            txt := HasProp(it,"text") ? it.text : ""
+            lv.Add("", "  " txt), map.Push(HasProp(it,"key") ? it.key : "")
+        }
+    }
+
+    ; 右侧双遮罩：彻底覆盖系统“残线”
+    ; 1) 紧贴 LV 客户区右缘 3px（内遮罩）
+    maskInner := gui.Add("Text", Format("x{} y{} w3 h{}", x + w - 3, y, h), "")
+    ; 2) 再在 LV 右缘外侧压 1px（外遮罩，紧贴卡片右内壁）
+    maskEdge := gui.Add("Text", Format("x{} y{} w1 h{}", x + w, y, h), "")
+    try {
+        maskInner.BackColor := Format("0x{:06X}", theme.CardBg)
+        maskEdge.BackColor  := Format("0x{:06X}", theme.CardBg)
+        ; 置顶（同父窗口内）
+        HWND_TOP := 0
+        SWP_NOSIZE:=0x0001, SWP_NOMOVE:=0x0002, SWP_NOZORDER:=0x0004, SWP_SHOWWINDOW:=0x0040
+        DllCall("user32\SetWindowPos", "ptr", maskInner.Hwnd, "ptr", HWND_TOP, "int", 0, "int", 0, "int", 0, "int", 0, "uint", SWP_NOMOVE|SWP_NOSIZE|SWP_SHOWWINDOW)
+        DllCall("user32\SetWindowPos", "ptr", maskEdge.Hwnd,  "ptr", HWND_TOP, "int", 0, "int", 0, "int", 0, "int", 0, "uint", SWP_NOMOVE|SWP_NOSIZE|SWP_SHOWWINDOW)
+    }
+
+    ; 列宽 = 可视宽 - 3（与遮罩对齐）
+    lv.ModifyCol(1, Max(160, w - 3))
+
+    ; 事件/接口
     onChanged := 0
     lv.OnEvent("Click", NavChange)
     lv.OnEvent("ItemFocus", NavChange)
@@ -347,17 +430,14 @@ UIX_Nav_BuildLV(gui, x, y, w, h, items, theme := 0) {
             left := row - 1, right := row + 1, moved := false
             while (left >= 1 || right <= map.Length) {
                 if (left >= 1 && map[left] != "") {
-                    lv.Modify(left, "Select Focus Vis")
-                    moved := true
+                    lv.Modify(left, "Select Focus Vis"), moved := true
                     break
                 }
                 if (right <= map.Length && map[right] != "") {
-                    lv.Modify(right, "Select Focus Vis")
-                    moved := true
+                    lv.Modify(right, "Select Focus Vis"), moved := true
                     break
                 }
-                left -= 1
-                right += 1
+                left -= 1, right += 1
             }
             if (!moved)
                 return
@@ -370,7 +450,10 @@ UIX_Nav_BuildLV(gui, x, y, w, h, items, theme := 0) {
 
     UIX_NavLV_Reflow(nx, ny, nw, nh, *) {
         lv.Move(nx, ny, nw, nh)
-        lv.ModifyCol(1, Max(60, nw - 8))
+        ; 遮罩随尺寸移动
+        maskInner.Move(nx + nw - 3, ny, 3, nh)
+        maskEdge.Move(nx + nw,     ny, 1, nh)
+        lv.ModifyCol(1, Max(160, nw - 3))
     }
     UIX_NavLV_SetOnChange(cb, *) {
         onChanged := cb
@@ -394,6 +477,8 @@ UIX_Nav_BuildLV(gui, x, y, w, h, items, theme := 0) {
     }
 
     return { Ctrl: lv
+           , MaskInner: maskInner
+           , MaskEdge:  maskEdge
            , Reflow: UIX_NavLV_Reflow
            , SetOnChange: UIX_NavLV_SetOnChange
            , SelectKey: UIX_NavLV_SelectKey

@@ -10,6 +10,11 @@
 
 global UI_ShellV2_Main := 0
 
+NAV_W   := 300   ; 左侧更宽（大约增加一半）
+NAV_PAD := 16    ; 卡片内边距
+GUTTER  := 18    ; 左右分隔
+ROW_H   := 52    ; 行高更高
+
 UI_ShowMainV2(owned := true, startKey := "skills") {
     UIX_EnablePerMonitorDPI()
     global App, UI_ShellV2_Main
@@ -47,7 +52,12 @@ UI_ShowMainV2(owned := true, startKey := "skills") {
       , { type:"sep", text:"系统" }
       , { key:"settings", text:"界面语言" }
     ]
-    nav := UIX_Nav_BuildLV(main, main.MarginX, main.MarginY, 160, 640, navItems)
+    ; 左侧圆角卡片（更像参考图的侧栏）
+    navCardRect := { x: main.MarginX, y: main.MarginY, w: NAV_W, h: 640 }
+    navCard := UIX_Theme_CreateCardPanel(main.Hwnd, navCardRect, theme, theme.Radius)
+    ; 卡片里的导航（去边框 + 行高）
+    nav := UIX_Nav_BuildLV(navCard, NAV_PAD, NAV_PAD
+    , NAV_W - NAV_PAD*2, 640 - NAV_PAD*2, navItems, theme, ROW_H)
     UIX_Theme_SkinListBox(nav.Ctrl, theme)
     panelRect := { x: main.MarginX + 160 + 8, y: main.MarginY, w: 860, h: 720 }
     state := { current: "", panel: 0, pageObj: 0 }
@@ -103,12 +113,17 @@ UI_ShowMainV2(owned := true, startKey := "skills") {
     }
 
     main.OnEvent("Size", (gui, mm, w, h) => (
-        ; 用 Reflow，确保列宽随窗口变化
-        (nav.Reflow).Call(gui.MarginX, gui.MarginY, 160, Max(h - gui.MarginY*2, 360)),
-        panelRect.x := gui.MarginX + 160 + 8,
+        ; 左侧卡片
+        navCard.Move(gui.MarginX, gui.MarginY, NAV_W, Max(h - gui.MarginY*2, 360)),
+        ; 卡片内导航
+        (nav.Reflow).Call(NAV_PAD, NAV_PAD, NAV_W - NAV_PAD*2, Max(h - gui.MarginY*2, 360) - NAV_PAD*2),
+
+        ; 右侧子面板区域（向右错开 NAV_W + GUTTER）
+        panelRect.x := gui.MarginX + NAV_W + GUTTER,
         panelRect.y := gui.MarginY,
-        panelRect.w := Max(w - panelRect.x - gui.MarginX, 480),
+        panelRect.w := Max(w - panelRect.x - gui.MarginY, 520),
         panelRect.h := Max(h - gui.MarginY*2, 360),
+
         (IsObject(state.panel) && state.panel) ? state.panel.Move(panelRect.x, panelRect.y, panelRect.w, panelRect.h) : 0,
         UIX_SafeCall(state.pageObj, "Reflow", { dlg: state.panel, rect: panelRect, prof: App["ProfileData"], cfg: App["ProfileData"].Rotation, theme: theme })
     ))
