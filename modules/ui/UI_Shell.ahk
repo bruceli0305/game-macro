@@ -8,6 +8,8 @@
 #Include "pages\UI_Page_Diag.ahk"
 #Include "pages\UI_Page_Tools_IO.ahk"
 #Include "pages\UI_Page_Tools_Quick.ahk"
+#Include "pages\UI_Page_Settings_Lang.ahk"
+#Include "pages\UI_Page_Settings_About.ahk"
 
 ; 主壳：左侧 TreeView + 右侧面板
 ; 全面使用块结构 if/try/catch，不使用单行形式
@@ -52,7 +54,7 @@ UI_ShowMain() {
     nodeDefault := UI.Nav.Add("默认技能",   rootData)
 
     ; 高级功能
-    nodeRot     := UI.Nav.Add("轮换配置",         rootAdv)
+    nodeRot     := UI.Nav.Add("轮换配置",           rootAdv)
     nodeDiag    := UI.Nav.Add("采集诊断（DXGI/ROI）", rootAdv)
 
     ; 工具
@@ -60,7 +62,8 @@ UI_ShowMain() {
     nodeToolsQuick := UI.Nav.Add("快捷测试",    rootTools)
 
     ; 设置
-    nodeSettings := UI.Nav.Add("界面 / 语言", rootSet)
+    nodeSettingsLang  := UI.Nav.Add("界面 / 语言", rootSet)
+    nodeSettingsAbout := UI.Nav.Add("关于",       rootSet)
 
     ; 展开分组
     try {
@@ -73,30 +76,28 @@ UI_ShowMain() {
     }
 
     ; 节点映射
-    UI_NavMap[nodeProfile]   := "profile"
-    UI_NavMap[nodeSkills]    := "skills"
-    UI_NavMap[nodePoints]    := "points"
-    UI_NavMap[nodeDefault]   := "default_skill"
-    UI_NavMap[nodeRot]       := "adv_rotation"
-    UI_NavMap[nodeDiag]      := "adv_diag"
-    UI_NavMap[nodeToolsIO]   := "tools_io"
-    UI_NavMap[nodeToolsQuick]:= "tools_quick"
-    UI_NavMap[nodeSettings]  := "settings_lang"
+    UI_NavMap[nodeProfile]      := "profile"
+    UI_NavMap[nodeSkills]       := "skills"
+    UI_NavMap[nodePoints]       := "points"
+    UI_NavMap[nodeDefault]      := "default_skill"
+    UI_NavMap[nodeRot]          := "adv_rotation"
+    UI_NavMap[nodeDiag]         := "adv_diag"
+    UI_NavMap[nodeToolsIO]      := "tools_io"
+    UI_NavMap[nodeToolsQuick]   := "tools_quick"
+    UI_NavMap[nodeSettingsLang] := "settings_lang"
+    UI_NavMap[nodeSettingsAbout]:= "settings_about"
 
     ; 页面注册
-    UI_RegisterPage("profile",       "概览与配置", Page_Profile_Build,       Page_Profile_Layout)
-    UI_RegisterPage("skills",        "技能",       Page_Skills_Build,        Page_Skills_Layout)
-    UI_RegisterPage("points",        "点位",       Page_Points_Build,        Page_Points_Layout)
-    UI_RegisterPage("default_skill", "默认技能",   Page_DefaultSkill_Build,  Page_DefaultSkill_Layout, Page_DefaultSkill_OnEnter)
-    UI_RegisterPage("adv_rotation",  "轮换配置",   Page_Rotation_Build,      Page_Rotation_Layout,     Page_Rotation_OnEnter)
-    UI_RegisterPage("adv_diag",      "采集诊断",   Page_Diag_Build,          Page_Diag_Layout)   ; 刷新在 Build 内已做
-    UI_RegisterPage("tools_io",      "导入导出",   Page_ToolsIO_Build,       Page_ToolsIO_Layout)
-    UI_RegisterPage("tools_quick",   "快捷测试",   Page_ToolsQuick_Build,    Page_ToolsQuick_Layout)
-
-    ; 设置页（占位或后续替换为正式设置页）
-    UI_RegisterPage("settings_lang", "设置"
-        , (page) => Page_Settings_StubBuild(page)
-        , (rc)   => 0)
+    UI_RegisterPage("profile",        "概览与配置", Page_Profile_Build,        Page_Profile_Layout)
+    UI_RegisterPage("skills",         "技能",       Page_Skills_Build,         Page_Skills_Layout)
+    UI_RegisterPage("points",         "点位",       Page_Points_Build,         Page_Points_Layout)
+    UI_RegisterPage("default_skill",  "默认技能",   Page_DefaultSkill_Build,   Page_DefaultSkill_Layout,  Page_DefaultSkill_OnEnter)
+    UI_RegisterPage("adv_rotation",   "轮换配置",   Page_Rotation_Build,       Page_Rotation_Layout,      Page_Rotation_OnEnter)
+    UI_RegisterPage("adv_diag",       "采集诊断",   Page_Diag_Build,           Page_Diag_Layout)
+    UI_RegisterPage("tools_io",       "导入导出",   Page_ToolsIO_Build,        Page_ToolsIO_Layout)
+    UI_RegisterPage("tools_quick",    "快捷测试",   Page_ToolsQuick_Build,     Page_ToolsQuick_Layout)
+    UI_RegisterPage("settings_lang",  "界面语言",   Page_Settings_Lang_Build,  Page_Settings_Lang_Layout, Page_Settings_Lang_OnEnter)
+    UI_RegisterPage("settings_about", "关于",       Page_Settings_About_Build, Page_Settings_About_Layout,Page_Settings_About_OnEnter)
 
     UI.Main.Show("w1000 h760")
     UI.Nav.Modify(nodeProfile, "Select")
@@ -135,30 +136,4 @@ UI_OnResize_LeftNav(gui, minmax, w, h) {
     navW := 200
     UI.Nav.Move(UI.Main.MarginX, UI.Main.MarginY, navW, Max(h - UI.Main.MarginY * 2, 320))
     UI_LayoutCurrentPage()
-}
-
-; 设置 / 界面语言 占位页（仍提供重建界面按钮）
-Page_Settings_StubBuild(page) {
-    global UI
-    rc := UI_GetPageRect()
-    page.Controls := []
-
-    txt := UI.Main.Add("Text", Format("x{} y{} w{}", rc.X, rc.Y, rc.W)
-        , "设置 / 界面语言`n提示：语言切换后需要重建界面以生效。")
-    page.Controls.Push(txt)
-
-    btn := UI.Main.Add("Button", Format("x{} y{} w160 h28", rc.X, rc.Y + 60), "重建界面")
-    btn.OnEvent("Click", UI_RebuildMain)
-    page.Controls.Push(btn)
-}
-
-UI_RebuildMain(*) {
-    global UI
-    try {
-        if (UI.Has("Main") && UI.Main) {
-            UI.Main.Destroy()
-        }
-    } catch {
-    }
-    UI_ShowMain()
 }
