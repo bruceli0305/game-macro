@@ -1,13 +1,11 @@
 #Requires AutoHotkey v2
-
-; 概览与配置（仅保留 角色配置 + 热键与轮询/拾色）
-; 不再依赖 UI_Page_Config_* 外部函数，全部事件在本页实现
-; 严格块结构写法；包含强力回退刷新，确保下拉与参数可用
+;Page_Profile.ahk
+; 概览与配置（紧凑版）
+; 变更：热键与轮询分组每个参数独占一行，所有标题右对齐，整齐划一。
+; 仍保留强力回退刷新，页面自包含事件回调；全程块结构 if/try/catch。
 
 Page_Profile_Build(page) {
     global UI
-
-    ; 安全获取右侧面板区域：优先 UI_GetPageRect，失败回退
     rc := UI_GetPageRect()
     page.Controls := []
 
@@ -27,61 +25,83 @@ Page_Profile_Build(page) {
     page.Controls.Push(UI.BtnDelete)
     page.Controls.Push(UI.BtnExport)
 
-    ; ====== Group: 热键与轮询/拾色 ======
+    ; ====== Group: 热键与轮询（逐行排布） ======
+    labelW := 120          ; 统一标签宽度（右对齐）
+    rowH   := 34           ; 行距
+    padX   := 12           ; 分组内边距
+    padTop := 26           ; 分组标题下内边距
+    ctrlGap:= 8            ; 标签与控件间距
+
+    ; 行数：StartHotkey、Poll、SendDelay、PickEnable、OffY、Dwell、PickKey、Apply
+    rows := 8
+    genH := padTop + rows * rowH + 14
+
     gy := rc.Y + 80 + 10
-    UI.GB_General := UI.Main.Add("GroupBox", Format("x{} y{} w{} h152", rc.X, gy, rc.W), T("group.general","热键与轮询"))
+    UI.GB_General := UI.Main.Add("GroupBox", Format("x{} y{} w{} h{}", rc.X, gy, rc.W, genH), T("group.general","热键与轮询"))
     page.Controls.Push(UI.GB_General)
 
-    ; 行1：开始/停止 + 捕获鼠标键 + 轮询/延迟
-    UI.LblStartStop := UI.Main.Add("Text", Format("x{} y{}", rc.X + 12, gy + 50), T("label.startStop","开始/停止："))
+    ; 统一坐标计算
+    xLabel := rc.X + padX
+    xCtrl  := xLabel + labelW + ctrlGap
+    yLine1 := gy + padTop
+
+    ; 行1：开始/停止（Hotkey）+ 捕获鼠标键按钮
+    UI.LblStartStop := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, yLine1 + 4, labelW), T("label.startStop","开始/停止："))
     page.Controls.Push(UI.LblStartStop)
-
-    UI.HkStart := UI.Main.Add("Hotkey", Format("x{} y{} w180", rc.X + 12 + 90, gy + 46))
+    UI.HkStart := UI.Main.Add("Hotkey", Format("x{} y{} w200", xCtrl, yLine1))
     page.Controls.Push(UI.HkStart)
-
-    UI.BtnCapStartMouse := UI.Main.Add("Button", Format("x{} y{} w110 h28", rc.X + 12 + 90 + 186, gy + 44), T("btn.captureMouse","捕获鼠标键"))
+    UI.BtnCapStartMouse := UI.Main.Add("Button", Format("x{} y{} w110 h26", xCtrl + 210, yLine1 - 2), T("btn.captureMouse","捕获鼠标键"))
     page.Controls.Push(UI.BtnCapStartMouse)
 
-    UI.LblPoll  := UI.Main.Add("Text", Format("x{} y{}", rc.X + 12 + 90 + 186 + 116, gy + 50), T("label.pollMs","轮询(ms)："))
+    ; 行2：轮询(ms)
+    y2 := yLine1 + rowH
+    UI.LblPoll := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y2 + 4, labelW), T("label.pollMs","轮询(ms)："))
     page.Controls.Push(UI.LblPoll)
-    UI.PollEdit := UI.Main.Add("Edit", "x+6 w90 Number Center")
+    UI.PollEdit := UI.Main.Add("Edit", Format("x{} y{} w200 Number Center", xCtrl, y2))
     page.Controls.Push(UI.PollEdit)
 
-    UI.LblDelay := UI.Main.Add("Text", "x+18", T("label.delayMs","全局延迟(ms)："))
+    ; 行3：全局延迟(ms)
+    y3 := y2 + rowH
+    UI.LblDelay := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y3 + 4, labelW), T("label.delayMs","全局延迟(ms)："))
     page.Controls.Push(UI.LblDelay)
-    UI.CdEdit   := UI.Main.Add("Edit", "x+6 w100 Number Center")
+    UI.CdEdit := UI.Main.Add("Edit", Format("x{} y{} w200 Number Center", xCtrl, y3))
     page.Controls.Push(UI.CdEdit)
 
-    UI.BtnApply := UI.Main.Add("Button", "x+18 w80 h28", T("btn.apply","应用"))
-    page.Controls.Push(UI.BtnApply)
-
-    ; 行2：取色避让与拾色确认键
-    UI.LblPick := UI.Main.Add("Text", Format("x{} y{}", rc.X + 12, gy + 84), T("label.pickAvoid","取色避让："))
+    ; 行4：取色避让（启用）
+    y4 := y3 + rowH
+    UI.LblPick := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y4 + 4, labelW), T("label.pickAvoid","取色避让："))
     page.Controls.Push(UI.LblPick)
-
-    UI.ChkPick := UI.Main.Add("CheckBox", "x+6 w18 h18")
+    UI.ChkPick := UI.Main.Add("CheckBox", Format("x{} y{} w200", xCtrl, y4), T("label.enable","启用"))
     page.Controls.Push(UI.ChkPick)
 
-    UI.LblOffY  := UI.Main.Add("Text", "x+14", T("label.offsetY","Y偏移(px)："))
+    ; 行5：Y偏移(px)
+    y5 := y4 + rowH
+    UI.LblOffY := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y5 + 4, labelW), T("label.offsetY","Y偏移(px)："))
     page.Controls.Push(UI.LblOffY)
-
-    UI.OffYEdit := UI.Main.Add("Edit", "x+6 w80 Number Center")
+    UI.OffYEdit := UI.Main.Add("Edit", Format("x{} y{} w200 Number Center", xCtrl, y5))
     page.Controls.Push(UI.OffYEdit)
 
-    UI.LblDwell := UI.Main.Add("Text", "x+14", T("label.dwellMs","等待(ms)："))
+    ; 行6：等待(ms)
+    y6 := y5 + rowH
+    UI.LblDwell := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y6 + 4, labelW), T("label.dwellMs","等待(ms)："))
     page.Controls.Push(UI.LblDwell)
-
-    UI.DwellEdit:= UI.Main.Add("Edit", "x+6 w90 Number Center")
+    UI.DwellEdit := UI.Main.Add("Edit", Format("x{} y{} w200 Number Center", xCtrl, y6))
     page.Controls.Push(UI.DwellEdit)
 
-    UI.LblPickKey := UI.Main.Add("Text", "x+14", T("label.pickKey","拾色热键："))
+    ; 行7：拾色热键
+    y7 := y6 + rowH
+    UI.LblPickKey := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y7 + 4, labelW), T("label.pickKey","拾色热键："))
     page.Controls.Push(UI.LblPickKey)
-
-    UI.DdPickKey  := UI.Main.Add("DropDownList", "x+6 w120")
+    UI.DdPickKey := UI.Main.Add("DropDownList", Format("x{} y{} w200", xCtrl, y7))
     UI.DdPickKey.Add(["LButton","MButton","RButton","XButton1","XButton2","F10","F11","F12"])
     page.Controls.Push(UI.DdPickKey)
 
-    ; ====== 事件绑定（全部改为本页回调） ======
+    ; 行8：应用按钮
+    y8 := y7 + rowH
+    UI.BtnApply := UI.Main.Add("Button", Format("x{} y{} w100 h28", xCtrl, y8 - 2), T("btn.apply","应用"))
+    page.Controls.Push(UI.BtnApply)
+
+    ; ====== 事件绑定 ======
     UI.ProfilesDD.OnEvent("Change", Profile_OnProfilesChanged)
     UI.BtnNew.OnEvent("Click", Profile_OnNew)
     UI.BtnClone.OnEvent("Click", Profile_OnClone)
@@ -95,9 +115,59 @@ Page_Profile_Build(page) {
 }
 
 Page_Profile_Layout(rc) {
+    ; 与 Build 同步的行高/宽度参数
+    labelW := 100
+    rowH   := 34
+    padX   := 12
+    padTop := 26
+    ctrlGap:= 8
+
     try {
+        ; 角色配置分组
         UI.GB_Profile.Move(rc.X, rc.Y, rc.W)
-        UI.GB_General.Move(rc.X, rc.Y + 90, rc.W)
+        UI.ProfilesDD.Move(rc.X + 12, rc.Y + 32)
+        ; 其余按钮保持相对位置（AutoHotkey 会延续 x+ 布局），无需每次计算
+
+        ; 热键与轮询分组
+        rows := 8
+        genH := padTop + rows * rowH + 14
+        gy   := rc.Y + 80 + 10
+        UI.GB_General.Move(rc.X, gy, rc.W, genH)
+
+        xLabel := rc.X + padX
+        xCtrl  := xLabel + labelW + ctrlGap
+        y1     := gy + padTop
+
+        UI.LblStartStop.Move(xLabel, y1 + 4, labelW)
+        UI.HkStart.Move(xCtrl, y1, 200)
+        UI.BtnCapStartMouse.Move(xCtrl + 210, y1 - 2)
+
+        y2 := y1 + rowH
+        UI.LblPoll.Move(xLabel, y2 + 4, labelW)
+        UI.PollEdit.Move(xCtrl, y2, 100)
+
+        y3 := y2 + rowH
+        UI.LblDelay.Move(xLabel, y3 + 4, labelW)
+        UI.CdEdit.Move(xCtrl, y3, 120)
+
+        y4 := y3 + rowH
+        UI.LblPick.Move(xLabel, y4 + 4, labelW)
+        UI.ChkPick.Move(xCtrl, y4, 100)
+
+        y5 := y4 + rowH
+        UI.LblOffY.Move(xLabel, y5 + 4, labelW)
+        UI.OffYEdit.Move(xCtrl, y5, 120)
+
+        y6 := y5 + rowH
+        UI.LblDwell.Move(xLabel, y6 + 4, labelW)
+        UI.DwellEdit.Move(xCtrl, y6, 120)
+
+        y7 := y6 + rowH
+        UI.LblPickKey.Move(xLabel, y7 + 4, labelW)
+        UI.DdPickKey.Move(xCtrl, y7, 140)
+
+        y8 := y7 + rowH
+        UI.BtnApply.Move(xCtrl, y8 - 2, 100, 28)
     } catch {
     }
 }
