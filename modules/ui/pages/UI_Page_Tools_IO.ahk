@@ -1,184 +1,198 @@
 #Requires AutoHotkey v2
 
-; 工具：导入/导出
-; 前缀：TIO_
+; 工具 → 导入/导出
+; 严格块结构的 if/try/catch，不使用单行形式
+; 控件前缀：TIO_
 
 Page_ToolsIO_Build(page) {
-    global UI, App
+    global UI
     rc := UI_GetPageRect()
     page.Controls := []
 
-    ; 导出
-    UI.TIO_GB_Exp := UI.Main.Add("GroupBox", Format("x{} y{} w{} h110", rc.X, rc.Y, rc.W), "导出")
-    page.Controls.Push(UI.TIO_GB_Exp)
+    ; 分组：导入/导出
+    UI.TIO_GB := UI.Main.Add("GroupBox", Format("x{} y{} w{} h200", rc.X, rc.Y, rc.W), "导入 / 导出")
+    page.Controls.Push(UI.TIO_GB)
 
-    curName := ""
-    try {
-        curName := App["CurrentProfile"]
-    } catch {
-        curName := ""
-    }
-    UI.TIO_L_Exp := UI.Main.Add("Text", Format("x{} y{} w{}", rc.X + 12, rc.Y + 26, rc.W - 24)
-        , "当前配置：" curName)
-    page.Controls.Push(UI.TIO_L_Exp)
+    ; 说明
+    msg := ""
+    msg .= "说明：" . "`r`n"
+    msg .= "• 导出当前配置为可分发包（包含脚本与配置、WorkerHost 可执行文件 视部署而定）。" . "`r`n"
+    msg .= "• 导入可从 .ini 复制到 Profiles 目录后生效；导入后建议在“概览与配置”页切换并检查。" . "`r`n"
+    UI.TIO_Tip := UI.Main.Add("Text", Format("x{} y{} w{}", rc.X + 12, rc.Y + 26, rc.W - 24), msg)
+    page.Controls.Push(UI.TIO_Tip)
 
-    UI.TIO_BtnExport := UI.Main.Add("Button", Format("x{} y{} w140 h28", rc.X + 12, rc.Y + 60), "导出当前配置")
+    ; 行：按钮
+    yb := rc.Y + 26 + 80
+    UI.TIO_BtnExport := UI.Main.Add("Button", Format("x{} y{} w150 h28", rc.X + 12, yb), "导出当前配置")
     page.Controls.Push(UI.TIO_BtnExport)
 
-    UI.TIO_BtnOpenExports := UI.Main.Add("Button", "x+8 w120 h28", "打开 Exports")
+    UI.TIO_BtnOpenExports := UI.Main.Add("Button", "x+8 w120 h28", "打开导出目录")
     page.Controls.Push(UI.TIO_BtnOpenExports)
-    UI.TIO_BtnOpenProfiles := UI.Main.Add("Button", "x+8 w120 h28", "打开 Profiles")
+
+    UI.TIO_BtnOpenProfiles := UI.Main.Add("Button", "x+8 w120 h28", "打开配置目录")
     page.Controls.Push(UI.TIO_BtnOpenProfiles)
 
-    ; 导入
-    y2 := rc.Y + 120
-    UI.TIO_GB_Imp := UI.Main.Add("GroupBox", Format("x{} y{} w{} h120", rc.X, y2, rc.W), "导入")
-    page.Controls.Push(UI.TIO_GB_Imp)
-
-    UI.TIO_L_Imp := UI.Main.Add("Text", Format("x{} y{} w{}", rc.X + 12, y2 + 26, rc.W - 24)
-        , "导入一个 .ini 为新配置（将复制到 Profiles 目录）")
-    page.Controls.Push(UI.TIO_L_Imp)
-
-    UI.TIO_BtnImport := UI.Main.Add("Button", Format("x{} y{} w140 h28", rc.X + 12, y2 + 60), "选择文件导入")
+    UI.TIO_BtnImport := UI.Main.Add("Button", "x+8 w150 h28", "从 .ini 导入为新配置")
     page.Controls.Push(UI.TIO_BtnImport)
 
     ; 事件
-    UI.TIO_BtnExport.OnEvent("Click", TIO_OnExport)
-    UI.TIO_BtnOpenExports.OnEvent("Click", TIO_OnOpenExports)
-    UI.TIO_BtnOpenProfiles.OnEvent("Click", TIO_OnOpenProfiles)
-    UI.TIO_BtnImport.OnEvent("Click", TIO_OnImport)
-
-    TIO_RefreshHeader()
+    UI.TIO_BtnExport.OnEvent("Click", ToolsIO_OnExport)
+    UI.TIO_BtnOpenExports.OnEvent("Click", ToolsIO_OnOpenExports)
+    UI.TIO_BtnOpenProfiles.OnEvent("Click", ToolsIO_OnOpenProfiles)
+    UI.TIO_BtnImport.OnEvent("Click", ToolsIO_OnImportIni)
 }
 
 Page_ToolsIO_Layout(rc) {
     try {
-        UI.TIO_GB_Exp.Move(rc.X, rc.Y, rc.W)
-        UI.TIO_GB_Imp.Move(rc.X, rc.Y + 120, rc.W)
+        UI.TIO_GB.Move(rc.X, rc.Y, rc.W)
+        UI.TIO_Tip.Move(rc.X + 12, rc.Y + 26, rc.W - 24)
+        ; 按钮横向布局，保持初始创建的相对位置
     } catch {
     }
 }
 
-Page_ToolsIO_OnEnter(*) {
-    TIO_RefreshHeader()
-}
+; ============== 事件实现 ==============
 
-TIO_RefreshHeader() {
-    global UI, App
-    try {
-        UI.TIO_L_Exp.Text := "当前配置：" App["CurrentProfile"]
-    } catch {
-    }
-}
-
-TIO_OnExport(*) {
+ToolsIO_OnExport(*) {
     global App
-    name := ""
+    cur := ""
     try {
-        name := App["CurrentProfile"]
+        if (IsSet(App) && App.Has("CurrentProfile")) {
+            cur := App["CurrentProfile"]
+        }
     } catch {
-        name := ""
+        cur := ""
     }
-    if (name = "") {
-        Notify("没有选中的配置，无法导出")
+    if (cur = "") {
+        MsgBox "未选择配置，无法导出。请先在“概览与配置”页选择或创建一个配置。"
         return
     }
     try {
-        Exporter_ExportProfile(name)
-    } catch {
-        Notify("导出失败")
+        Exporter_ExportProfile(cur)
+    } catch as e {
+        MsgBox "导出失败：" e.Message
     }
 }
 
-TIO_OnOpenExports(*) {
-    global App
-    dir := ""
+ToolsIO_OnOpenExports(*) {
+    dir := A_ScriptDir "\Exports"
     try {
-        dir := App["ExportDir"]
+        DirCreate(dir)
     } catch {
-        dir := A_ScriptDir "\Exports"
     }
-    Run(dir)
+    try {
+        Run dir
+    } catch {
+        MsgBox "无法打开目录：" dir
+    }
 }
 
-TIO_OnOpenProfiles(*) {
+ToolsIO_OnOpenProfiles(*) {
     global App
     dir := ""
     try {
+        if !(IsSet(App) && App.Has("ProfilesDir")) {
+            App := IsSet(App) ? App : Map()
+            App["ProfilesDir"] := A_ScriptDir "\Profiles"
+        }
         dir := App["ProfilesDir"]
+        DirCreate(dir)
     } catch {
         dir := A_ScriptDir "\Profiles"
     }
-    Run(dir)
+    try {
+        Run dir
+    } catch {
+        MsgBox "无法打开目录：" dir
+    }
 }
 
-TIO_OnImport(*) {
-    global App, UI
-
-    sel := ""
+ToolsIO_OnImportIni(*) {
+    global App
+    ; 选择 .ini 文件
+    path := ""
     try {
-        sel := FileSelect(3, A_Desktop, "选择要导入的配置 .ini", "配置文件 (*.ini)")
+        path := FileSelect("F", A_ScriptDir, "配置文件 (*.ini)")
     } catch {
-        sel := ""
+        path := ""
     }
-    if (sel = "") {
+    if (path = "") {
         return
     }
 
+    ; 建议的新名称：基于文件名（不含扩展名）
     base := ""
     try {
-        base := RegExReplace(sel, ".*\\", "")
+        base := RegExReplace(path, "i)^.*\\", "")
         base := RegExReplace(base, "\.ini$", "")
     } catch {
-        base := "Imported"
+        base := "NewProfile"
     }
 
-    nameBox := InputBox("为该配置取一个名称：", "导入配置", base)
-    if (nameBox.Result != "OK") {
-        return
-    }
-    newName := Trim(nameBox.Value)
-    if (newName = "") {
-        Notify("名称不可为空")
-        return
-    }
-
-    target := ""
-    dir := ""
+    ; 询问名称
+    newName := ""
     try {
-        dir := App["ProfilesDir"]
+        ib := InputBox("导入为新配置名称：", "导入 .ini 为配置", base)
+        if (ib.Result = "Cancel") {
+            return
+        }
+        newName := Trim(ib.Value)
     } catch {
-        dir := A_ScriptDir "\Profiles"
+        newName := base
     }
-    target := dir "\" newName ".ini"
+    if (newName = "") {
+        MsgBox "名称不可为空。"
+        return
+    }
 
-    if FileExist(target) {
-        yesNo := MsgBox("已存在同名配置，是否覆盖？", "确认", "YesNo")
-        if (yesNo != "Yes") {
+    ; 复制到 Profiles 目录
+    profDir := ""
+    try {
+        if !(IsSet(App) && App.Has("ProfilesDir")) {
+            App := IsSet(App) ? App : Map()
+            App["ProfilesDir"] := A_ScriptDir "\Profiles"
+        }
+        profDir := App["ProfilesDir"]
+        DirCreate(profDir)
+    } catch {
+        profDir := A_ScriptDir "\Profiles"
+    }
+
+    dest := profDir "\" newName ".ini"
+    if FileExist(dest) {
+        ans := MsgBox("目标已存在，是否覆盖？`r`n" dest, , "YesNo")
+        if (ans != "Yes") {
             return
         }
     }
-
-    ok := false
+    ok := true
     try {
-        FileCopy(sel, target, true)
-        ok := true
-    } catch {
+        FileCopy path, dest, true
+    } catch as e {
         ok := false
+        MsgBox "导入失败：" e.Message
+    }
+    if (!ok) {
+        return
     }
 
-    if (ok) {
-        ; 刷新列表并切换到新配置
-        try {
-            Profile_RefreshAll_Strong()
-        } catch {
-        }
-        try {
-            Profile_SwitchProfile_Strong(newName)
-        } catch {
-        }
-        Notify("导入成功：" newName)
-    } else {
-        Notify("导入失败")
+    ; 刷新配置列表（如果页面函数存在，则调用）
+    refreshed := false
+    try {
+        UI_Page_Config_ReloadProfiles()
+        refreshed := true
+    } catch {
+        refreshed := false
     }
+
+    ; 切换至新配置（强力回退方式）
+    if (!refreshed) {
+        try {
+            App["CurrentProfile"] := newName
+            App["ProfileData"] := Storage_LoadProfile(newName)
+        } catch {
+        }
+    }
+
+    Notify("已导入为配置：" newName)
 }
