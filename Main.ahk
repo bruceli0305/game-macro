@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+; Main.ahk
 ; 若未以管理员运行，则自举为管理员
 if !A_IsAdmin {
     try {
