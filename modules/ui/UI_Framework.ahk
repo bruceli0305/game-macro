@@ -147,3 +147,16 @@ UI_EnablePerMonitorDPI() {
         }
     }
 }
+
+; ========= 重建主界面（全局可用） =========
+UI_RebuildMain(*) {
+    global UI
+    try {
+        if (IsSet(UI) && UI.Has("Main") && UI.Main) {
+            UI.Main.Destroy()
+        }
+    } catch {
+        ; 忽略销毁异常
+    }
+    UI_ShowMain()
+}

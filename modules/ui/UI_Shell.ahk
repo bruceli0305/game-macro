@@ -1,18 +1,5 @@
 #Requires AutoHotkey v2
-#Include "UI_Framework.ahk"
-#Include "pages\UI_Page_Profile.ahk"
-#Include "pages\UI_Page_Skills.ahk"
-#Include "pages\UI_Page_Points.ahk"
-#Include "pages\UI_Page_DefaultSkill.ahk"
-#Include "pages\UI_Page_RotationSummary.ahk"
-#Include "pages\UI_Page_Diag.ahk"
-#Include "pages\UI_Page_Tools_IO.ahk"
-#Include "pages\UI_Page_Tools_Quick.ahk"
-#Include "pages\UI_Page_Settings_Lang.ahk"
-#Include "pages\UI_Page_Settings_About.ahk"
-#Include "pages\UI_Page_Rules_Summary.ahk"
-#Include "pages\UI_Page_Buffs_Summary.ahk"
-#Include "pages\UI_Page_Threads_Summary.ahk"
+#Include "pages\_index.ahk"
 
 ; 主壳：左侧 TreeView + 右侧面板
 ; 全面使用块结构 if/try/catch，不使用单行形式
@@ -58,12 +45,12 @@ UI_ShowMain() {
     nodeDefault := UI.Nav.Add("默认技能",   rootData)
 
     ; 自动化
-    nodeRules   := UI.Nav.Add("循环规则",   rootAuto)
+    nodeRules   := UI.Nav.Add("循环规则",       rootAuto)
     nodeBuffs   := UI.Nav.Add("计时器（BUFF）", rootAuto)
-    nodeThreads := UI.Nav.Add("线程配置",   rootAuto)
+    nodeThreads := UI.Nav.Add("线程配置",       rootAuto)
 
     ; 高级功能
-    nodeRot     := UI.Nav.Add("轮换配置",           rootAdv)
+    nodeRot     := UI.Nav.Add("轮换配置",             rootAdv)
     nodeDiag    := UI.Nav.Add("采集诊断（DXGI/ROI）", rootAdv)
 
     ; 工具
@@ -136,7 +123,6 @@ UI_OnNavChange(*) {
         return
     }
     if (!UI_NavMap.Has(sel)) {
-        ; 被点到的是分组节点：展开即可
         try {
             UI.Nav.Modify(sel, "Expand")
         } catch {

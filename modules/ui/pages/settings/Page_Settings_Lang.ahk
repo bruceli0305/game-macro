@@ -160,7 +160,19 @@ SettingsLang_OnApply(*) {
     }
 
     Notify(T("msg.langApplied","语言已应用，界面将重建。"))
-    UI_RebuildMain()
+
+    ; 安全方式调用 UI_RebuildMain：显式函数对象，失败则回退为 Destroy+Show
+    try {
+        UI_RebuildMain()
+    } catch {
+        try {
+            if (IsSet(UI) && UI.Has("Main") && UI.Main) {
+                UI.Main.Destroy()
+            }
+        } catch {
+        }
+        UI_ShowMain()
+    }
 }
 
 SettingsLang_OnOpenDir(*) {

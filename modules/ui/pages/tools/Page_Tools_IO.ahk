@@ -17,7 +17,7 @@ Page_ToolsIO_Build(page) {
     msg := ""
     msg .= "说明：" . "`r`n"
     msg .= "• 导出当前配置为可分发包（包含脚本与配置、WorkerHost 可执行文件 视部署而定）。" . "`r`n"
-    msg .= "• 导入可从 .ini 复制到 Profiles 目录后生效；导入后建议在“概览与配置”页切换并检查。" . "`r`n"
+    msg .= "• 导入可将 .ini 复制到 Profiles 目录后生效；导入后可在“概览与配置”页选择该新配置。" . "`r`n"
     UI.TIO_Tip := UI.Main.Add("Text", Format("x{} y{} w{}", rc.X + 12, rc.Y + 26, rc.W - 24), msg)
     page.Controls.Push(UI.TIO_Tip)
 
@@ -32,7 +32,7 @@ Page_ToolsIO_Build(page) {
     UI.TIO_BtnOpenProfiles := UI.Main.Add("Button", "x+8 w120 h28", "打开配置目录")
     page.Controls.Push(UI.TIO_BtnOpenProfiles)
 
-    UI.TIO_BtnImport := UI.Main.Add("Button", "x+8 w150 h28", "从 .ini 导入为新配置")
+    UI.TIO_BtnImport := UI.Main.Add("Button", "x+8 w170 h28", "从 .ini 导入为新配置")
     page.Controls.Push(UI.TIO_BtnImport)
 
     ; 事件
@@ -109,10 +109,12 @@ ToolsIO_OnOpenProfiles(*) {
 
 ToolsIO_OnImportIni(*) {
     global App
+
     ; 选择 .ini 文件
     path := ""
     try {
-        path := FileSelect("F", A_ScriptDir, "配置文件 (*.ini)")
+        ; v2 签名：FileSelect(Options?, RootDir?, Prompt?, Filter?)
+        path := FileSelect("", A_ScriptDir, "选择 .ini 文件", "Ini (*.ini)")
     } catch {
         path := ""
     }
@@ -176,17 +178,17 @@ ToolsIO_OnImportIni(*) {
         return
     }
 
-    ; 刷新配置列表（如果页面函数存在，则调用）
-    refreshed := false
+    ; 优先尝试：若“概览与配置”页的强力刷新函数存在则调用
+    did := 0
     try {
-        UI_Page_Config_ReloadProfiles()
-        refreshed := true
+        Profile_RefreshAll_Strong()
+        did := 1
     } catch {
-        refreshed := false
+        did := 0
     }
 
-    ; 切换至新配置（强力回退方式）
-    if (!refreshed) {
+    ; 若页面尚未构建或函数不可用，则回退：只更新 App 状态
+    if (did = 0) {
         try {
             App["CurrentProfile"] := newName
             App["ProfileData"] := Storage_LoadProfile(newName)
