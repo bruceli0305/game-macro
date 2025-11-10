@@ -2,34 +2,38 @@
 ;Page_Profile_API.ahk
 ; Profile 公共 API（与页面解耦）
 ; 提供：Profile_RefreshAll_Strong() / Profile_SwitchProfile_Strong(name)
-; 说明：
-; - 若 UI 控件存在（UI.ProfilesDD、UI.HkStart 等），会一并刷新
-; - 若 UI 控件未创建，仅刷新 App 状态与运行时引擎（Hotkeys/WorkerPool/ROI/Rotation/DXGI）
-; - 全部块结构 if/try/catch
+; 严格块结构 if/try/catch，不使用单行形式
+; 增强：控件就绪判定更稳健，避免“未渲染”的误判；加入详细日志。
+
+global g_Profile_Populating := IsSet(g_Profile_Populating) ? g_Profile_Populating : false
 
 Profile_RefreshAll_Strong() {
-    global App, UI
+    global App, UI, g_Profile_Populating
+    UI_Trace("Profile_RefreshAll_Strong begin")
 
-    ; 1) 确保 App/目录
     try {
         if !IsSet(App) {
             App := Map()
+            UI_Trace("App map created")
         }
         if !App.Has("ProfilesDir") {
             App["ProfilesDir"] := A_ScriptDir "\Profiles"
+            UI_Trace("ProfilesDir default=" App["ProfilesDir"])
         }
         if !App.Has("ConfigExt") {
             App["ConfigExt"] := ".ini"
         }
         DirCreate(App["ProfilesDir"])
-    } catch {
+    } catch as e {
+        UI_Trace("Ensure App/dir exception: " e.Message)
     }
 
-    ; 2) 枚举/兜底
     names := []
     try {
         names := Storage_ListProfiles()
-    } catch {
+        UI_Trace("ListProfiles count=" names.Length)
+    } catch as e {
+        UI_Trace("ListProfiles exception: " e.Message)
         names := []
     }
     if (names.Length = 0) {
@@ -37,15 +41,17 @@ Profile_RefreshAll_Strong() {
             data := Core_DefaultProfileData()
             Storage_SaveProfile(data)
             names := Storage_ListProfiles()
-        } catch {
+            UI_Trace("Created default profile, count=" names.Length)
+        } catch as e {
+            UI_Trace("Create default profile failed: " e.Message)
             names := []
         }
     }
     if (names.Length = 0) {
+        UI_Trace("No profiles, abort")
         return false
     }
 
-    ; 3) 选择目标
     target := ""
     try {
         if (App.Has("CurrentProfile") && App["CurrentProfile"] != "") {
@@ -57,12 +63,28 @@ Profile_RefreshAll_Strong() {
     if (target = "") {
         target := names[1]
     }
+    UI_Trace("Target profile=" target)
 
-    ; 4) 刷新 UI 下拉（若存在）
+    ; 4) 刷新 UI 下拉：直接探测控件对象可用性，避免 Has 判定误差
+    dd := 0
+    ready := false
     try {
-        if (IsSet(UI) && UI.Has("ProfilesDD") && UI.ProfilesDD) {
-            UI.ProfilesDD.Delete()
-            UI.ProfilesDD.Add(names)
+        if (IsSet(UI)) {
+            dd := UI.ProfilesDD
+            if (dd) {
+                ready := true
+            }
+        }
+    } catch {
+        ready := false
+    }
+
+    if (ready) {
+        try {
+            g_Profile_Populating := true
+            UI_Trace("Fill ProfilesDD begin (ready=1)")
+            dd.Delete()
+            dd.Add(names)
 
             sel := 1
             i := 0
@@ -73,70 +95,129 @@ Profile_RefreshAll_Strong() {
                     break
                 }
             }
-            UI.ProfilesDD.Value := sel
+            dd.Value := sel
+            UI_Trace("Fill ProfilesDD done, sel=" sel)
+        } catch as e {
+            UI_Trace("Fill ProfilesDD exception: " e.Message)
+        } finally {
+            g_Profile_Populating := false
         }
-    } catch {
+    } else {
+        UI_Trace("ProfilesDD not ready (skip fill)")
     }
 
-    ; 5) 切换到目标（含运行时引擎）
-    ok := Profile_SwitchProfile_Strong(target)
+    ok := false
+    try {
+        ok := Profile_SwitchProfile_Strong(target)
+    } catch as e {
+        UI_Trace("SwitchProfile exception: " e.Message)
+        ok := false
+    }
+    UI_Trace("Profile_RefreshAll_Strong end ok=" ok)
     return ok
 }
 
 Profile_SwitchProfile_Strong(name) {
-    global App, UI
+    global App, UI, UI_CurrentPage
+    UI_Trace("SwitchProfile name=" name)
 
     prof := 0
     try {
         App["CurrentProfile"] := name
         prof := Storage_LoadProfile(name)
         App["ProfileData"] := prof
-    } catch {
+        nm := ""
+        try {
+            nm := HasProp(prof, "Name") ? prof.Name : ""
+        } catch {
+            nm := ""
+        }
+        UI_Trace("Profile loaded name=" nm)
+    } catch as e {
+        UI_Trace("Storage_LoadProfile exception: " e.Message)
         return false
     }
 
-    ; 若 UI 控件存在则灌控件
+    ; 仅在 Profile 页激活且控件存在时，写回 UI
+    canWriteUI := false
     try {
-        if (IsSet(UI) && UI.Has("HkStart") && UI.HkStart) {
-            UI.HkStart.Value := prof.StartHotkey
-        }
-        if (IsSet(UI) && UI.Has("PollEdit") && UI.PollEdit) {
-            UI.PollEdit.Value := prof.PollIntervalMs
-        }
-        if (IsSet(UI) && UI.Has("CdEdit") && UI.CdEdit) {
-            UI.CdEdit.Value := prof.SendCooldownMs
-        }
-        if (IsSet(UI) && UI.Has("ChkPick") && UI.ChkPick) {
-            UI.ChkPick.Value := (prof.PickHoverEnabled ? 1 : 0)
-        }
-        if (IsSet(UI) && UI.Has("OffYEdit") && UI.OffYEdit) {
-            UI.OffYEdit.Value := prof.PickHoverOffsetY
-        }
-        if (IsSet(UI) && UI.Has("DwellEdit") && UI.DwellEdit) {
-            UI.DwellEdit.Value := prof.PickHoverDwellMs
-        }
-        if (IsSet(UI) && UI.Has("DdPickKey") && UI.DdPickKey) {
-            pk := "LButton"
-            try {
-                if (HasProp(prof, "PickConfirmKey")) {
-                    pk := prof.PickConfirmKey
-                }
-            } catch {
-                pk := "LButton"
-            }
-            opts := ["LButton","MButton","RButton","XButton1","XButton2","F10","F11","F12"]
-            pos := 1
-            idx := 0
-            for _, v in opts {
-                idx := idx + 1
-                if (v = pk) {
-                    pos := idx
-                    break
-                }
-            }
-            UI.DdPickKey.Value := pos
+        if (IsSet(UI_CurrentPage) && UI_CurrentPage = "profile") {
+            canWriteUI := true
         }
     } catch {
+        canWriteUI := false
+    }
+    UI_Trace("SwitchProfile canWriteUI=" (canWriteUI ? 1 : 0) " currentPage=" UI_CurrentPage)
+
+    if (canWriteUI) {
+        try {
+            if (IsSet(UI)) {
+                try {
+                    if (UI.HkStart) {
+                        UI.HkStart.Value := prof.StartHotkey
+                    }
+                } catch {
+                }
+                try {
+                    if (UI.PollEdit) {
+                        UI.PollEdit.Value := prof.PollIntervalMs
+                    }
+                } catch {
+                }
+                try {
+                    if (UI.CdEdit) {
+                        UI.CdEdit.Value := prof.SendCooldownMs
+                    }
+                } catch {
+                }
+                try {
+                    if (UI.ChkPick) {
+                        UI.ChkPick.Value := (prof.PickHoverEnabled ? 1 : 0)
+                    }
+                } catch {
+                }
+                try {
+                    if (UI.OffYEdit) {
+                        UI.OffYEdit.Value := prof.PickHoverOffsetY
+                    }
+                } catch {
+                }
+                try {
+                    if (UI.DwellEdit) {
+                        UI.DwellEdit.Value := prof.PickHoverDwellMs
+                    }
+                } catch {
+                }
+                try {
+                    if (UI.DdPickKey) {
+                        pk := "LButton"
+                        try {
+                            if (HasProp(prof, "PickConfirmKey")) {
+                                pk := prof.PickConfirmKey
+                            }
+                        } catch {
+                            pk := "LButton"
+                        }
+                        opts := ["LButton", "MButton", "RButton", "XButton1", "XButton2", "F10", "F11", "F12"]
+                        pos := 1
+                        idx := 0
+                        for _, v in opts {
+                            idx := idx + 1
+                            if (v = pk) {
+                                pos := idx
+                                break
+                            }
+                        }
+                        UI.DdPickKey.Value := pos
+                    }
+                } catch {
+                }
+            }
+        } catch {
+        }
+        UI_Trace("SwitchProfile wrote values to UI")
+    } else {
+        UI_Trace("SwitchProfile skipped UI write")
     }
 
     ; 运行期：热键/池/计数/ROI/Rotation/DXGI
@@ -174,5 +255,6 @@ Profile_SwitchProfile_Strong(name) {
     } catch {
     }
 
+    UI_Trace("SwitchProfile done")
     return true
 }
