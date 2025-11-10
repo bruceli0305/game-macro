@@ -1,14 +1,15 @@
+; ============================== modules\ui\pages\profile\Page_Profile_API.ahk ==============================
 #Requires AutoHotkey v2
-;Page_Profile_API.ahk
 ; Profile 公共 API（与页面解耦）
 ; 提供：Profile_RefreshAll_Strong() / Profile_SwitchProfile_Strong(name)
 ; 严格块结构 if/try/catch，不使用单行形式
-; 增强：控件就绪判定更稳健，避免“未渲染”的误判；加入详细日志。
+; 增强：控件就绪探测、抑制 Change 重入、详细日志
 
 global g_Profile_Populating := IsSet(g_Profile_Populating) ? g_Profile_Populating : false
 
 Profile_RefreshAll_Strong() {
     global App, UI, g_Profile_Populating
+
     UI_Trace("Profile_RefreshAll_Strong begin")
 
     try {
@@ -65,7 +66,6 @@ Profile_RefreshAll_Strong() {
     }
     UI_Trace("Target profile=" target)
 
-    ; 4) 刷新 UI 下拉：直接探测控件对象可用性，避免 Has 判定误差
     dd := 0
     ready := false
     try {
@@ -119,6 +119,7 @@ Profile_RefreshAll_Strong() {
 
 Profile_SwitchProfile_Strong(name) {
     global App, UI, UI_CurrentPage
+
     UI_Trace("SwitchProfile name=" name)
 
     prof := 0
@@ -138,7 +139,6 @@ Profile_SwitchProfile_Strong(name) {
         return false
     }
 
-    ; 仅在 Profile 页激活且控件存在时，写回 UI
     canWriteUI := false
     try {
         if (IsSet(UI_CurrentPage) && UI_CurrentPage = "profile") {
@@ -198,7 +198,7 @@ Profile_SwitchProfile_Strong(name) {
                         } catch {
                             pk := "LButton"
                         }
-                        opts := ["LButton", "MButton", "RButton", "XButton1", "XButton2", "F10", "F11", "F12"]
+                        opts := ["LButton","MButton","RButton","XButton1","XButton2","F10","F11","F12"]
                         pos := 1
                         idx := 0
                         for _, v in opts {
@@ -220,7 +220,6 @@ Profile_SwitchProfile_Strong(name) {
         UI_Trace("SwitchProfile skipped UI write")
     }
 
-    ; 运行期：热键/池/计数/ROI/Rotation/DXGI
     try {
         Hotkeys_BindStartHotkey(prof.StartHotkey)
     } catch {

@@ -1,163 +1,376 @@
+; ============================== modules\ui\pages\profile\Page_Profile.ahk ==============================
 #Requires AutoHotkey v2
-;Page_Profile.ahk
 ; 概览与配置（紧凑版）
-; 加日志：Build/OnEnter/Change 等关键点
-; 严格块结构 if/try/catch，不使用单行形式
+; 兼容：Build(page:=0) / Layout(rc:=0) 双签名；严格块结构；带详细日志
 
 global g_Profile_Populating := IsSet(g_Profile_Populating) ? g_Profile_Populating : false
 
-Page_Profile_Build(page) {
-    global UI
+Page_Profile_Build(page := 0) {
+    global UI, UI_Pages, UI_CurrentPage
     UI_Trace("Page_Profile_Build enter")
-    rc := UI_GetPageRect()
-    page.Controls := []
-    UI.GB_Profile := UI.Main.Add("GroupBox", Format("x{} y{} w{} h80", rc.X, rc.Y, rc.W), T("group.profile", "角色配置"))
-    page.Controls.Push(UI.GB_Profile)
+
+    rc := 0
+    try {
+        rc := UI_GetPageRect()
+    } catch {
+        rc := { X: 244, Y: 10, W: 804, H: 760 }
+    }
+
+    pg := 0
+    try {
+        if (IsObject(page)) {
+            pg := page
+        } else {
+            if (IsSet(UI_Pages) && UI_Pages.Has(UI_CurrentPage)) {
+                pg := UI_Pages[UI_CurrentPage]
+            }
+        }
+    } catch {
+        pg := 0
+    }
+
+    if (IsObject(pg)) {
+        try {
+            pg.Controls := []
+        } catch {
+        }
+    }
+
+    UI.GB_Profile := UI.Main.Add("GroupBox", Format("x{} y{} w{} h80", rc.X, rc.Y, rc.W), T("group.profile","角色配置"))
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.GB_Profile)
+        } catch {
+        }
+    }
 
     UI.ProfilesDD := UI.Main.Add("DropDownList", Format("x{} y{} w280", rc.X + 12, rc.Y + 32))
-    page.Controls.Push(UI.ProfilesDD)
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.ProfilesDD)
+        } catch {
+        }
+    }
 
-    UI.BtnNew := UI.Main.Add("Button", "x+10 w80 h28", T("btn.new", "新建"))
-    UI.BtnClone := UI.Main.Add("Button", "x+8 w80 h28", T("btn.clone", "复制"))
-    UI.BtnDelete := UI.Main.Add("Button", "x+8 w80 h28", T("btn.delete", "删除"))
-    UI.BtnExport := UI.Main.Add("Button", "x+16 w92 h28", T("btn.export", "导出打包"))
-    page.Controls.Push(UI.BtnNew)
-    page.Controls.Push(UI.BtnClone)
-    page.Controls.Push(UI.BtnDelete)
-    page.Controls.Push(UI.BtnExport)
+    UI.BtnNew := UI.Main.Add("Button", "x+10 w80 h28", T("btn.new","新建"))
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.BtnNew)
+        } catch {
+        }
+    }
+
+    UI.BtnClone := UI.Main.Add("Button", "x+8 w80 h28", T("btn.clone","复制"))
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.BtnClone)
+        } catch {
+        }
+    }
+
+    UI.BtnDelete := UI.Main.Add("Button", "x+8 w80 h28", T("btn.delete","删除"))
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.BtnDelete)
+        } catch {
+        }
+    }
+
+    UI.BtnExport := UI.Main.Add("Button", "x+16 w92 h28", T("btn.export","导出打包"))
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.BtnExport)
+        } catch {
+        }
+    }
 
     labelW := 120
-    rowH := 34
-    padX := 12
+    rowH   := 34
+    padX   := 12
     padTop := 26
-    ctrlGap := 8
+    ctrlGap:= 8
 
     rows := 8
     genH := padTop + rows * rowH + 14
 
     gy := rc.Y + 80 + 10
-    UI.GB_General := UI.Main.Add("GroupBox", Format("x{} y{} w{} h{}", rc.X, gy, rc.W, genH), T("group.general",
-        "热键与轮询"))
-    page.Controls.Push(UI.GB_General)
+    UI.GB_General := UI.Main.Add("GroupBox", Format("x{} y{} w{} h{}", rc.X, gy, rc.W, genH), T("group.general","热键与轮询"))
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.GB_General)
+        } catch {
+        }
+    }
 
     xLabel := rc.X + padX
-    xCtrl := xLabel + labelW + ctrlGap
+    xCtrl  := xLabel + labelW + ctrlGap
     yLine1 := gy + padTop
 
-    UI.LblStartStop := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, yLine1 + 4, labelW), T("label.startStop",
-        "开始/停止："))
-    page.Controls.Push(UI.LblStartStop)
+    UI.LblStartStop := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, yLine1 + 4, labelW), T("label.startStop","开始/停止："))
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.LblStartStop)
+        } catch {
+        }
+    }
+
     UI.HkStart := UI.Main.Add("Hotkey", Format("x{} y{} w200", xCtrl, yLine1))
-    page.Controls.Push(UI.HkStart)
-    UI.BtnCapStartMouse := UI.Main.Add("Button", Format("x{} y{} w110 h26", xCtrl + 210, yLine1 - 2), T(
-        "btn.captureMouse", "捕获鼠标键"))
-    page.Controls.Push(UI.BtnCapStartMouse)
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.HkStart)
+        } catch {
+        }
+    }
+
+    UI.BtnCapStartMouse := UI.Main.Add("Button", Format("x{} y{} w110 h26", xCtrl + 210, yLine1 - 2), T("btn.captureMouse","捕获鼠标键"))
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.BtnCapStartMouse)
+        } catch {
+        }
+    }
 
     y2 := yLine1 + rowH
-    UI.LblPoll := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y2 + 4, labelW), T("label.pollMs", "轮询(ms)："))
-    page.Controls.Push(UI.LblPoll)
+    UI.LblPoll := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y2 + 4, labelW), T("label.pollMs","轮询(ms)："))
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.LblPoll)
+        } catch {
+        }
+    }
+
     UI.PollEdit := UI.Main.Add("Edit", Format("x{} y{} w200 Number Center", xCtrl, y2))
-    page.Controls.Push(UI.PollEdit)
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.PollEdit)
+        } catch {
+        }
+    }
 
     y3 := y2 + rowH
-    UI.LblDelay := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y3 + 4, labelW), T("label.delayMs",
-        "全局延迟(ms)："))
-    page.Controls.Push(UI.LblDelay)
+    UI.LblDelay := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y3 + 4, labelW), T("label.delayMs","全局延迟(ms)："))
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.LblDelay)
+        } catch {
+        }
+    }
+
     UI.CdEdit := UI.Main.Add("Edit", Format("x{} y{} w200 Number Center", xCtrl, y3))
-    page.Controls.Push(UI.CdEdit)
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.CdEdit)
+        } catch {
+        }
+    }
 
     y4 := y3 + rowH
-    UI.LblPick := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y4 + 4, labelW), T("label.pickAvoid", "取色避让："
-    ))
-    page.Controls.Push(UI.LblPick)
-    UI.ChkPick := UI.Main.Add("CheckBox", Format("x{} y{} w200", xCtrl, y4), T("label.enable", "启用"))
-    page.Controls.Push(UI.ChkPick)
+    UI.LblPick := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y4 + 4, labelW), T("label.pickAvoid","取色避让："))
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.LblPick)
+        } catch {
+        }
+    }
+
+    UI.ChkPick := UI.Main.Add("CheckBox", Format("x{} y{} w200", xCtrl, y4), T("label.enable","启用"))
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.ChkPick)
+        } catch {
+        }
+    }
 
     y5 := y4 + rowH
-    UI.LblOffY := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y5 + 4, labelW), T("label.offsetY",
-        "Y偏移(px)："))
-    page.Controls.Push(UI.LblOffY)
+    UI.LblOffY := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y5 + 4, labelW), T("label.offsetY","Y偏移(px)："))
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.LblOffY)
+        } catch {
+        }
+    }
+
     UI.OffYEdit := UI.Main.Add("Edit", Format("x{} y{} w200 Number Center", xCtrl, y5))
-    page.Controls.Push(UI.OffYEdit)
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.OffYEdit)
+        } catch {
+        }
+    }
 
     y6 := y5 + rowH
-    UI.LblDwell := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y6 + 4, labelW), T("label.dwellMs",
-        "等待(ms)："))
-    page.Controls.Push(UI.LblDwell)
+    UI.LblDwell := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y6 + 4, labelW), T("label.dwellMs","等待(ms)："))
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.LblDwell)
+        } catch {
+        }
+    }
+
     UI.DwellEdit := UI.Main.Add("Edit", Format("x{} y{} w200 Number Center", xCtrl, y6))
-    page.Controls.Push(UI.DwellEdit)
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.DwellEdit)
+        } catch {
+        }
+    }
 
     y7 := y6 + rowH
-    UI.LblPickKey := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y7 + 4, labelW), T("label.pickKey",
-        "拾色热键："))
-    page.Controls.Push(UI.LblPickKey)
+    UI.LblPickKey := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y7 + 4, labelW), T("label.pickKey","拾色热键："))
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.LblPickKey)
+        } catch {
+        }
+    }
+
     UI.DdPickKey := UI.Main.Add("DropDownList", Format("x{} y{} w200", xCtrl, y7))
-    UI.DdPickKey.Add(["LButton", "MButton", "RButton", "XButton1", "XButton2", "F10", "F11", "F12"])
-    page.Controls.Push(UI.DdPickKey)
+    try {
+        UI.DdPickKey.Add(["LButton","MButton","RButton","XButton1","XButton2","F10","F11","F12"])
+    } catch {
+    }
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.DdPickKey)
+        } catch {
+        }
+    }
 
     y8 := y7 + rowH
-    UI.BtnApply := UI.Main.Add("Button", Format("x{} y{} w100 h28", xCtrl, y8 - 2), T("btn.apply", "应用"))
-    page.Controls.Push(UI.BtnApply)
+    UI.BtnApply := UI.Main.Add("Button", Format("x{} y{} w100 h28", xCtrl, y8 - 2), T("btn.apply","应用"))
+    if (IsObject(pg)) {
+        try {
+            pg.Controls.Push(UI.BtnApply)
+        } catch {
+        }
+    }
 
-    UI.ProfilesDD.OnEvent("Change", Profile_OnProfilesChanged)
-    UI.BtnNew.OnEvent("Click", Profile_OnNew)
-    UI.BtnClone.OnEvent("Click", Profile_OnClone)
-    UI.BtnDelete.OnEvent("Click", Profile_OnDelete)
-    UI.BtnExport.OnEvent("Click", Profile_OnExport)
-    UI.BtnCapStartMouse.OnEvent("Click", Profile_OnCaptureStartMouse)
-    UI.BtnApply.OnEvent("Click", Profile_OnApplyGeneral)
+    try {
+        UI.ProfilesDD.OnEvent("Change", Profile_OnProfilesChanged)
+        UI.BtnNew.OnEvent("Click", Profile_OnNew)
+        UI.BtnClone.OnEvent("Click", Profile_OnClone)
+        UI.BtnDelete.OnEvent("Click", Profile_OnDelete)
+        UI.BtnExport.OnEvent("Click", Profile_OnExport)
+        UI.BtnCapStartMouse.OnEvent("Click", Profile_OnCaptureStartMouse)
+        UI.BtnApply.OnEvent("Click", Profile_OnApplyGeneral)
+    } catch {
+    }
 
     UI_Trace("Page_Profile_Build exit (controls ready)")
 }
 
-Page_Profile_Layout(rc) {
+Page_Profile_Layout(rc := 0) {
+    if (!IsObject(rc)) {
+        try {
+            rc := UI_GetPageRect()
+        } catch {
+            rc := { X: 244, Y: 10, W: 804, H: 760 }
+        }
+    }
+
     labelW := 100
-    rowH := 34
-    padX := 12
+    rowH   := 34
+    padX   := 12
     padTop := 26
-    ctrlGap := 8
+    ctrlGap:= 8
+
     try {
         UI.GB_Profile.Move(rc.X, rc.Y, rc.W)
+    } catch {
+    }
+    try {
         UI.ProfilesDD.Move(rc.X + 12, rc.Y + 32)
+    } catch {
+    }
 
-        rows := 8
-        genH := padTop + rows * rowH + 14
-        gy := rc.Y + 80 + 10
+    rows := 8
+    genH := padTop + rows * rowH + 14
+    gy   := rc.Y + 80 + 10
+
+    try {
         UI.GB_General.Move(rc.X, gy, rc.W, genH)
+    } catch {
+    }
 
-        xLabel := rc.X + padX
-        xCtrl := xLabel + labelW + ctrlGap
-        y1 := gy + padTop
+    xLabel := rc.X + padX
+    xCtrl  := xLabel + labelW + ctrlGap
+    y1     := gy + padTop
 
+    try {
         UI.LblStartStop.Move(xLabel, y1 + 4, labelW)
+    } catch {
+    }
+    try {
         UI.HkStart.Move(xCtrl, y1, 200)
+    } catch {
+    }
+    try {
         UI.BtnCapStartMouse.Move(xCtrl + 210, y1 - 2)
+    } catch {
+    }
 
-        y2 := y1 + rowH
+    y2 := y1 + rowH
+    try {
         UI.LblPoll.Move(xLabel, y2 + 4, labelW)
+    } catch {
+    }
+    try {
         UI.PollEdit.Move(xCtrl, y2, 100)
+    } catch {
+    }
 
-        y3 := y2 + rowH
+    y3 := y2 + rowH
+    try {
         UI.LblDelay.Move(xLabel, y3 + 4, labelW)
+    } catch {
+    }
+    try {
         UI.CdEdit.Move(xCtrl, y3, 120)
+    } catch {
+    }
 
-        y4 := y3 + rowH
+    y4 := y3 + rowH
+    try {
         UI.LblPick.Move(xLabel, y4 + 4, labelW)
+    } catch {
+    }
+    try {
         UI.ChkPick.Move(xCtrl, y4, 100)
+    } catch {
+    }
 
-        y5 := y4 + rowH
+    y5 := y4 + rowH
+    try {
         UI.LblOffY.Move(xLabel, y5 + 4, labelW)
+    } catch {
+    }
+    try {
         UI.OffYEdit.Move(xCtrl, y5, 120)
+    } catch {
+    }
 
-        y6 := y5 + rowH
+    y6 := y5 + rowH
+    try {
         UI.LblDwell.Move(xLabel, y6 + 4, labelW)
+    } catch {
+    }
+    try {
         UI.DwellEdit.Move(xCtrl, y6, 120)
+    } catch {
+    }
 
-        y7 := y6 + rowH
+    y7 := y6 + rowH
+    try {
         UI.LblPickKey.Move(xLabel, y7 + 4, labelW)
+    } catch {
+    }
+    try {
         UI.DdPickKey.Move(xCtrl, y7, 140)
+    } catch {
+    }
 
-        y8 := y7 + rowH
+    y8 := y7 + rowH
+    try {
         UI.BtnApply.Move(xCtrl, y8 - 2, 100, 28)
     } catch {
     }
@@ -207,7 +420,7 @@ Profile_OnNew(*) {
     UI_Trace("Profile_OnNew")
     name := ""
     try {
-        ib := InputBox(T("label.profileName", "配置名称："), T("dlg.newProfile", "新建配置"))
+        ib := InputBox(T("label.profileName","配置名称："), T("dlg.newProfile","新建配置"))
         if (ib.Result = "Cancel") {
             return
         }
@@ -216,7 +429,7 @@ Profile_OnNew(*) {
         name := ""
     }
     if (name = "") {
-        MsgBox T("msg.nameEmpty", "名称不可为空")
+        MsgBox T("msg.nameEmpty","名称不可为空")
         return
     }
     try {
@@ -225,10 +438,10 @@ Profile_OnNew(*) {
         Storage_SaveProfile(data)
         App["CurrentProfile"] := name
         Profile_RefreshAll_Strong()
-        Notify(T("msg.created", "已创建：") name)
+        Notify(T("msg.created","已创建：") name)
     } catch as e {
         UI_Trace("Profile_OnNew exception: " e.Message)
-        MsgBox T("msg.createFail", "创建失败：") e.Message
+        MsgBox T("msg.createFail","创建失败：") e.Message
     }
 }
 
@@ -242,12 +455,12 @@ Profile_OnClone(*) {
         src := ""
     }
     if (src = "") {
-        MsgBox T("msg.noProfile", "未选择配置")
+        MsgBox T("msg.noProfile","未选择配置")
         return
     }
     newName := ""
     try {
-        ib := InputBox(T("label.newProfileName", "新配置名称："), T("dlg.cloneProfile", "复制配置"), src "_Copy")
+        ib := InputBox(T("label.newProfileName","新配置名称："), T("dlg.cloneProfile","复制配置"), src "_Copy")
         if (ib.Result = "Cancel") {
             return
         }
@@ -256,7 +469,7 @@ Profile_OnClone(*) {
         newName := src "_Copy"
     }
     if (newName = "") {
-        MsgBox T("msg.nameEmpty", "名称不可为空")
+        MsgBox T("msg.nameEmpty","名称不可为空")
         return
     }
     try {
@@ -265,10 +478,10 @@ Profile_OnClone(*) {
         Storage_SaveProfile(data)
         App["CurrentProfile"] := newName
         Profile_RefreshAll_Strong()
-        Notify(T("msg.cloned", "已复制为：") newName)
+        Notify(T("msg.cloned","已复制为：") newName)
     } catch as e {
         UI_Trace("Profile_OnClone exception: " e.Message)
-        MsgBox T("msg.cloneFail", "复制失败：") e.Message
+        MsgBox T("msg.cloneFail","复制失败：") e.Message
     }
 }
 
@@ -282,7 +495,7 @@ Profile_OnDelete(*) {
         names := []
     }
     if (names.Length <= 1) {
-        MsgBox T("msg.keepOne", "至少保留一个配置。")
+        MsgBox T("msg.keepOne","至少保留一个配置。")
         return
     }
     cur := ""
@@ -292,21 +505,21 @@ Profile_OnDelete(*) {
         cur := ""
     }
     if (cur = "") {
-        MsgBox T("msg.noProfile", "未选择配置")
+        MsgBox T("msg.noProfile","未选择配置")
         return
     }
-    ok := Confirm(T("confirm.deleteProfile", "确定删除配置：") cur "？")
+    ok := Confirm(T("confirm.deleteProfile","确定删除配置：") cur "？")
     if (!ok) {
         return
     }
     try {
         Storage_DeleteProfile(cur)
-        Notify(T("msg.deleted", "已删除：") cur)
+        Notify(T("msg.deleted","已删除：") cur)
         App["CurrentProfile"] := ""
         Profile_RefreshAll_Strong()
     } catch as e {
         UI_Trace("Profile_OnDelete exception: " e.Message)
-        MsgBox T("msg.deleteFail", "删除失败：") e.Message
+        MsgBox T("msg.deleteFail","删除失败：") e.Message
     }
 }
 
@@ -320,23 +533,23 @@ Profile_OnExport(*) {
         cur := ""
     }
     if (cur = "") {
-        MsgBox T("msg.noProfile", "未选择配置")
+        MsgBox T("msg.noProfile","未选择配置")
         return
     }
     try {
         Exporter_ExportProfile(cur)
     } catch as e {
         UI_Trace("Profile_OnExport exception: " e.Message)
-        MsgBox T("msg.exportFail", "导出失败：") e.Message
+        MsgBox T("msg.exportFail","导出失败：") e.Message
     }
 }
 
 Profile_OnCaptureStartMouse(*) {
     global UI
     UI_Trace("Profile_OnCaptureStartMouse begin")
-    ToolTip T("tip.captureMouse", "请按下 鼠标中键/侧键 作为开始/停止热键（Esc取消）")
+    ToolTip T("tip.captureMouse","请按下 鼠标中键/侧键 作为开始/停止热键（Esc取消）")
     key := ""
-    loop {
+    Loop {
         if GetKeyState("Esc", "P") {
             break
         }
@@ -379,6 +592,7 @@ Profile_OnApplyGeneral(*) {
             App["ProfileData"] := Core_DefaultProfileData()
         }
         prof := App["ProfileData"]
+
         prof.StartHotkey := UI.HkStart.Value
 
         pi := 25
@@ -426,10 +640,10 @@ Profile_OnApplyGeneral(*) {
         } catch {
         }
 
-        Notify(T("msg.saved", "配置已保存"))
+        Notify(T("msg.saved","配置已保存"))
     } catch as e {
         UI_Trace("Profile_OnApplyGeneral exception: " e.Message)
-        MsgBox T("msg.saveFail", "保存失败：") e.Message
+        MsgBox T("msg.saveFail","保存失败：") e.Message
     }
 }
 

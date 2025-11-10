@@ -1,6 +1,6 @@
+; ============================== modules\ui\UI_Framework.ahk ==============================
 #Requires AutoHotkey v2
-;UI_Framework.ahk
-; 页面管理框架：注册、切换、布局（兼容 Build(page) 与 Build() 两种签名）
+; 页面管理框架：注册、切换、布局（兼容 Build()/Build(page) 与 Layout()/Layout(rc)）
 ; 严格使用块结构 if/try/catch，不使用单行形式
 
 ; ====== 日志 ======
@@ -16,26 +16,80 @@ UI_Trace(msg) {
     } catch {
     }
     try {
-        FileAppend(ts " [" A_TickCount "] " msg "rn"
+        FileAppend(ts " [" A_TickCount "] " msg "`r`n"
             , A_ScriptDir "\Logs\ui_trace.log", "UTF-8")
     } catch {
     }
 }
 
+; ====== 通用调用器：检测 0/1 参并安全调用 ======
+UI_Call0Or1(fn, arg) {
+    ; 返回 true 表示成功调用
+    ok := false
+    if (!IsObject(fn)) {
+        return false
+    }
+    pmin := -1
+    try {
+        pmin := fn.MinParams
+    } catch {
+        pmin := -1
+    }
+    if (pmin = 0) {
+        try {
+            fn.Call()
+            ok := true
+        } catch as e0 {
+            UI_Trace("UI_Call0Or1: Call() exception: " e0.Message)
+        }
+        return ok
+    }
+    if (pmin >= 1) {
+        try {
+            fn.Call(arg)
+            ok := true
+        } catch as e1 {
+            UI_Trace("UI_Call0Or1: Call(arg) exception: " e1.Message)
+        }
+        return ok
+    }
+    ; 未能读取到 MinParams 时，尝试先传参，再不传参
+    try {
+        fn.Call(arg)
+        ok := true
+    } catch as e2 {
+        UI_Trace("UI_Call0Or1: Call(arg) failed: " e2.Message)
+        try {
+            fn.Call()
+            ok := true
+        } catch as e3 {
+            UI_Trace("UI_Call0Or1: Call() failed: " e3.Message)
+        }
+    }
+    return ok
+}
+
 global UI := IsSet(UI) ? UI : Map()
-global UI_Pages := Map() ; key -> { Title, Controls:[], Build, Layout, Inited, OnEnter?, OnLeave? }
+global UI_Pages := Map()          ; key -> { Title, Controls:[], Build, Layout, Inited, OnEnter?, OnLeave? }
 global UI_CurrentPage := ""
-global UI_NavMap := Map() ; navNodeId -> pageKey
+global UI_NavMap := Map()         ; navNodeId -> pageKey
 
 UI_RegisterPage(key, title, buildFn, layoutFn := 0, onEnter := 0, onLeave := 0) {
     global UI_Pages
-    page := { Title: title, Controls: [], Build: buildFn, Layout: layoutFn, Inited: false, OnEnter: onEnter, OnLeave: onLeave }
+    page := { Title: title
+            , Controls: []
+            , Build: buildFn
+            , Layout: layoutFn
+            , Inited: false
+            , OnEnter: onEnter
+            , OnLeave: onLeave }
     UI_Pages[key] := page
     UI_Trace("RegisterPage key=" key " title=" title)
 }
 
 UI_SwitchPage(key) {
     global UI_Pages, UI_CurrentPage
+
     UI_Trace("SwitchPage from=" UI_CurrentPage " to=" key)
 
     if (UI_CurrentPage = key) {
@@ -71,22 +125,20 @@ UI_SwitchPage(key) {
 
     if (!pg.Inited) {
         built := false
+        ; 优先根据 MinParams 尝试 0/1 参调用，避免异常噪声
         try {
-            UI_Trace("Page Build(page) begin key=" key)
-            pg.Build(pg)
-            UI_Trace("Page Build(page) success key=" key)
-            built := true
-        } catch as e1 {
-            UI_Trace("Page Build(page) failed key=" key " err=" e1.Message)
-            try {
-                UI_Trace("Page Build() begin key=" key)
-                pg.Build()
-                UI_Trace("Page Build() success key=" key)
+            UI_Trace("Page Build smart-call begin key=" key)
+            called := UI_Call0Or1(pg.Build, pg)
+            if (called) {
                 built := true
-            } catch as e2 {
-                UI_Trace("Page Build() failed key=" key " err=" e2.Message)
+                UI_Trace("Page Build smart-call success key=" key)
+            } else {
+                UI_Trace("Page Build smart-call failed key=" key)
                 built := false
             }
+        } catch as eB {
+            UI_Trace("Page Build smart-call exception key=" key " err=" eB.Message)
+            built := false
         }
         pg.Inited := built
         if (!built) {
@@ -105,11 +157,24 @@ UI_SwitchPage(key) {
     }
     UI_Trace("Show controls: " shown " for page " key)
 
-    try {
-        UI_LayoutCurrentPage()
-        UI_Trace("Layout called for page " key)
-    } catch as eL {
-        UI_Trace("Layout exception for page " key " err=" eL.Message)
+    ; 智能布局：传递 rc（若函数需要 1 参则用 rc，否则无参调用）
+    if (pg.Layout) {
+        try {
+            rc := UI_GetPageRect()
+        } catch as eRC {
+            UI_Trace("GetPageRect exception: " eRC.Message)
+            rc := { X: 244, Y: 10, W: 804, H: 760 }
+        }
+        try {
+            ok := UI_Call0Or1(pg.Layout, rc)
+            if (!ok) {
+                UI_Trace("Layout smart-call failed for page " key)
+            } else {
+                UI_Trace("Layout smart-call success for page " key)
+            }
+        } catch as eL {
+            UI_Trace("Layout smart-call exception for page " key " err=" eL.Message)
+        }
     }
 
     if (pg.OnEnter) {
@@ -125,6 +190,7 @@ UI_SwitchPage(key) {
 ; ========= 右侧面板区域（动态读取左侧 Nav 宽度） =========
 UI_GetPageRect() {
     global UI
+
     mX := 12
     mY := 10
     try {
@@ -138,7 +204,7 @@ UI_GetPageRect() {
     }
 
     navW := 220
-    gap := 12
+    gap  := 12
     try {
         if (IsSet(UI) && UI.Has("Nav") && UI.Nav) {
             nx := 0
@@ -177,8 +243,7 @@ UI_GetPageRect() {
         h := 240
     }
     rcOut := { X: x, Y: y, W: w, H: h, NavW: navW, ClientW: cw, ClientH: ch }
-    UI_Trace(Format("GetPageRect x={1} y={2} w={3} h={4} navW={5} client={6}x{7}", rcOut.X, rcOut.Y, rcOut.W, rcOut.H,
-        navW, cw, ch))
+    UI_Trace(Format("GetPageRect x={1} y={2} w={3} h={4} navW={5} client={6}x{7}", rcOut.X, rcOut.Y, rcOut.W, rcOut.H, navW, cw, ch))
     return rcOut
 }
 
@@ -188,26 +253,23 @@ UI_LayoutCurrentPage() {
         return
     }
     pg := UI_Pages[UI_CurrentPage]
-    if (pg.Layout) {
-        rc := 0
-        try {
-            rc := UI_GetPageRect()
-        } catch as eRC {
-            UI_Trace("GetPageRect exception: " eRC.Message)
-            rc := { X: 244, Y: 10, W: 804, H: 760 }
+    if (!pg.Layout) {
+        return
+    }
+    rc := 0
+    try {
+        rc := UI_GetPageRect()
+    } catch as e {
+        UI_Trace("GetPageRect exception in LayoutCurrentPage: " e.Message)
+        rc := { X: 244, Y: 10, W: 804, H: 760 }
+    }
+    try {
+        ok := UI_Call0Or1(pg.Layout, rc)
+        if (!ok) {
+            UI_Trace("LayoutCurrentPage smart-call failed for " UI_CurrentPage)
         }
-        ; 首选调用 Layout(rc)，若因签名不匹配抛出异常，回退调用 Layout()
-        try {
-            pg.Layout(rc)
-        } catch as e1 {
-            UI_Trace("Layout(rc) exception for " UI_CurrentPage " err=" e1.Message)
-            try {
-                pg.Layout()
-                UI_Trace("Layout() fallback success for " UI_CurrentPage)
-            } catch as e2 {
-                UI_Trace("Layout() fallback failed for " UI_CurrentPage " err=" e2.Message)
-            }
-        }
+    } catch as e2 {
+        UI_Trace("LayoutCurrentPage exception for " UI_CurrentPage " err=" e2.Message)
     }
 }
 
