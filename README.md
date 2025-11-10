@@ -5,24 +5,32 @@ A game automation tool developed with AutoHotkey v2, supporting advanced feature
 ## Features
 
 ### 🎯 Core Features
-- **Pixel Detection**: Detect skill cooldown status through screen pixel color analysis
-- **Multi-threading Support**: Multiple independent skill execution threads
+- **Advanced Pixel Detection**: Support for DXGI screen capture, ROI detection, and GDI fallback methods
+- **Multi-threading Support**: Multiple independent skill execution threads with worker pool management
 - **Smart Avoidance**: Automatic mouse avoidance during color picking to prevent game interference
-- **Rule Engine**: Conditional automation rule system
-- **Buff Timers**: Automatic buff renewal functionality
+- **Rule Engine**: Conditional automation rule system with pixel and counter conditions
+- **Buff Timers**: Automatic buff renewal functionality with priority-based execution
+- **DXGI Screen Capture**: High-performance screen capture using DirectX Graphics Infrastructure
+- **Rotation Management**: Complex skill rotation sequences with opener, tracks, and gates
+- **Internationalization**: Multi-language support with configurable language packs
 
 ### 🛠️ Configuration Management
-- **Multi-character Profiles**: Independent configurations for different game characters
-- **Visual Editor**: Graphical interface for configuring skills, points, and rules
+- **Multi-character Profiles**: Independent JSON-based configurations for different game characters
+- **Visual Editor**: Graphical interface for configuring skills, points, rules, and rotations
 - **Export Functionality**: Package configurations as standalone scripts
-- **Internationalization Support**: Multi-language interface (English and Chinese)
+- **Internationalization Support**: Multi-language interface with INI-based language packs
 - **Modular Architecture**: Organized code structure for easy maintenance and extension
+- **Skill Management**: Comprehensive skill editor with pixel detection settings
+- **Point Management**: Color detection point configuration with tolerance controls
+- **Rule System**: Advanced rule editor with conditions and actions
+- **Rotation Editor**: Complex rotation sequences with multiple phases
 
 ## Quick Start
 
 ### System Requirements
 - Windows operating system
 - AutoHotkey v2.0 or higher
+- DirectX 11 compatible graphics card (for DXGI screen capture)
 
 ### Installation Steps
 1. Download and install [AutoHotkey v2](https://www.autohotkey.com/)
@@ -79,39 +87,53 @@ game-macro/
 │   ├── en-US.ini              # English language pack
 │   └── zh-CN.ini              # Chinese language pack
 ├── modules/                    # Functional modules
-│   ├── GUI_Main.ahk           # Main interface
 │   ├── core/                   # Core functionality modules
 │   │   ├── AppConfig.ahk      # Configuration management
 │   │   └── Core.ahk           # Core system functions
 │   ├── engines/                # Engine modules
 │   │   ├── BuffEngine.ahk     # Buff management engine
+│   │   ├── Dup.ahk            # DXGI screen capture engine
 │   │   ├── Pixel.ahk          # Pixel detection engine
-│   │   └── RuleEngine.ahk     # Rule processing engine
+│   │   ├── Rotation.ahk        # Rotation management engine
+│   │   └── RuleEngine.ahk      # Rule processing engine
+│   ├── i18n/                   # Internationalization
+│   │   └── Lang.ahk            # Language management
+│   ├── lib/                    # External libraries
+│   │   ├── dxgi_dup.cpp       # DXGI duplication C++ source
+│   │   └── dxgi_dup.dll       # DXGI duplication library
 │   ├── runtime/                # Runtime modules
-│   │   ├── Counters.ahk       # Counter management
-│   │   ├── Hotkeys.ahk        # Hotkey handling
+│   │   ├── Counters.ahk        # Counter management
+│   │   ├── Hotkeys.ahk         # Hotkey handling
 │   │   └── Poller.ahk          # Polling system
 │   ├── storage/                # Storage modules
-│   │   ├── Exporter.ahk       # Configuration export
-│   │   └── Storage.ahk        # Data storage
+│   │   ├── Exporter.ahk        # Configuration export
+│   │   └── Storage.ahk         # Data storage
 │   ├── ui/                     # User interface modules
-│   │   ├── UI_Layout.ahk      # Layout management
-│   │   ├── UI_Shell.ahk       # Shell interface
-│   │   ├── dialogs/           # Dialog components
-│   │   └── pages/             # Page components
+│   │   ├── UI_Layout.ahk       # Layout management
+│   │   ├── UI_Shell.ahk        # Shell interface
+│   │   ├── dialogs/            # Dialog components
+│   │   │   ├── GUI_BuffEditor.ahk      # Buff editor dialog
+│   │   │   ├── GUI_PointEditor.ahk    # Point editor dialog
+│   │   │   ├── GUI_RuleEditor.ahk      # Rule editor dialog
+│   │   │   ├── GUI_SkillEditor.ahk     # Skill editor dialog
+│   │   │   ├── GUI_Threads.ahk         # Threads manager dialog
+│   │   │   └── UI_DefaultSkillDlg.ahk  # Default skill dialog
+│   │   ├── pages/              # Page components
+│   │   │   ├── UI_Page_Config.ahk      # Configuration page
+│   │   │   └── UI_Page_Settings.ahk    # Settings page
+│   │   └── rotation/           # Rotation editor components
+│   │       ├── RE_UI_Common.ahk         # Common rotation UI
+│   │       ├── RE_UI_Page_Gates.ahk    # Gates page
+│   │       ├── RE_UI_Page_General.ahk  # General page
+│   │       ├── RE_UI_Page_Opener.ahk  # Opener page
+│   │       ├── RE_UI_Page_Tracks.ahk   # Tracks page
+│   │       └── RE_UI_Shell.ahk          # Rotation shell
 │   ├── util/                   # Utility modules
 │   │   └── Utils.ahk           # Utility functions
-│   ├── workers/                # Worker modules
-│   │   ├── WorkerHost.ahk     # Worker host management
-│   │   └── WorkerPool.ahk     # Worker pool management
-│   └── i18n/                   # Internationalization
-│       └── Lang.ahk            # Language management
+│   └── workers/                # Worker modules
+│       ├── WorkerHost.ahk       # Worker host management
+│       └── WorkerPool.ahk       # Worker pool management
 ├── Profiles/                   # Character profile directory
-│   ├── Default.ini            # Default configuration
-│   ├── 夺魂.ini               # Example configuration
-│   └── 裁决.ini               # Example configuration
-├── Exports/                    # Export directory
-│   └── 夺魂/                   # Example export configuration
 └── Logs/                       # Log directory
 ```
 
