@@ -6,7 +6,7 @@ global gAppCfg := Map()
 AppConfig_Init() {
     global App, gAppCfg
     if !IsSet(App)
-        global App := Map()
+        App := Map()
     App["ConfigDir"] := A_ScriptDir "\Config"
     DirCreate(App["ConfigDir"])
     App["AppConfigPath"] := App["ConfigDir"] "\AppConfig.ini"

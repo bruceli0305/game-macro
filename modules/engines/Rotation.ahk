@@ -8,6 +8,15 @@ global gRot := Map()             ; { Cfg, RT }
 global gRotInitBusy := false     ; 防并发 init
 global gRotInitialized := false  ; 防重复 init
 
+; 新增：切换 Profile 时调用，清空轮换引擎状态
+Rotation_Reset() {
+    global gRot, gRotInitialized, gRotInitBusy
+    try gRot.Clear()
+    gRot := Map()
+    gRotInitBusy := false
+    gRotInitialized := false
+}
+
 Rot_Log(msg, level := "INFO") {
     DirCreate(A_ScriptDir "\Logs")
     ts := FormatTime(, "yyyy-MM-dd HH:mm:ss")
@@ -433,6 +442,37 @@ Rotation_GateEval_Cond(c) {
         rid := HasProp(c, "RuleId")  ? c.RuleId  : 0
         qms := HasProp(c, "QuietMs") ? c.QuietMs : 0
         return Rotation_GateEval_RuleQuiet({ RuleId: rid, QuietMs: qms })
+    } else if (kind = "COUNTER" || kind = "COUNTERREADY") {
+        ; 支持 Gate 中的计数条件（RefIndex=技能索引）
+        si := HasProp(c, "RefIndex") ? c.RefIndex : 0
+        if (si <= 0)
+            return false
+        cmp := StrUpper(HasProp(c, "Cmp") ? c.Cmp : "GE")
+        val := HasProp(c, "Value") ? Integer(c.Value) : 1
+        cnt := Counters_Get(si)
+        switch cmp {
+            case "GE": return cnt >= val
+            case "EQ": return cnt =  val
+            case "GT": return cnt >  val
+            case "LE": return cnt <= val
+            case "LT": return cnt <  val
+        }
+        return false
+    } else if (kind = "ELAPSED") {
+        ; 阶段用时比较（基于当前 PhaseState.StartedAt）
+        global gRot
+        if !(gRot.Has("RT") && HasProp(gRot["RT"], "PhaseState") && HasProp(gRot["RT"].PhaseState, "StartedAt"))
+            return false
+        ms := HasProp(c, "ElapsedMs") ? Integer(c.ElapsedMs) : 0
+        cmp := StrUpper(HasProp(c, "Cmp") ? c.Cmp : "GE")
+        elapsed := A_TickCount - gRot["RT"].PhaseState.StartedAt
+        switch cmp {
+            case "GE": return elapsed >= ms
+            case "EQ": return elapsed =  ms
+            case "GT": return elapsed >  ms
+            case "LE": return elapsed <= ms
+            case "LT": return elapsed <  ms
+        }
     }
     ; 预留：Counter/Timer 等
     return false
@@ -769,7 +809,9 @@ Rotation_OpenerStepTick() {
         try {
             defTid := Rotation_GetTrackById(Rotation_GetDefaultTrackId()).ThreadId
         }
-        ok := WorkerPool_SendSkillIndex(defTid, si, "OpenerStep")
+        ; 一次性 Hold 覆盖（按 Step.HoldMs），不改 Skills 本体
+        holdOverride := HasProp(stp, "HoldMs") ? Max(0, Integer(stp.HoldMs)) : -1
+        ok := WorkerPool_SendSkillIndex(defTid, si, "OpenerStep", holdOverride)
         if (ok) {
             if (HasProp(stp,"Verify") && stp.Verify) {
                 ; 可接 RuleEngine_SendVerified 或轻量像素反馈（留空，保持最小改动）

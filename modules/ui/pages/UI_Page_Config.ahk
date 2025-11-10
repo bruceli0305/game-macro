@@ -185,6 +185,7 @@ UI_Page_Config_SwitchProfile(name) {
     Counters_Init()
     try Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
     try App["ProfileData"].Rotation.Enabled := 1
+    try Rotation_Reset()
     try Rotation_InitFromProfile()
     try Dup_OnProfileChanged()
 
@@ -201,6 +202,7 @@ UI_Page_Config_SwitchProfile(name) {
             Diag_Log("SwitchProfile: Force enable -> Enabled=1 (and save)")
             Storage_SaveProfile(App["ProfileData"])
         }
+        Rotation_Reset()
         Rotation_InitFromProfile()
     } catch as e {
         Diag_Log("SwitchProfile init error: " e.Message)
@@ -221,7 +223,7 @@ UI_Page_Config_RefreshSkillList() {
 UI_Page_Config_AddSkill() {
     SkillEditor_Open({}, 0, (newSkill, idx) => (
         App["ProfileData"].Skills.Push(newSkill),
-        UI_Page_Config_RefreshSkillList()
+        UI_Page_Config_RefreshSkillList(),
         Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
     ))
 }
@@ -236,7 +238,7 @@ UI_Page_Config_EditSelectedSkill() {
     cur := App["ProfileData"].Skills[idx]
     SkillEditor_Open(cur, idx, (newSkill, idx2) => (
         App["ProfileData"].Skills[idx2] := newSkill,
-        UI_Page_Config_RefreshSkillList()
+        UI_Page_Config_RefreshSkillList(),
         Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
     ))
 }

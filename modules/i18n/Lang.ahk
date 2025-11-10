@@ -18,7 +18,7 @@ Lang_Dir() {
 Lang_Init(code := "") {
     global App, gLang
     if !IsSet(App)
-        global App := Map()
+        App := Map()
     if !App.Has("LangDir")
         App["LangDir"] := A_ScriptDir "\Languages"
     DirCreate(App["LangDir"])  ; 确保目录存在

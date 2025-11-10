@@ -72,7 +72,7 @@ UI_ToggleMainPage(vis) {
     for ctl in [
         UI.GB_Profile, UI.ProfilesDD, UI.BtnNew, UI.BtnClone, UI.BtnDelete, UI.BtnExport, UI.GB_General, UI.LblStartStop,
         UI.HkStart, UI.BtnCapStartMouse,UI.LblPoll, UI.PollEdit, UI.LblDelay, UI.CdEdit, UI.BtnApply, UI.LblPick, UI.ChkPick, UI.LblOffY,
-        UI.OffYEdit, UI.LblDwell, UI.DwellEdit,, UI.LblPickKey, UI.DdPickKey, UI.GB_Auto, UI.BtnThreads, UI.BtnRules, UI.BtnBuffs, UI.BtnDefault, UI.BtnPaneSkills,
+        UI.OffYEdit, UI.LblDwell, UI.DwellEdit, UI.LblPickKey, UI.DdPickKey, UI.GB_Auto, UI.BtnThreads, UI.BtnRules, UI.BtnBuffs, UI.BtnDefault, UI.BtnPaneSkills,
         UI.BtnPanePoints, UI.SkillLV, UI.BtnAddSkill, UI.BtnEditSkill, UI.BtnDelSkill, UI.BtnTestSkill, UI.BtnSaveSkill,
         UI.PointLV, UI.BtnAddPoint, UI.BtnEditPoint, UI.BtnDelPoint, UI.BtnTestPoint, UI.BtnSavePoint
     ] {
