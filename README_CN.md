@@ -10,6 +10,8 @@
 - **智能避让**：鼠标取色时自动避让，避免干扰游戏操作
 - **规则引擎**：基于条件的自动化规则系统
 - **BUFF计时器**：自动续BUFF功能
+- **自动化页面**：完整的线程、BUFF、规则和循环管理界面
+- **实时监控**：实时状态监控，包含摘要页面和详细列表
 
 ### 🛠️ 配置管理
 - **多角色配置**：支持多个游戏角色的独立配置
@@ -95,10 +97,30 @@ game-macro/
 │   │   ├── Exporter.ahk       # 配置导出
 │   │   └── Storage.ahk        # 数据存储
 │   ├── ui/                     # 用户界面模块
+│   │   ├── UI_Framework.ahk    # UI框架和页面管理
 │   │   ├── UI_Layout.ahk      # 布局管理
 │   │   ├── UI_Shell.ahk       # 外壳界面
 │   │   ├── dialogs/           # 对话框组件
-│   │   └── pages/             # 页面组件
+│   │   │   ├── GUI_BuffEditor.ahk      # BUFF编辑器对话框
+│   │   │   ├── GUI_PointEditor.ahk    # 坐标点编辑器对话框
+│   │   │   ├── GUI_RuleEditor.ahk      # 规则编辑器对话框
+│   │   │   ├── GUI_SkillEditor.ahk     # 技能编辑器对话框
+│   │   │   ├── GUI_Threads.ahk         # 线程管理器对话框
+│   │   │   └── UI_DefaultSkillDlg.ahk  # 默认技能对话框
+│   │   ├── pages/             # 页面组件
+│   │   │   ├── automation/            # 自动化管理页面
+│   │   │   │   ├── Page_Buffs_Summary.ahk    # BUFF摘要页面
+│   │   │   │   ├── Page_Rules_Summary.ahk    # 规则摘要页面
+│   │   │   │   └── Page_Threads_Summary.ahk  # 线程摘要页面
+│   │   │   ├── UI_Page_Config.ahk      # 配置页面
+│   │   │   └── UI_Page_Settings.ahk    # 设置页面
+│   │   └── rotation/           # 循环编辑器组件
+│   │       ├── RE_UI_Common.ahk         # 通用循环UI
+│   │       ├── RE_UI_Page_Gates.ahk    # 门控页面
+│   │       ├── RE_UI_Page_General.ahk  # 通用页面
+│   │       ├── RE_UI_Page_Opener.ahk  # 开场页面
+│   │       ├── RE_UI_Page_Tracks.ahk   # 轨道页面
+│   │       └── RE_UI_Shell.ahk          # 循环外壳
 │   ├── util/                   # 工具模块
 │   │   └── Utils.ahk           # 工具函数
 │   ├── workers/                # 工作模块
@@ -183,6 +205,13 @@ MIT 许可证是一个宽松的开源许可证，允许：
 - 避免影响其他玩家的游戏体验
 
 ## 更新日志
+
+### v0.0.1-Alpha-0.2 (当前版本)
+- **UI框架增强**：添加完整的自动化管理页面
+- **实时监控**：实现线程、BUFF和规则的摘要页面
+- **布局优化**：改进UI布局计算，提升视觉效果
+- **动态高度计算**：基于内容增强GroupBox高度计算
+- **按钮定位优化**：优化按钮位置，提升用户体验
 
 ### v0.0.1-Alpha-0.1
 - 初始版本发布

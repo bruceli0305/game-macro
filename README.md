@@ -13,6 +13,8 @@ A game automation tool developed with AutoHotkey v2, supporting advanced feature
 - **DXGI Screen Capture**: High-performance screen capture using DirectX Graphics Infrastructure
 - **Rotation Management**: Complex skill rotation sequences with opener, tracks, and gates
 - **Internationalization**: Multi-language support with configurable language packs
+- **Automation Pages**: Comprehensive UI pages for managing threads, buffs, rules, and rotations
+- **Real-time Monitoring**: Live status monitoring with summary pages and detailed lists
 
 ### 🛠️ Configuration Management
 - **Multi-character Profiles**: Independent JSON-based configurations for different game characters
@@ -109,6 +111,7 @@ game-macro/
 │   │   ├── Exporter.ahk        # Configuration export
 │   │   └── Storage.ahk         # Data storage
 │   ├── ui/                     # User interface modules
+│   │   ├── UI_Framework.ahk    # UI framework and page management
 │   │   ├── UI_Layout.ahk       # Layout management
 │   │   ├── UI_Shell.ahk        # Shell interface
 │   │   ├── dialogs/            # Dialog components
@@ -119,6 +122,10 @@ game-macro/
 │   │   │   ├── GUI_Threads.ahk         # Threads manager dialog
 │   │   │   └── UI_DefaultSkillDlg.ahk  # Default skill dialog
 │   │   ├── pages/              # Page components
+│   │   │   ├── automation/            # Automation management pages
+│   │   │   │   ├── Page_Buffs_Summary.ahk    # Buffs summary page
+│   │   │   │   ├── Page_Rules_Summary.ahk    # Rules summary page
+│   │   │   │   └── Page_Threads_Summary.ahk  # Threads summary page
 │   │   │   ├── UI_Page_Config.ahk      # Configuration page
 │   │   │   └── UI_Page_Settings.ahk    # Settings page
 │   │   └── rotation/           # Rotation editor components
@@ -205,6 +212,13 @@ While this software is open-source, please use it responsibly:
 - Avoid affecting other players' gaming experience
 
 ## Changelog
+
+### v0.0.1-Alpha-0.2 (Current)
+- **UI Framework Enhancement**: Added comprehensive automation management pages
+- **Real-time Monitoring**: Implemented summary pages for threads, buffs, and rules
+- **Layout Optimization**: Improved UI layout calculations for better visual presentation
+- **Dynamic Height Calculation**: Enhanced GroupBox height calculations based on content
+- **Button Positioning**: Optimized button placement for better user experience
 
 ### v0.0.1-Alpha-0.1
 - Initial version release
