@@ -10,20 +10,22 @@ Page_Buffs_Build(page) {
     page.Controls := []
 
     ; ====== 摘要区 ======
-    UI.BF_GB_Sum := UI.Main.Add("GroupBox", Format("x{} y{} w{} h180", rc.X, rc.Y, rc.W), "计时器（BUFF） - 摘要")
+    ; 计算摘要区实际高度：标题栏26 + 7行文本编辑框(7*22=154) + 按钮区域(26+5=31) = 211像素
+    sumH := 26 + 6*22 + 8 + 26 + 10
+    UI.BF_GB_Sum := UI.Main.Add("GroupBox", Format("x{} y{} w{} h{}", rc.X, rc.Y, rc.W, sumH), "计时器（BUFF） - 摘要")
     page.Controls.Push(UI.BF_GB_Sum)
 
     UI.BF_Info := UI.Main.Add("Edit", Format("x{} y{} w{} r7 ReadOnly", rc.X + 12, rc.Y + 26, rc.W - 24))
     page.Controls.Push(UI.BF_Info)
 
-    UI.BF_BtnOpen := UI.Main.Add("Button", Format("x{} y{} w160 h26", rc.X + 12, rc.Y + 26 + 7*22 + 10), "打开 BUFF 编辑器")
+    UI.BF_BtnOpen := UI.Main.Add("Button", Format("x{} y{} w160 h26", rc.X + 12, rc.Y + 26 + 6*22 + 8), "打开 BUFF 编辑器")
     page.Controls.Push(UI.BF_BtnOpen)
 
     UI.BF_BtnRefresh := UI.Main.Add("Button", "x+8 w100 h26", "刷新")
     page.Controls.Push(UI.BF_BtnRefresh)
 
     ; ====== BUFF 列表 ======
-    ly := rc.Y + 180 + 10
+    ly := rc.Y + sumH + 10
     UI.BF_GB_List := UI.Main.Add("GroupBox", Format("x{} y{} w{} h{}", rc.X, ly, rc.W, Max(220, rc.H - (ly - rc.Y))), "BUFF 列表")
     page.Controls.Push(UI.BF_GB_List)
 
@@ -41,12 +43,14 @@ Page_Buffs_Build(page) {
 
 Page_Buffs_Layout(rc) {
     try {
-        UI.BF_GB_Sum.Move(rc.X, rc.Y, rc.W)
+        ; 计算摘要区实际高度：标题栏26 + 7行文本编辑框(7*22=154) + 按钮区域(26+5=31) = 211像素
+        sumH := 26 + 7*22 + 26 + 5
+        UI.BF_GB_Sum.Move(rc.X, rc.Y, rc.W, sumH)
         UI.BF_Info.Move(rc.X + 12, rc.Y + 26, rc.W - 24)
-        UI.BF_BtnOpen.Move(rc.X + 12, rc.Y + 26 + 7*22 + 10)
-        UI.BF_BtnRefresh.Move(UI.BF_BtnOpen.Pos.X + UI.BF_BtnOpen.Pos.W + 8, rc.Y + 26 + 7*22 + 10)
+        UI.BF_BtnOpen.Move(rc.X + 12, rc.Y + 26 + 6*22 + 8)
+        UI.BF_BtnRefresh.Move(UI.BF_BtnOpen.Pos.X + UI.BF_BtnOpen.Pos.W + 8, rc.Y + 26 + 6*22 + 8)
 
-        ly := rc.Y + 180 + 10
+        ly := rc.Y + sumH + 10
         listH := Max(220, rc.H - (ly - rc.Y))
         UI.BF_GB_List.Move(rc.X, ly, rc.W, listH)
         UI.BF_LV.Move(rc.X + 12, ly + 26, rc.W - 24, listH - 40)

@@ -10,7 +10,9 @@ Page_Threads_Build(page) {
     page.Controls := []
 
     ; ====== 摘要区 ======
-    UI.TH_GB_Sum := UI.Main.Add("GroupBox", Format("x{} y{} w{} h160", rc.X, rc.Y, rc.W), "线程配置 - 摘要")
+    ; 计算摘要区实际需要的高度：标题栏26 + 文本编辑框6行(6*22) + 按钮间距8 + 按钮高度26 + 底部间距10 = 196
+    sumH := 26 + 6*22 + 8 + 26 + 10
+    UI.TH_GB_Sum := UI.Main.Add("GroupBox", Format("x{} y{} w{} h{}", rc.X, rc.Y, rc.W, sumH), "线程配置 - 摘要")
     page.Controls.Push(UI.TH_GB_Sum)
 
     UI.TH_Info := UI.Main.Add("Edit", Format("x{} y{} w{} r6 ReadOnly", rc.X + 12, rc.Y + 26, rc.W - 24))
@@ -23,7 +25,7 @@ Page_Threads_Build(page) {
     page.Controls.Push(UI.TH_BtnRefresh)
 
     ; ====== 列表区 ======
-    ly := rc.Y + 160 + 10
+    ly := rc.Y + sumH + 10  ; 使用实际摘要区高度计算列表区位置
     listH := Max(220, rc.H - (ly - rc.Y))
     UI.TH_GB_List := UI.Main.Add("GroupBox", Format("x{} y{} w{} h{}", rc.X, ly, rc.W, listH), "线程列表")
     page.Controls.Push(UI.TH_GB_List)
@@ -42,12 +44,15 @@ Page_Threads_Build(page) {
 
 Page_Threads_Layout(rc) {
     try {
-        UI.TH_GB_Sum.Move(rc.X, rc.Y, rc.W)
+        ; 计算摘要区实际需要的高度：标题栏26 + 文本编辑框6行(6*22) + 按钮间距8 + 按钮高度26 + 底部间距10 = 196
+        sumH := 26 + 6*22 + 8 + 26 + 10
+        
+        UI.TH_GB_Sum.Move(rc.X, rc.Y, rc.W, sumH)
         UI.TH_Info.Move(rc.X + 12, rc.Y + 26, rc.W - 24)
         UI.TH_BtnOpen.Move(rc.X + 12, rc.Y + 26 + 6*22 + 8)
         UI.TH_BtnRefresh.Move(UI.TH_BtnOpen.Pos.X + UI.TH_BtnOpen.Pos.W + 8, rc.Y + 26 + 6*22 + 8)
 
-        ly := rc.Y + 160 + 10
+        ly := rc.Y + sumH + 10  ; 使用实际摘要区高度计算列表区位置
         listH := Max(220, rc.H - (ly - rc.Y))
         UI.TH_GB_List.Move(rc.X, ly, rc.W, listH)
         UI.TH_LV.Move(rc.X + 12, ly + 26, rc.W - 24, listH - 40)
