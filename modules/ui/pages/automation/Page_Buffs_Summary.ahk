@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;Page_Buffs_Summary.ahk
 ; 自动化 → 计时器（BUFF）摘要页
 ; 严格块结构 if/try/catch，不使用单行形式
 ; 控件前缀：BF_

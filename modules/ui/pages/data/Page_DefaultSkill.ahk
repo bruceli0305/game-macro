@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;Page_DefaultSkill.ahk
 ; 默认技能（嵌入页）
 ; 控件命名以 DS_ 前缀，避免与其他页面冲突
 ; 严格块结构写法

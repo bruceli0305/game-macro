@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;Page_Rotation_Summary.ahk
 ; 轮换配置概要页
 ; 严格块结构
 

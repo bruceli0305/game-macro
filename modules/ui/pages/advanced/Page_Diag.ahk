@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;Page_Diag.ahk
 ; 采集诊断（DXGI/ROI）
 ; 严格块结构 if/try/catch，不使用单行形式
 ; 控件前缀：DG_

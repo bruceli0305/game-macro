@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;Page_Threads_Summary.ahk
 ; 自动化 → 线程配置（摘要页）
 ; 严格块结构 if/try/catch，不使用单行形式
 ; 控件前缀：TH_

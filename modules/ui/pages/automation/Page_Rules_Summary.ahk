@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;Page_Rules_Summary.ahk
 ; 自动化 → 循环规则（摘要页）
 ; 严格块结构 if/try/catch，不使用单行形式
 ; 控件前缀：RU_

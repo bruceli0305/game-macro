@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;Page_Settings_About.ahk
 ; 设置 → 关于（正式页）
 ; 严格块结构 if/try/catch，不使用单行形式
 ; 控件前缀：SA_

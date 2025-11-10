@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;UI_Framework.ahk
 ; 页面管理框架：注册、切换、布局（兼容 Build(page) 与 Build() 两种签名）
 ; 严格使用块结构 if/try/catch
 

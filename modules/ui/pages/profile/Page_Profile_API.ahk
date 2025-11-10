@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;Page_Profile_API.ahk
 ; Profile 公共 API（与页面解耦）
 ; 提供：Profile_RefreshAll_Strong() / Profile_SwitchProfile_Strong(name)
 ; 说明：

@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;Page_Settings_Lang.ahk
 ; 设置 → 界面与语言（正式页，替换占位）
 ; 严格块结构 if/try/catch，不使用单行形式
 ; 控件前缀：SL_

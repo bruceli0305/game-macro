@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;Page_Tools_Quick.ahk
 ; 工具 → 快捷测试
 ; 严格块结构 if/try/catch，不使用单行形式
 ; 控件前缀：TQ_

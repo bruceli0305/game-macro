@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;Page_Points.ahk
 ; 数据与检测 → 取色点位（嵌入页）
 ; 不依赖旧 UI_Page_Config_* 函数；全部事件在本页实现
 ; 严格块结构 if/try/catch，不使用单行语句
