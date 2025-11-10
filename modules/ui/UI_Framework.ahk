@@ -98,21 +98,61 @@ UI_SwitchPage(key) {
     }
 }
 
+; ========= 右侧面板区域（动态读取左侧 Nav 宽度） =========
 UI_GetPageRect() {
     global UI
-    navW := 200
-    mX := UI.Main.MarginX
-    mY := UI.Main.MarginY
 
-    rc := Buffer(16, 0)
-    DllCall("user32\GetClientRect", "ptr", UI.Main.Hwnd, "ptr", rc.Ptr)
-    cw := NumGet(rc, 8, "Int")
-    ch := NumGet(rc, 12, "Int")
+    ; 主窗边距（默认为 12/10）
+    mX := 12
+    mY := 10
+    try {
+        if (IsSet(UI) && UI.Has("Main") && UI.Main) {
+            mX := UI.Main.MarginX
+            mY := UI.Main.MarginY
+        }
+    } catch {
+        mX := 12
+        mY := 10
+    }
 
-    x := mX + navW + 12
+    ; 左侧导航实际宽度（默认 220），与页面间隔 gap=12
+    navW := 220
+    gap  := 12
+    try {
+        if (IsSet(UI) && UI.Has("Nav") && UI.Nav) {
+            nx := 0, ny := 0, nw := 0, nh := 0
+            UI.Nav.GetPos(&nx, &ny, &nw, &nh)
+            if (nw > 0) {
+                navW := nw
+            }
+        }
+    } catch {
+        navW := 220
+    }
+
+    ; 主窗客户区尺寸
+    cw := 0, ch := 0
+    try {
+        rc := Buffer(16, 0)
+        DllCall("user32\GetClientRect", "ptr", UI.Main.Hwnd, "ptr", rc.Ptr)
+        cw := NumGet(rc, 8, "Int")
+        ch := NumGet(rc, 12, "Int")
+    } catch {
+        cw := A_ScreenWidth
+        ch := A_ScreenHeight
+    }
+
+    ; 右侧区域
+    x := mX + navW + gap
     y := mY
-    w := Max(cw - x - mX, 320)
-    h := Max(ch - mY * 2, 300)
+    w := cw - x - mX
+    h := ch - mY * 2
+    if (w < 320) {
+        w := 320
+    }
+    if (h < 240) {
+        h := 240
+    }
 
     return { X: x, Y: y, W: w, H: h, NavW: navW, ClientW: cw, ClientH: ch }
 }
