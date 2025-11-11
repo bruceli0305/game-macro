@@ -29,12 +29,18 @@ A game automation tool developed with AutoHotkey v2, supporting advanced feature
 
 ## Quick Start
 
-### System Requirements
+### Option 1: Portable EXE (Recommended for Beginners)
+1. **Download the latest release** from the `releases/` folder
+2. **Extract the ZIP file** to any directory
+3. **Run `game-macro.exe`** - No installation required
+
+### Option 2: Source Code (For Developers)
+#### System Requirements
 - Windows operating system
 - AutoHotkey v2.0 or higher
 - DirectX 11 compatible graphics card (for DXGI screen capture)
 
-### Installation Steps
+#### Installation Steps
 1. Download and install [AutoHotkey v2](https://www.autohotkey.com/)
 2. Clone or download this project to your local machine
 3. Double-click `Main.ahk` to start the configuration tool
