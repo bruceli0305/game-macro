@@ -31,9 +31,11 @@ Page_Settings_About_Build(page) {
     y2 := y1 + 34
     UI.SA_BtnNative := UI.Main.Add("Button", Format("x{} y{} w150 h26", rc.X + 12, y2), T("about.openNative","打开 DXGI 原生日志"))
     UI.SA_BtnHost   := UI.Main.Add("Button", "x+8 w150 h26", T("about.openHost","打开 WorkerHost 位置"))
+    UI.SA_BtnGitHub := UI.Main.Add("Button", "x+8 w150 h26", T("about.openGitHub","打开 GitHub 项目"))
     UI.SA_BtnRefresh:= UI.Main.Add("Button", "x+8 w100 h26", T("btn.refresh","刷新"))
     page.Controls.Push(UI.SA_BtnNative)
     page.Controls.Push(UI.SA_BtnHost)
+    page.Controls.Push(UI.SA_BtnGitHub)
     page.Controls.Push(UI.SA_BtnRefresh)
 
     ; 事件
@@ -43,6 +45,7 @@ Page_Settings_About_Build(page) {
     UI.SA_BtnLangDir.OnEvent("Click", SettingsAbout_OnOpenLangDir)
     UI.SA_BtnNative.OnEvent("Click", SettingsAbout_OnOpenNativeLog)
     UI.SA_BtnHost.OnEvent("Click", SettingsAbout_OnOpenWorkerHost)
+    UI.SA_BtnGitHub.OnEvent("Click", SettingsAbout_OnOpenGitHub)
     UI.SA_BtnRefresh.OnEvent("Click", SettingsAbout_OnRefresh)
 
     ; 初次刷新
@@ -63,6 +66,7 @@ Page_Settings_About_Layout(rc) {
         y2 := y1 + 34
         UI.SA_BtnNative.Move(rc.X + 12, y2)
         UI.SA_BtnHost.Move(, y2)
+        UI.SA_BtnGitHub.Move(, y2)
         UI.SA_BtnRefresh.Move(, y2)
     } catch {
     }
@@ -166,6 +170,7 @@ SettingsAbout_BuildSummary() {
     sum .= "Exports:  " exports  "`r`n"
     sum .= "Logs:     " logs     "`r`n"
     sum .= "Languages:" langs    "`r`n"
+    sum .= "GitHub:   https://github.com/bruceli0305/game-macro" "`r`n"
     sum .= "`r`n"
     sum .= "DXGI: Enabled=" dx_en " Ready=" dx_ready " FPS=" fps "`r`n"
     sum .= "OutIdx: " outIdx "  Name: " monName "  Rect: " rect "`r`n"
@@ -286,5 +291,15 @@ SettingsAbout_OnOpenWorkerHost(*) {
         Run dir
     } catch {
         MsgBox T("about.failOpen","无法打开目录：") dir
+    }
+}
+
+SettingsAbout_OnOpenGitHub(*) {
+    ; 打开GitHub项目页面
+    githubUrl := "https://github.com/bruceli0305/game-macro"
+    try {
+        Run githubUrl
+    } catch {
+        MsgBox "无法打开浏览器访问GitHub项目页面：" githubUrl
     }
 }
