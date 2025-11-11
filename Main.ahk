@@ -13,6 +13,11 @@ SetWorkingDir A_ScriptDir
 CoordMode "Mouse", "Screen"
 CoordMode "Pixel", "Screen"
 
+; 设置应用程序图标
+if FileExist(A_ScriptDir "\assets\icon.ico") {
+    TraySetIcon(A_ScriptDir "\assets\icon.ico", , 1)
+}
+
 ; ========= Includes =========
 #Include "modules\util\Utils.ahk"
 #Include "modules\i18n\Lang.ahk"
