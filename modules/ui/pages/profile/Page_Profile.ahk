@@ -76,14 +76,6 @@ Page_Profile_Build(page := 0) {
         }
     }
 
-    UI.BtnExport := UI.Main.Add("Button", "x+16 w92 h28", T("btn.export","导出打包"))
-    if (IsObject(pg)) {
-        try {
-            pg.Controls.Push(UI.BtnExport)
-        } catch {
-        }
-    }
-
     labelW := 120
     rowH   := 34
     padX   := 12
@@ -250,7 +242,6 @@ Page_Profile_Build(page := 0) {
         UI.BtnNew.OnEvent("Click", Profile_OnNew)
         UI.BtnClone.OnEvent("Click", Profile_OnClone)
         UI.BtnDelete.OnEvent("Click", Profile_OnDelete)
-        UI.BtnExport.OnEvent("Click", Profile_OnExport)
         UI.BtnCapStartMouse.OnEvent("Click", Profile_OnCaptureStartMouse)
         UI.BtnApply.OnEvent("Click", Profile_OnApplyGeneral)
     } catch {
@@ -520,27 +511,6 @@ Profile_OnDelete(*) {
     } catch as e {
         UI_Trace("Profile_OnDelete exception: " e.Message)
         MsgBox T("msg.deleteFail","删除失败：") e.Message
-    }
-}
-
-Profile_OnExport(*) {
-    global App
-    UI_Trace("Profile_OnExport")
-    cur := ""
-    try {
-        cur := App["CurrentProfile"]
-    } catch {
-        cur := ""
-    }
-    if (cur = "") {
-        MsgBox T("msg.noProfile","未选择配置")
-        return
-    }
-    try {
-        Exporter_ExportProfile(cur)
-    } catch as e {
-        UI_Trace("Profile_OnExport exception: " e.Message)
-        MsgBox T("msg.exportFail","导出失败：") e.Message
     }
 }
 

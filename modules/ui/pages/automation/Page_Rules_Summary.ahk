@@ -18,24 +18,47 @@ Page_Rules_Build(page) {
     UI.RU_Info := UI.Main.Add("Edit", Format("x{} y{} w{} r7 ReadOnly", rc.X + 12, rc.Y + 26, rc.W - 24))
     page.Controls.Push(UI.RU_Info)
 
-    UI.RU_BtnOpen := UI.Main.Add("Button", Format("x{} y{} w160 h26", rc.X + 12, rc.Y + 26 + 6*22 + 8), "打开规则管理器")
-    page.Controls.Push(UI.RU_BtnOpen)
-
-    UI.RU_BtnRefresh := UI.Main.Add("Button", "x+8 w100 h26", "刷新")
+    UI.RU_BtnRefresh := UI.Main.Add("Button", Format("x{} y{} w100 h26", rc.X + 12, rc.Y + 26 + 6*22 + 8), "刷新")
     page.Controls.Push(UI.RU_BtnRefresh)
+
+    UI.RU_BtnSave := UI.Main.Add("Button", "x+8 w100 h26", "保存")
+    page.Controls.Push(UI.RU_BtnSave)
 
     ; ====== 规则列表 ======
     ly := rc.Y + sumH + 10
-    UI.RU_GB_List := UI.Main.Add("GroupBox", Format("x{} y{} w{} h{}", rc.X, ly, rc.W, Max(220, rc.H - (ly - rc.Y))), "规则列表")
+    listH := Max(300, rc.H - (ly - rc.Y))
+    UI.RU_GB_List := UI.Main.Add("GroupBox", Format("x{} y{} w{} h{}", rc.X, ly, rc.W, listH), "规则管理")
     page.Controls.Push(UI.RU_GB_List)
 
-    UI.RU_LV := UI.Main.Add("ListView", Format("x{} y{} w{} h{}", rc.X + 12, ly + 26, rc.W - 24, Max(180, rc.H - (ly - rc.Y) - 40))
-        , ["ID","名称","启用","线程","条件#","动作#","冷却(ms)","上次触发"])
+    UI.RU_LV := UI.Main.Add("ListView", Format("x{} y{} w{} h{}", rc.X + 12, ly + 26, rc.W - 24, listH - 80)
+        , ["ID","启用","名称","逻辑","条件数","动作数","冷却ms","优先级","动作间隔","线程"])
     page.Controls.Push(UI.RU_LV)
 
+    ; 管理按钮
+    UI.RU_BtnAdd := UI.Main.Add("Button", Format("x{} y{} w90 h26", rc.X + 12, ly + listH - 40), "新增规则")
+    page.Controls.Push(UI.RU_BtnAdd)
+    
+    UI.RU_BtnEdit := UI.Main.Add("Button", "x+8 w90 h26", "编辑规则")
+    page.Controls.Push(UI.RU_BtnEdit)
+    
+    UI.RU_BtnDel := UI.Main.Add("Button", "x+8 w90 h26", "删除规则")
+    page.Controls.Push(UI.RU_BtnDel)
+    
+    UI.RU_BtnUp := UI.Main.Add("Button", "x+8 w90 h26", "上移")
+    page.Controls.Push(UI.RU_BtnUp)
+    
+    UI.RU_BtnDown := UI.Main.Add("Button", "x+8 w90 h26", "下移")
+    page.Controls.Push(UI.RU_BtnDown)
+
     ; 事件
-    UI.RU_BtnOpen.OnEvent("Click", Rules_OnOpenManager)
     UI.RU_BtnRefresh.OnEvent("Click", Rules_OnRefresh)
+    UI.RU_BtnSave.OnEvent("Click", Rules_OnSave)
+    UI.RU_BtnAdd.OnEvent("Click", Rules_OnAdd)
+    UI.RU_BtnEdit.OnEvent("Click", Rules_OnEdit)
+    UI.RU_BtnDel.OnEvent("Click", Rules_OnDelete)
+    UI.RU_BtnUp.OnEvent("Click", Rules_OnMoveUp)
+    UI.RU_BtnDown.OnEvent("Click", Rules_OnMoveDown)
+    UI.RU_LV.OnEvent("DoubleClick", Rules_OnEdit)
 
     ; 首次刷新
     Rules_RefreshAll()
@@ -44,16 +67,22 @@ Page_Rules_Build(page) {
 Page_Rules_Layout(rc) {
     try {
         ; 计算摘要区实际高度：标题栏26 + 7行文本编辑框(7*22=154) + 按钮区域(26+5=31) = 211像素
-        sumH := 26 + 7*22 + 26 + 5
+        sumH := 26 + 6*22 + 8 + 26 + 10
         UI.RU_GB_Sum.Move(rc.X, rc.Y, rc.W, sumH)
         UI.RU_Info.Move(rc.X + 12, rc.Y + 26, rc.W - 24)
-        UI.RU_BtnOpen.Move(rc.X + 12, rc.Y + 26 + 6*22 + 8)
-        UI.RU_BtnRefresh.Move(UI.RU_BtnOpen.Pos.X + UI.RU_BtnOpen.Pos.W + 8, rc.Y + 26 + 6*22 + 8)
+        UI.RU_BtnRefresh.Move(rc.X + 12, rc.Y + 26 + 6*22 + 8)
+        UI.RU_BtnSave.Move(UI.RU_BtnRefresh.Pos.X + UI.RU_BtnRefresh.Pos.W + 8, rc.Y + 26 + 6*22 + 8)
 
         ly := rc.Y + sumH + 10
-        listH := Max(220, rc.H - (ly - rc.Y))
+        listH := Max(300, rc.H - (ly - rc.Y))
         UI.RU_GB_List.Move(rc.X, ly, rc.W, listH)
-        UI.RU_LV.Move(rc.X + 12, ly + 26, rc.W - 24, listH - 40)
+        UI.RU_LV.Move(rc.X + 12, ly + 26, rc.W - 24, listH - 80)
+        
+        UI.RU_BtnAdd.Move(rc.X + 12, ly + listH - 40)
+        UI.RU_BtnEdit.Move(UI.RU_BtnAdd.Pos.X + UI.RU_BtnAdd.Pos.W + 8, ly + listH - 40)
+        UI.RU_BtnDel.Move(UI.RU_BtnEdit.Pos.X + UI.RU_BtnEdit.Pos.W + 8, ly + listH - 40)
+        UI.RU_BtnUp.Move(UI.RU_BtnDel.Pos.X + UI.RU_BtnDel.Pos.W + 8, ly + listH - 40)
+        UI.RU_BtnDown.Move(UI.RU_BtnUp.Pos.X + UI.RU_BtnUp.Pos.W + 8, ly + listH - 40)
     } catch {
     }
 }
@@ -153,17 +182,19 @@ Rules_FillList() {
             return
         }
         for i, r in App["ProfileData"].Rules {
-            name := HasProp(r,"Name") ? r.Name : ("Rule" i)
             en := (HasProp(r,"Enabled") && r.Enabled) ? "√" : ""
-            thr := HasProp(r,"ThreadId") ? r.ThreadId : 1
+            name := HasProp(r,"Name") ? r.Name : ("Rule" i)
+            logic := HasProp(r,"Logic") ? r.Logic : "AND"
             cc := HasProp(r,"Conditions") ? r.Conditions.Length : 0
             ac := HasProp(r,"Actions") ? r.Actions.Length : 0
             cd := HasProp(r,"CooldownMs") ? r.CooldownMs : 0
-            lf := HasProp(r,"LastFire") ? r.LastFire : 0
-            lfTxt := (lf > 0) ? (A_TickCount - lf) " ms 前" : "-"
-            UI.RU_LV.Add("", i, name, en, thr, cc, ac, cd, lfTxt)
+            prio := HasProp(r,"Priority") ? r.Priority : i
+            gap := HasProp(r,"ActionGapMs") ? r.ActionGapMs : 60
+            thr := HasProp(r,"ThreadId") ? r.ThreadId : 1
+            tname := ThreadNameById(thr)
+            UI.RU_LV.Add("", i, en, name, logic, cc, ac, cd, prio, gap, tname)
         }
-        loop 8 {
+        loop 10 {
             UI.RU_LV.ModifyCol(A_Index, "AutoHdr")
         }
     } catch {
@@ -175,16 +206,127 @@ Rules_FillList() {
     }
 }
 
-; ====== 事件 ======
-
-Rules_OnOpenManager(*) {
-    try {
-        RulesManager_Show()
-    } catch {
-        MsgBox "无法打开规则管理器。"
+ThreadNameById(id) {
+    global App
+    if HasProp(App["ProfileData"], "Threads") {
+        for _, t in App["ProfileData"].Threads {
+            if (t.Id = id)
+                return t.Name
+        }
     }
+    return (id = 1) ? "默认线程" : "线程#" id
 }
+
+; ====== 事件 ======
 
 Rules_OnRefresh(*) {
     Rules_RefreshAll()
+}
+
+Rules_OnSave(*) {
+    try {
+        Storage_SaveProfile(App["ProfileData"])
+        Notify("循环配置已保存")
+    } catch {
+        MsgBox "保存失败。"
+    }
+}
+
+Rules_OnAdd(*) {
+    try {
+        global App
+        newR := {
+            Name: "新规则", Enabled: 1, Logic: "AND", CooldownMs: 500
+          , Priority: App["ProfileData"].Rules.Length + 1, ActionGapMs: 60
+          , Conditions: [], Actions: [], LastFire: 0, ThreadId: 1
+        }
+        RuleEditor_Open(newR, 0, OnSavedNew)
+    } catch {
+        MsgBox "无法新增规则。"
+    }
+}
+
+OnSavedNew(savedR, idx) {
+    global App
+    App["ProfileData"].Rules.Push(savedR)
+    Rules_RefreshAll()
+}
+
+Rules_OnEdit(*) {
+    row := UI.RU_LV.GetNext(0, "Focused")
+    if !row {
+        MsgBox "请先选中一个规则。"
+        return
+    }
+    try {
+        idx := row
+        cur := App["ProfileData"].Rules[idx]
+        RuleEditor_Open(cur, idx, OnSavedEdit)
+    } catch {
+        MsgBox "无法编辑规则。"
+    }
+}
+
+OnSavedEdit(savedR, idx2) {
+    global App
+    App["ProfileData"].Rules[idx2] := savedR
+    Rules_RefreshAll()
+}
+
+Rules_OnDelete(*) {
+    row := UI.RU_LV.GetNext(0, "Focused")
+    if !row {
+        MsgBox "请先选中一个规则。"
+        return
+    }
+    try {
+        idx := row
+        App["ProfileData"].Rules.RemoveAt(idx)
+        for i, r in App["ProfileData"].Rules
+            r.Priority := i
+        Rules_RefreshAll()
+        Notify("已删除规则")
+    } catch {
+        MsgBox "无法删除规则。"
+    }
+}
+
+Rules_OnMoveUp(*) {
+    row := UI.RU_LV.GetNext(0, "Focused")
+    if !row
+        return
+    try {
+        from := row, to := from - 1
+        if (to < 1)
+            return
+        item := App["ProfileData"].Rules[from]
+        App["ProfileData"].Rules.RemoveAt(from)
+        App["ProfileData"].Rules.InsertAt(to, item)
+        for i, r in App["ProfileData"].Rules
+            r.Priority := i
+        Rules_RefreshAll()
+        UI.RU_LV.Modify(to, "Select Focus Vis")
+    } catch {
+        MsgBox "无法上移规则。"
+    }
+}
+
+Rules_OnMoveDown(*) {
+    row := UI.RU_LV.GetNext(0, "Focused")
+    if !row
+        return
+    try {
+        from := row, to := from + 1
+        if (to > App["ProfileData"].Rules.Length)
+            return
+        item := App["ProfileData"].Rules[from]
+        App["ProfileData"].Rules.RemoveAt(from)
+        App["ProfileData"].Rules.InsertAt(to, item)
+        for i, r in App["ProfileData"].Rules
+            r.Priority := i
+        Rules_RefreshAll()
+        UI.RU_LV.Modify(to, "Select Focus Vis")
+    } catch {
+        MsgBox "无法下移规则。"
+    }
 }
