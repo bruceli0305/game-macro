@@ -106,7 +106,7 @@ Page_Profile_Build(page := 0) {
         }
     }
 
-    UI.HkStart := UI.Main.Add("Hotkey", Format("x{} y{} w200", xCtrl, yLine1))
+    UI.HkStart := UI.Main.Add("Hotkey", Format("x{} y{} w180", xCtrl, yLine1))
     if (IsObject(pg)) {
         try {
             pg.Controls.Push(UI.HkStart)
@@ -114,7 +114,7 @@ Page_Profile_Build(page := 0) {
         }
     }
 
-    UI.BtnCapStartMouse := UI.Main.Add("Button", Format("x{} y{} w110 h26", xCtrl + 210, yLine1 - 2), T("btn.captureMouse","捕获鼠标键"))
+    UI.BtnCapStartMouse := UI.Main.Add("Button", Format("x{} y{} w110 h26", xCtrl + 100 + ctrlGap, yLine1 - 2), T("btn.captureMouse","捕获鼠标键"))
     if (IsObject(pg)) {
         try {
             pg.Controls.Push(UI.BtnCapStartMouse)
@@ -131,7 +131,7 @@ Page_Profile_Build(page := 0) {
         }
     }
 
-    UI.PollEdit := UI.Main.Add("Edit", Format("x{} y{} w200 Number Center", xCtrl, y2))
+    UI.PollEdit := UI.Main.Add("Edit", Format("x{} y{} w180 Number Center", xCtrl, y2))
     if (IsObject(pg)) {
         try {
             pg.Controls.Push(UI.PollEdit)
@@ -148,7 +148,7 @@ Page_Profile_Build(page := 0) {
         }
     }
 
-    UI.CdEdit := UI.Main.Add("Edit", Format("x{} y{} w200 Number Center", xCtrl, y3))
+    UI.CdEdit := UI.Main.Add("Edit", Format("x{} y{} w180 Number Center", xCtrl, y3))
     if (IsObject(pg)) {
         try {
             pg.Controls.Push(UI.CdEdit)
@@ -165,7 +165,7 @@ Page_Profile_Build(page := 0) {
         }
     }
 
-    UI.ChkPick := UI.Main.Add("CheckBox", Format("x{} y{} w200", xCtrl, y4), T("label.enable","启用"))
+    UI.ChkPick := UI.Main.Add("CheckBox", Format("x{} y{} w180", xCtrl, y4), T("label.enable","启用"))
     if (IsObject(pg)) {
         try {
             pg.Controls.Push(UI.ChkPick)
@@ -182,7 +182,7 @@ Page_Profile_Build(page := 0) {
         }
     }
 
-    UI.OffYEdit := UI.Main.Add("Edit", Format("x{} y{} w200 Number Center", xCtrl, y5))
+    UI.OffYEdit := UI.Main.Add("Edit", Format("x{} y{} w180 Number Center", xCtrl, y5))
     if (IsObject(pg)) {
         try {
             pg.Controls.Push(UI.OffYEdit)
@@ -199,7 +199,7 @@ Page_Profile_Build(page := 0) {
         }
     }
 
-    UI.DwellEdit := UI.Main.Add("Edit", Format("x{} y{} w200 Number Center", xCtrl, y6))
+    UI.DwellEdit := UI.Main.Add("Edit", Format("x{} y{} w180 Number Center", xCtrl, y6))
     if (IsObject(pg)) {
         try {
             pg.Controls.Push(UI.DwellEdit)
@@ -216,7 +216,7 @@ Page_Profile_Build(page := 0) {
         }
     }
 
-    UI.DdPickKey := UI.Main.Add("DropDownList", Format("x{} y{} w200", xCtrl, y7))
+    UI.DdPickKey := UI.Main.Add("DropDownList", Format("x{} y{} w180", xCtrl, y7))
     try {
         UI.DdPickKey.Add(["LButton","MButton","RButton","XButton1","XButton2","F10","F11","F12"])
     } catch {
@@ -229,7 +229,7 @@ Page_Profile_Build(page := 0) {
     }
 
     y8 := y7 + rowH
-    UI.BtnApply := UI.Main.Add("Button", Format("x{} y{} w100 h28", xCtrl, y8 - 2), T("btn.apply","应用"))
+    UI.BtnApply := UI.Main.Add("Button", Format("x{} y{} w100 h28", xCtrl, y8), T("btn.apply","应用"))
     if (IsObject(pg)) {
         try {
             pg.Controls.Push(UI.BtnApply)
@@ -259,7 +259,7 @@ Page_Profile_Layout(rc := 0) {
         }
     }
 
-    labelW := 100
+    labelW := 120
     rowH   := 34
     padX   := 12
     padTop := 26
@@ -292,11 +292,11 @@ Page_Profile_Layout(rc := 0) {
     } catch {
     }
     try {
-        UI.HkStart.Move(xCtrl, y1, 200)
+        UI.HkStart.Move(xCtrl, y1, 180)
     } catch {
     }
     try {
-        UI.BtnCapStartMouse.Move(xCtrl + 210, y1 - 2)
+        UI.BtnCapStartMouse.Move(xCtrl + 100 + ctrlGap, y1 - 2)
     } catch {
     }
 
@@ -306,7 +306,7 @@ Page_Profile_Layout(rc := 0) {
     } catch {
     }
     try {
-        UI.PollEdit.Move(xCtrl, y2, 100)
+        UI.PollEdit.Move(xCtrl, y2, 180)
     } catch {
     }
 
@@ -316,7 +316,7 @@ Page_Profile_Layout(rc := 0) {
     } catch {
     }
     try {
-        UI.CdEdit.Move(xCtrl, y3, 120)
+        UI.CdEdit.Move(xCtrl, y3, 180)
     } catch {
     }
 
@@ -326,7 +326,7 @@ Page_Profile_Layout(rc := 0) {
     } catch {
     }
     try {
-        UI.ChkPick.Move(xCtrl, y4, 100)
+        UI.ChkPick.Move(xCtrl, y4, 180)
     } catch {
     }
 
@@ -336,7 +336,7 @@ Page_Profile_Layout(rc := 0) {
     } catch {
     }
     try {
-        UI.OffYEdit.Move(xCtrl, y5, 120)
+        UI.OffYEdit.Move(xCtrl, y5, 180)
     } catch {
     }
 
@@ -346,7 +346,7 @@ Page_Profile_Layout(rc := 0) {
     } catch {
     }
     try {
-        UI.DwellEdit.Move(xCtrl, y6, 120)
+        UI.DwellEdit.Move(xCtrl, y6, 180)
     } catch {
     }
 
@@ -356,13 +356,13 @@ Page_Profile_Layout(rc := 0) {
     } catch {
     }
     try {
-        UI.DdPickKey.Move(xCtrl, y7, 140)
+        UI.DdPickKey.Move(xCtrl, y7, 180)
     } catch {
     }
 
     y8 := y7 + rowH
     try {
-        UI.BtnApply.Move(xCtrl, y8 - 2, 100, 28)
+        UI.BtnApply.Move(xCtrl, y8, 100, 28)
     } catch {
     }
 }
