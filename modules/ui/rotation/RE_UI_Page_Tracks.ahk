@@ -1,3 +1,4 @@
+; modules\ui\rotation\RE_UI_Page_Tracks.ahk
 #Requires AutoHotkey v2
 #Include "RE_UI_Common.ahk"
 
@@ -30,6 +31,7 @@ REUI_Page_Tracks_Build(ctx) {
     btnSave.OnEvent("Click", SaveTracks)
 
     SaveTracks(*) {
+        global App
         Storage_SaveProfile(App["ProfileData"])
         Notify("轨道已保存")
     }
@@ -39,14 +41,17 @@ REUI_Page_Tracks_Build(ctx) {
 
 ;------------------------------- 列表/数据 -------------------------------
 REUI_Tracks_Ensure(&cfg) {
-    if !HasProp(cfg, "Tracks") || !IsObject(cfg.Tracks)
+    if !HasProp(cfg, "Tracks") || !IsObject(cfg.Tracks) {
         cfg.Tracks := []
+    }
 
     if (cfg.Tracks.Length = 0) {
-        if HasProp(cfg, "Track1")
+        if HasProp(cfg, "Track1") {
             cfg.Tracks.Push(cfg.Track1)
-        if HasProp(cfg, "Track2")
+        }
+        if HasProp(cfg, "Track2") {
             cfg.Tracks.Push(cfg.Track2)
+        }
     }
     if (cfg.Tracks.Length = 0) {
         cfg.Tracks.Push({ Id:1, Name:"轨道1", ThreadId:1, MaxDurationMs:8000, MinStayMs:0, NextTrackId:0, Watch:[], RuleRefs:[] })
@@ -82,10 +87,13 @@ REUI_Tracks_OnAdd(cfg, owner, lv) {
         maxId := 0
         for _, t in cfg.Tracks {
             thisId := HasProp(t, "Id") ? Integer(t.Id) : 0
-            if (thisId > maxId)
+            if (thisId > maxId) {
                 maxId := thisId
+            }
         }
         newId := maxId + 1
+    } catch {
+        newId := 1
     }
     tr := { Id:newId, Name:"轨道" newId, ThreadId:1, MaxDurationMs:8000, MinStayMs:0, NextTrackId:0, Watch:[], RuleRefs:[] }
     REUI_TrackEditor_Open(owner, cfg, tr, 0, OnSaved)
@@ -102,8 +110,9 @@ REUI_Tracks_OnEdit(lv, cfg, owner) {
         MsgBox "请选择一条轨道"
         return
     }
-    if (row < 1 || row > cfg.Tracks.Length)
+    if (row < 1 || row > cfg.Tracks.Length) {
         return
+    }
     cur := cfg.Tracks[row]
     REUI_TrackEditor_Open(owner, cfg, cur, row, OnSaved)
 
@@ -137,12 +146,14 @@ REUI_Tracks_OnDel(lv, cfg) {
 
 REUI_Tracks_OnMove(lv, cfg, dir) {
     row := lv.GetNext(0, "Focused")
-    if !row
+    if !row {
         return
+    }
     from := row
     to := from + dir
-    if (to < 1 || to > cfg.Tracks.Length)
+    if (to < 1 || to > cfg.Tracks.Length) {
         return
+    }
     item := cfg.Tracks[from]
     cfg.Tracks.RemoveAt(from)
     cfg.Tracks.InsertAt(to, item)
@@ -175,17 +186,26 @@ REUI_TrackEditor_Open(owner, cfg, t, idx := 0, onSaved := 0) {
     g.Add("Text", "xm y+8 w70 Right", "名称：")
     edName := g.Add("Edit", "x+6 w220", t.Name)
 
+    ; 名称/线程
     g.Add("Text", "x+20 w50 Right", "线程：")
     ddThr := g.Add("DropDownList", "x+6 w200")
-    thNames := [], thIds := []
+    thNames := []
+    thIds   := []
     try {
-        for _, th in App["ProfileData"].Threads {
-            thNames.Push(th.Name)
-            thIds.Push(th.Id)
+        if (IsSet(App) && App.Has("ProfileData") && HasProp(App["ProfileData"], "Threads")
+            && IsObject(App["ProfileData"].Threads) && App["ProfileData"].Threads.Length) {
+            for _, th in App["ProfileData"].Threads {
+                thNames.Push(th.Name)
+                thIds.Push(th.Id)
+            }
         }
+    } catch {
     }
-    if thNames.Length
-        ddThr.Add(thNames)
+    if (thNames.Length = 0) {
+        thNames := ["默认线程"]
+        thIds   := [1]
+    }
+    ddThr.Add(thNames)
     sel := 1
     for i, id in thIds {
         if (id = t.ThreadId) {

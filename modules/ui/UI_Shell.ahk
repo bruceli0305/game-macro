@@ -55,6 +55,12 @@ UI_ShowMain() {
     nodeRot     := UI.Nav.Add("轮换配置",             rootAdv)
     nodeDiag    := UI.Nav.Add("采集诊断（DXGI/ROI）", rootAdv)
 
+    ; 新增：轮换配置的三级菜单（第一步：常规、轨道）
+    nodeRotGen    := UI.Nav.Add("常规", nodeRot)
+    nodeRotTrks   := UI.Nav.Add("轨道", nodeRot)
+    nodeRotGates  := UI.Nav.Add("跳轨", nodeRot)
+    nodeRotOpener := UI.Nav.Add("起手", nodeRot)
+
     nodeToolsIO    := UI.Nav.Add("导入 / 导出", rootTools)
     nodeToolsQuick := UI.Nav.Add("快捷测试",    rootTools)
 
@@ -81,6 +87,13 @@ UI_ShowMain() {
     UI_NavMap[nodeThreads]      := "threads"
     UI_NavMap[nodeRot]          := "adv_rotation"
     UI_NavMap[nodeDiag]         := "adv_diag"
+
+    ; 新增映射
+    UI_NavMap[nodeRotGen]       := "adv_rotation_general"
+    UI_NavMap[nodeRotTrks]      := "adv_rotation_tracks"
+    UI_NavMap[nodeRotGates]     := "adv_rotation_gates"
+    UI_NavMap[nodeRotOpener]    := "adv_rotation_opener"
+
     UI_NavMap[nodeToolsIO]      := "tools_io"
     UI_NavMap[nodeToolsQuick]   := "tools_quick"
     UI_NavMap[nodeSettingsLang] := "settings_lang"
@@ -99,6 +112,11 @@ UI_ShowMain() {
     UI_RegisterPage("adv_rotation",   "轮换配置",   Page_Rotation_Build,       Page_Rotation_Layout,      Page_Rotation_OnEnter)
     UI_RegisterPage("adv_diag",       "采集诊断",   Page_Diag_Build,           Page_Diag_Layout)
 
+    ; 新注册：轮换配置下的两页
+    UI_RegisterPage("adv_rotation_general", "轮换-常规", Page_RotGen_Build,   Page_RotGen_Layout,   Page_RotGen_OnEnter)
+    UI_RegisterPage("adv_rotation_tracks",  "轮换-轨道", Page_RotTracks_Build,Page_RotTracks_Layout,Page_RotTracks_OnEnter)
+    UI_RegisterPage("adv_rotation_gates",   "轮换-跳轨",  Page_RotGates_Build,       Page_RotGates_Layout,      Page_RotGates_OnEnter)
+    UI_RegisterPage("adv_rotation_opener",  "轮换-起手",  Page_RotOpener_Build,      Page_RotOpener_Layout,     Page_RotOpener_OnEnter)
     UI_RegisterPage("tools_io",       "导入导出",   Page_ToolsIO_Build,        Page_ToolsIO_Layout)
     UI_RegisterPage("tools_quick",    "快捷测试",   Page_ToolsQuick_Build,     Page_ToolsQuick_Layout)
 

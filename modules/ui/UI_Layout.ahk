@@ -96,7 +96,7 @@ UI_ForceRedrawAll() {
 }
 
 ; 安全移动控件（供各页面可选使用）
-UI_MoveSafe(ctrl, x, y, w := "", h := "") {
+UI_MoveSafe(ctrl, x := "", y := "", w := "", h := "") {
     try {
         if (w = "" && h = "") {
             ctrl.Move(x, y)

@@ -138,28 +138,61 @@ REUI_Gates_OnMove(lv, cfg, dir) {
 
 ;------------------------------ Gate 编辑器 ------------------------------
 REUI_GateEditor_Open(owner, cfg, g, idx := 0, onSaved := 0) {
-    isNew := (idx=0)
-    if !IsObject(g) g := {}
-    if !HasProp(g,"Priority")      g.Priority := (isNew ? (HasProp(cfg,"Gates")?cfg.Gates.Length:0)+1 : idx)
-    if !HasProp(g,"TargetTrackId") g.TargetTrackId := 0
-    if !HasProp(g,"Logic")         g.Logic := "AND"
-    if !HasProp(g,"Conds")         g.Conds := []
+    global UI
+    isNew := (idx = 0)
 
-    ge := Gui("+Owner" owner.Hwnd, isNew ? "新增跳轨" : "编辑跳轨")
-    ge.MarginX := 12, ge.MarginY := 10
-    ge.SetFont("s10","Segoe UI")
+    ; 规范化 g
+    if (!IsObject(g)) {
+        g := {}
+    }
+    if (!HasProp(g, "Priority")) {
+        len := 0
+        try {
+            len := (HasProp(cfg, "Gates") && IsObject(cfg.Gates)) ? cfg.Gates.Length : 0
+        } catch {
+            len := 0
+        }
+        g.Priority := isNew ? (len + 1) : idx
+    }
+    if (!HasProp(g, "TargetTrackId")) {
+        g.TargetTrackId := 0
+    }
+    if (!HasProp(g, "Logic")) {
+        g.Logic := "AND"
+    }
+    if (!HasProp(g, "Conds") || !IsObject(g.Conds)) {
+        g.Conds := []
+    }
 
-    ge.Add("Text","w80 Right","优先级：")
-    edPri := ge.Add("Edit","x+6 w120 Number", g.Priority)
+    ; Owner 处理（避免把对象错当字符串）
+    ownHwnd := 0
+    try {
+        ownHwnd := owner.Hwnd
+    } catch {
+        try {
+            ownHwnd := UI.Main.Hwnd
+        } catch {
+            ownHwnd := 0
+        }
+    }
+    ge := Gui(ownHwnd ? Format("+Owner {}", ownHwnd) : "", isNew ? "新增跳轨" : "编辑跳轨")
+    ge.MarginX := 12
+    ge.MarginY := 10
+    ge.SetFont("s10", "Segoe UI")
 
-    ge.Add("Text","xm y+8 w100 Right","目标轨：")
-    ddTarget := ge.Add("DropDownList","x+6 w160")
+    ge.Add("Text", "w80 Right", "优先级：")
+    edPri := ge.Add("Edit", "x+6 w120 Number", g.Priority)
+
+    ge.Add("Text", "xm y+8 w100 Right", "目标轨：")
+    ddTarget := ge.Add("DropDownList", "x+6 w160")
     trackIds := REUI_ListTrackIds(cfg)
     arrTargets := ["0"]
-    for _, id in trackIds
-        arrTargets.Push(id)
-    if arrTargets.Length
+    for _, id in trackIds {
+        arrTargets.Push(Format("{:}", id))
+    }
+    if (arrTargets.Length) {
         ddTarget.Add(arrTargets)
+    }
     allTargets := arrTargets
     sel := 1
     for i, v in allTargets {
@@ -170,15 +203,15 @@ REUI_GateEditor_Open(owner, cfg, g, idx := 0, onSaved := 0) {
     }
     ddTarget.Value := sel
 
-    ge.Add("Text","xm y+8 w70 Right","逻辑：")
-    ddLogic := ge.Add("DropDownList","x+6 w120", ["AND","OR"])
+    ge.Add("Text", "xm y+8 w70 Right", "逻辑：")
+    ddLogic := ge.Add("DropDownList", "x+6 w120", ["AND", "OR"])
     ddLogic.Value := (StrUpper(g.Logic) = "OR") ? 2 : 1
 
-    ge.Add("Text","xm y+8","条件：")
-    lvC := ge.Add("ListView","xm w760 r9 +Grid", ["类型","摘要"])
-    btnCAdd := ge.Add("Button","xm y+8 w90","新增")
-    btnCEdit:= ge.Add("Button","x+8 w90","编辑")
-    btnCDel:= ge.Add("Button","x+8 w90","删除")
+    ge.Add("Text", "xm y+8", "条件：")
+    lvC := ge.Add("ListView", "xm w760 r9 +Grid", ["类型", "摘要"])
+    btnCAdd := ge.Add("Button", "xm y+8 w90", "新增")
+    btnCEdit := ge.Add("Button", "x+8 w90", "编辑")
+    btnCDel := ge.Add("Button", "x+8 w90", "删除")
 
     REUI_GateEditor_FillConds(lvC, g)
 
@@ -187,24 +220,29 @@ REUI_GateEditor_Open(owner, cfg, g, idx := 0, onSaved := 0) {
     btnCDel.OnEvent("Click", (*) => REUI_CondEditor_OnDel(lvC, g))
     lvC.OnEvent("DoubleClick", (*) => REUI_CondEditor_OnEdit(lvC, ge, cfg, g))
 
-    btnOK := ge.Add("Button","xm y+12 w100","保存")
-    btnCA := ge.Add("Button","x+8 w100","取消")
+    btnOK := ge.Add("Button", "xm y+12 w100", "保存")
+    btnCA := ge.Add("Button", "x+8 w100", "取消")
     btnOK.OnEvent("Click", SaveGate)
     btnCA.OnEvent("Click", (*) => ge.Destroy())
     ge.OnEvent("Close", (*) => ge.Destroy())
     ge.Show()
 
     SaveGate(*) {
-        p := (edPri.Value!="") ? Integer(edPri.Value) : (idx=0?1:idx)
+        p := (edPri.Value != "") ? Integer(edPri.Value) : (idx = 0 ? 1 : idx)
         g.Priority := Max(1, p)
+
         tidx := ddTarget.Value
-        if (tidx>=1 && tidx<=allTargets.Length)
+        if (tidx >= 1 && tidx <= allTargets.Length) {
             g.TargetTrackId := Integer(allTargets[tidx])
-        else
+        } else {
             g.TargetTrackId := 0
-        g.Logic := (ddLogic.Value=2) ? "OR" : "AND"
-        if onSaved
-            onSaved(g, (idx=0?0:idx))
+        }
+
+        g.Logic := (ddLogic.Value = 2) ? "OR" : "AND"
+
+        if onSaved {
+            onSaved(g, (idx = 0 ? 0 : idx))
+        }
         ge.Destroy()
         Notify(isNew ? "已新增跳轨" : "已保存跳轨")
     }

@@ -14,12 +14,24 @@ Page_Rotation_Build(page) {
     UI.RS_Info := UI.Main.Add("Edit", Format("x{} y{} w{} r8 ReadOnly", rc.X + 12, rc.Y + 26, rc.W - 24))
     page.Controls.Push(UI.RS_Info)
 
-    UI.RS_BtnOpen := UI.Main.Add("Button", Format("x{} y{} w160 h28", rc.X + 12, rc.Y + 26 + 8*22 + 10), T("rot.open","打开轮换配置编辑器"))
-    UI.RS_BtnRefresh := UI.Main.Add("Button", "x+8 w100 h28", T("btn.refresh","刷新"))
-    page.Controls.Push(UI.RS_BtnOpen)
-    page.Controls.Push(UI.RS_BtnRefresh)
+    ; 将原“打开编辑器”改为四个快捷跳转按钮
+    yBtns := rc.Y + 26 + 8*22 + 10
+    UI.RS_BtnGen  := UI.Main.Add("Button", Format("x{} y{} w120 h28", rc.X + 12, yBtns), "常规")
+    UI.RS_BtnTrk  := UI.Main.Add("Button", "x+8 w120 h28", "轨道")
+    UI.RS_BtnGate := UI.Main.Add("Button", "x+8 w120 h28", "跳轨")
+    UI.RS_BtnOp   := UI.Main.Add("Button", "x+8 w120 h28", "起手")
+    page.Controls.Push(UI.RS_BtnGen)
+    page.Controls.Push(UI.RS_BtnTrk)
+    page.Controls.Push(UI.RS_BtnGate)
+    page.Controls.Push(UI.RS_BtnOp)
 
-    UI.RS_BtnOpen.OnEvent("Click", Page_Rotation_OpenEditor)
+    UI.RS_BtnGen.OnEvent("Click", (*) => UI_SwitchPage("adv_rotation_general"))
+    UI.RS_BtnTrk.OnEvent("Click", (*) => UI_SwitchPage("adv_rotation_tracks"))
+    UI.RS_BtnGate.OnEvent("Click", (*) => UI_SwitchPage("adv_rotation_gates"))
+    UI.RS_BtnOp.OnEvent("Click", (*) => UI_SwitchPage("adv_rotation_opener"))
+
+    UI.RS_BtnRefresh := UI.Main.Add("Button", "x+20 w100 h28", T("btn.refresh","刷新"))
+    page.Controls.Push(UI.RS_BtnRefresh)
     UI.RS_BtnRefresh.OnEvent("Click", Page_Rotation_Refresh)
 
     Page_Rotation_Refresh()
@@ -29,8 +41,12 @@ Page_Rotation_Layout(rc) {
     try {
         UI.RS_GB.Move(rc.X, rc.Y, rc.W)
         UI.RS_Info.Move(rc.X + 12, rc.Y + 26, rc.W - 24)
-        UI.RS_BtnOpen.Move(rc.X + 12, rc.Y + 26 + 8*22 + 10)
-        UI.RS_BtnRefresh.Move(, rc.Y + 26 + 8*22 + 10)
+        yBtns := rc.Y + 26 + 8*22 + 10
+        UI_MoveSafe(UI.RS_BtnGen,  rc.X + 12, yBtns)
+        UI_MoveSafe(UI.RS_BtnTrk,  "",        yBtns)
+        UI_MoveSafe(UI.RS_BtnGate, "",        yBtns)
+        UI_MoveSafe(UI.RS_BtnOp,   "",        yBtns)
+        UI_MoveSafe(UI.RS_BtnRefresh, "",     yBtns)
     } catch {
     }
 }
@@ -39,12 +55,8 @@ Page_Rotation_OnEnter(*) {
     Page_Rotation_Refresh()
 }
 
-Page_Rotation_OpenEditor(*) {
-    RotationEditor_Show()
-}
-
 Page_Rotation_Refresh(*) {
-    global App
+    global App, UI
     text := ""
     try {
         if !IsSet(App) {
