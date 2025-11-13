@@ -217,11 +217,8 @@ UI_GetPageRect() {
     gap  := 12
     try {
         if (IsSet(UI) && UI.Has("Nav") && UI.Nav) {
-            nx := 0
-            ny := 0
-            nw := 0
-            nh := 0
-            UI.Nav.GetPos(&nx, &ny, &nw, &nh)
+            nx := 0, ny := 0, nw := 0, nh := 0
+            UI.Nav.GetPos(&nx, &ny, &nw, &nh)  ; DIP
             if (nw > 0) {
                 navW := nw
             }
@@ -235,8 +232,13 @@ UI_GetPageRect() {
     try {
         rc := Buffer(16, 0)
         DllCall("user32\GetClientRect", "ptr", UI.Main.Hwnd, "ptr", rc.Ptr)
-        cw := NumGet(rc, 8, "Int")
-        ch := NumGet(rc, 12, "Int")
+        cw_px := NumGet(rc, 8,  "Int")
+        ch_px := NumGet(rc, 12, "Int")
+        ; 把 px 转为 DIP（控件 Move/尺寸使用的是 DIP）
+        scale := 1.0
+        try scale := UI_GetScale(UI.Main.Hwnd)
+        cw := Round(cw_px / scale)
+        ch := Round(ch_px / scale)
     } catch {
         cw := A_ScreenWidth
         ch := A_ScreenHeight
@@ -253,7 +255,7 @@ UI_GetPageRect() {
         h := 240
     }
     rcOut := { X: x, Y: y, W: w, H: h, NavW: navW, ClientW: cw, ClientH: ch }
-    UI_Trace(Format("GetPageRect x={1} y={2} w={3} h={4} navW={5} client={6}x{7}", rcOut.X, rcOut.Y, rcOut.W, rcOut.H, navW, cw, ch))
+    UI_Trace(Format("GetPageRect x={1} y={2} w={3} h={4} navW={5} clientDIP={6}x{7}", rcOut.X, rcOut.Y, rcOut.W, rcOut.H, navW, cw, ch))
     return rcOut
 }
 

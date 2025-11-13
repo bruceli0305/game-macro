@@ -41,18 +41,25 @@ Page_Skills_Build(page) {
 
 Page_Skills_Layout(rc) {
     try {
-        UI.SkillLV.Move(rc.X, rc.Y, rc.W, rc.H - 40 - 8)
-        y := rc.Y + rc.H - 30
-        UI.BtnAddSkill.Move(rc.X, y)
-        UI.BtnEditSkill.Move(, y)
-        UI.BtnDelSkill.Move(, y)
-        UI.BtnTestSkill.Move(, y)
-        UI.BtnSaveSkill.Move(, y)
+        btnH := 28
+        try UI.BtnAddSkill.GetPos(,,, &btnH)
+
+        gap := 8
+        listH := rc.H - btnH - gap
+        if (listH < 120)
+            listH := 120
+
+        UI.SkillLV.Move(rc.X, rc.Y, rc.W, listH)
+
+        yBtn := rc.Y + rc.H - btnH
+        UI.BtnAddSkill.Move(rc.X, yBtn)
+        UI.BtnEditSkill.Move(,    yBtn)
+        UI.BtnDelSkill.Move(,     yBtn)
+        UI.BtnTestSkill.Move(,    yBtn)
+        UI.BtnSaveSkill.Move(,    yBtn)
+
         loop 7 {
-            try {
-                UI.SkillLV.ModifyCol(A_Index, "AutoHdr")
-            } catch {
-            }
+            try UI.SkillLV.ModifyCol(A_Index, "AutoHdr")
         }
     } catch {
     }

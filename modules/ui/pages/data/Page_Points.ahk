@@ -41,18 +41,26 @@ Page_Points_Build(page) {
 
 Page_Points_Layout(rc) {
     try {
-        UI.PointLV.Move(rc.X, rc.Y, rc.W, rc.H - 40 - 8)
-        y := rc.Y + rc.H - 30
-        UI.BtnAddPoint.Move(rc.X, y)
-        UI.BtnEditPoint.Move(, y)
-        UI.BtnDelPoint.Move(, y)
-        UI.BtnTestPoint.Move(, y)
-        UI.BtnSavePoint.Move(, y)
+        ; 读取按钮高度（DIP）
+        btnH := 28
+        try UI.BtnAddPoint.GetPos(,,, &btnH)
+
+        gap := 8
+        listH := rc.H - btnH - gap
+        if (listH < 120)
+            listH := 120
+
+        UI.PointLV.Move(rc.X, rc.Y, rc.W, listH)
+
+        yBtn := rc.Y + rc.H - btnH
+        UI.BtnAddPoint.Move(rc.X, yBtn)
+        UI.BtnEditPoint.Move(,     yBtn)
+        UI.BtnDelPoint.Move(,      yBtn)
+        UI.BtnTestPoint.Move(,     yBtn)
+        UI.BtnSavePoint.Move(,     yBtn)
+
         loop 6 {
-            try {
-                UI.PointLV.ModifyCol(A_Index, "AutoHdr")
-            } catch {
-            }
+            try UI.PointLV.ModifyCol(A_Index, "AutoHdr")
         }
     } catch {
     }
