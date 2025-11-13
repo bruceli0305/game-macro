@@ -148,30 +148,25 @@ SettingsLang_OnApply(*) {
     code := UI_SL_Packs[idx].Code
 
     ; 设置语言并保存到 AppConfig
-    try {
-        Lang_SetLanguage(code)
-    } catch {
-        ; 即使设置失败，也继续写配置，留待重建
-    }
+    try Lang_SetLanguage(code)
     try {
         AppConfig_Set("Language", code)
         AppConfig_Save()
-    } catch {
     }
 
     Notify(T("msg.langApplied","语言已应用，界面将重建。"))
 
-    ; 安全方式调用 UI_RebuildMain：显式函数对象，失败则回退为 Destroy+Show
+    ; 不再销毁主窗/新建窗口，改为在当前窗口内重建页面
+    ; 用 SetTimer 延后执行，避免在当前按钮事件内销毁控件
+    SetTimer(SettingsLang_DoRelocalize, -1)
+}
+
+SettingsLang_DoRelocalize() {
     try {
-        UI_RebuildMain()
+        UI_RelocalizeInPlace()
     } catch {
-        try {
-            if (IsSet(UI) && UI.Has("Main") && UI.Main) {
-                UI.Main.Destroy()
-            }
-        } catch {
-        }
-        UI_ShowMain()
+        ; 若极端情况下失败，再回退到彻底重建（可选）
+        ; UI_RebuildMain()
     }
 }
 

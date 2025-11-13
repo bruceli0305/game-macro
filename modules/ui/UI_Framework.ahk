@@ -93,10 +93,25 @@ UI_SwitchPage(key) {
     UI_Trace("SwitchPage from=" UI_CurrentPage " to=" key)
 
     if (UI_CurrentPage = key) {
-        UI_Trace("SwitchPage short-circuit: already on " key)
-        return
+        if (UI_Pages.Has(key)) {
+            _pg := UI_Pages[key]
+            needRebuild := false
+            try {
+                needRebuild := (!_pg.Inited) || (!IsObject(_pg.Controls)) || (_pg.Controls.Length = 0)
+            } catch {
+                needRebuild := true
+            }
+            if (!needRebuild) {
+                UI_Trace("SwitchPage short-circuit: already on " key)
+                return
+            }
+            ; 否则继续往下执行，走正常重建流程
+        } else {
+            return
+        }
     }
 
+    ; 先正常触发旧页 OnLeave
     if (UI_CurrentPage != "" && UI_Pages.Has(UI_CurrentPage)) {
         old := UI_Pages[UI_CurrentPage]
         if (old.OnLeave) {
@@ -107,13 +122,10 @@ UI_SwitchPage(key) {
                 UI_Trace("OnLeave exception for " UI_CurrentPage ": " e.Message)
             }
         }
-        for ctl in old.Controls {
-            try {
-                ctl.Visible := false
-            } catch {
-            }
-        }
     }
+
+    ; 核心修复：切换前先隐藏所有页面控件，杜绝残留
+    UI_HideAllPageControls()
 
     if (!UI_Pages.Has(key)) {
         UI_Trace("SwitchPage target not found: " key)
@@ -125,7 +137,6 @@ UI_SwitchPage(key) {
 
     if (!pg.Inited) {
         built := false
-        ; 优先根据 MinParams 尝试 0/1 参调用，避免异常噪声
         try {
             UI_Trace("Page Build smart-call begin key=" key)
             called := UI_Call0Or1(pg.Build, pg)
@@ -151,13 +162,12 @@ UI_SwitchPage(key) {
     for ctl in pg.Controls {
         try {
             ctl.Visible := true
-            shown := shown + 1
+            shown += 1
         } catch {
         }
     }
     UI_Trace("Show controls: " shown " for page " key)
 
-    ; 智能布局：传递 rc（若函数需要 1 参则用 rc，否则无参调用）
     if (pg.Layout) {
         try {
             rc := UI_GetPageRect()
@@ -304,4 +314,69 @@ UI_RebuildMain(*) {
     }
     UI_ShowMain()
     UI_Trace("UI_RebuildMain done")
+}
+; 动态本地化当前窗口：不销毁主窗，仅重建页面控件与标题
+UI_RelocalizeInPlace() {
+    global UI, UI_Pages, UI_CurrentPage
+
+    UI_Trace("UI_RelocalizeInPlace begin")
+
+    ; 先隐藏所有控件，避免重建过程闪烁
+    UI_HideAllPageControls()
+
+    ; 1) 更新窗口标题
+    try {
+        newTitle := T("app.title", "输出取色宏 - 左侧菜单")
+        DllCall("user32\SetWindowTextW", "ptr", UI.Main.Hwnd, "wstr", newTitle)
+    } catch as e1 {
+        UI_Trace("Relocalize: SetWindowText fail: " e1.Message)
+    }
+
+    ; 2) 销毁全部页面控件，并重置初始化标记
+    try {
+        for key, pg in UI_Pages {
+            if (pg && IsObject(pg) && pg.HasProp("Controls") && IsObject(pg.Controls)) {
+                for ctl in pg.Controls {
+                    try ctl.Destroy()
+                }
+                pg.Controls := []
+            }
+            if (pg && IsObject(pg) && pg.HasProp("Inited")) {
+                pg.Inited := false
+            }
+        }
+    } catch as e2 {
+        UI_Trace("Relocalize: destroy page controls err: " e2.Message)
+    }
+
+    ; 3) 强制重建当前页：先清空当前页标记，再切回
+    key := UI_CurrentPage
+    UI_CurrentPage := ""   ; 强制 UI_SwitchPage 重建
+    if (key = "" || !UI_Pages.Has(key)) {
+        key := "profile"
+    }
+    try {
+        UI_SwitchPage(key)
+    } catch as e3 {
+        UI_Trace("Relocalize: UI_SwitchPage err: " e3.Message)
+    }
+
+    ; 4) 强制重绘
+    UI_ForceRedrawAll()
+    UI_Trace("UI_RelocalizeInPlace end")
+}
+
+; 隐藏所有页面的全部控件（防止跨页残留）
+UI_HideAllPageControls() {
+    global UI_Pages
+    try {
+        for key, pg in UI_Pages {
+            if (pg && IsObject(pg) && HasProp(pg, "Controls") && IsObject(pg.Controls)) {
+                for ctl in pg.Controls {
+                    try ctl.Visible := false
+                }
+            }
+        }
+    } catch {
+    }
 }
