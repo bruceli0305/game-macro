@@ -1,5 +1,5 @@
 ; 替换文件：modules\ui\rotation\RE_UI_Page_Opener.ahk
-; 说明：这是“起手”页的完整实现（Watch 列表 + Steps 列表与各自编辑器）
+; 说明：这是“起手”页的完整实现（监视列表 + Steps 列表与各自编辑器）
 ; 风格：无逗号链、无单行多语句（AHK v2 稳定）
 
 #Requires AutoHotkey v2
@@ -47,17 +47,18 @@ REUI_Page_Opener_Build(ctx) {
     rc := { X: 12, Y: 12, W: 820, H: 520 }
     try {
         r := UI_TabPageRect(tab)  ; 来自 UI_Layout.ahk
-        if (IsObject(r))
+        if (IsObject(r)) {
             rc := r
+        }
     }
     btnW := 84       ; 右侧按钮列宽
     gap := 8         ; 列表与按钮列间距
     minW := 560      ; 列表最小宽度，避免过窄
     listW := Max(minW, rc.W - btnW - gap - 20)  ; 预留右列空间
 
-    ;================ Watch ==================
-    dlg.Add("Text","xm y+16","Watch（技能计数/黑框确认）：")
-    lvOW := dlg.Add("ListView", Format("xm y+6 w{} r7 +Grid", listW), ["技能","Require","VerifyBlack"])
+    ;================ 监视（Watch） ==================
+    dlg.Add("Text","xm y+16","监视（技能计数/黑框确认）：")
+    lvOW := dlg.Add("ListView", Format("xm y+6 w{} r7 +Grid", listW), ["技能","计数","黑框确认"])
     ; 右侧按钮列：按列表左上角绝对定位
     lvOW.GetPos(&lx, &ly, &lw, &lh)
     btnX := lx + lw + gap
@@ -72,7 +73,7 @@ REUI_Page_Opener_Build(ctx) {
     lvOW.OnEvent("DoubleClick", (*) => REUI_Opener_WatchEdit(dlg, cfg, lvOW))
 
     ;================ Steps ==================
-    ; 在 Watch 列表下方，使用同样宽度与按钮列
+    ; 在监视列表下方，使用同样宽度与按钮列
     stepsLabelY := ly + lh + 16
     dlg.Add("Text", Format("x{} y{}", lx, stepsLabelY), "Steps（按序执行）：")
     lvS := dlg.Add("ListView", Format("x{} y{} w{} r8 +Grid", lx, stepsLabelY + 16, listW)
@@ -99,15 +100,17 @@ REUI_Page_Opener_Build(ctx) {
 
     SaveOpener(*) {
         cfg.Opener.Enabled := cbEnable.Value ? 1 : 0
-        if (edMax.Value != "")
+        if (edMax.Value != "") {
             cfg.Opener.MaxDurationMs := Integer(edMax.Value)
-        else
+        } else {
             cfg.Opener.MaxDurationMs := 4000
+        }
 
-        if (ddThr.Value>=1 && ddThr.Value<=thrIds.Length)
+        if (ddThr.Value>=1 && ddThr.Value<=thrIds.Length) {
             cfg.Opener.ThreadId := thrIds[ddThr.Value]
-        else
+        } else {
             cfg.Opener.ThreadId := 1
+        }
 
         cfg.Opener.StepsCount := (HasProp(cfg.Opener,"Steps") && IsObject(cfg.Opener.Steps)) ? cfg.Opener.Steps.Length : 0
         Storage_SaveProfile(App["ProfileData"])
@@ -122,21 +125,28 @@ REUI_Page_Opener_Build(ctx) {
 }
 
 REUI_Opener_Ensure(&cfg) {
-    if !HasProp(cfg,"Opener")
+    if !HasProp(cfg,"Opener") {
         cfg.Opener := {}
+    }
     op := cfg.Opener
-    if !HasProp(op,"Enabled")
+    if !HasProp(op,"Enabled") {
         op.Enabled := 0
-    if !HasProp(op,"MaxDurationMs")
+    }
+    if !HasProp(op,"MaxDurationMs") {
         op.MaxDurationMs := 4000
-    if !HasProp(op,"ThreadId")
+    }
+    if !HasProp(op,"ThreadId") {
         op.ThreadId := 1
-    if !HasProp(op,"Watch")
+    }
+    if !HasProp(op,"Watch") {
         op.Watch := []
-    if !HasProp(op,"StepsCount")
+    }
+    if !HasProp(op,"StepsCount") {
         op.StepsCount := 0
-    if !HasProp(op,"Steps")
+    }
+    if !HasProp(op,"Steps") {
         op.Steps := []
+    }
     cfg.Opener := op
 }
 
@@ -158,8 +168,9 @@ REUI_Opener_FillWatch(lv, cfg) {
 }
 REUI_Opener_SkillName(idx) {
     try {
-        if (idx>=1 && idx<=App["ProfileData"].Skills.Length)
+        if (idx>=1 && idx<=App["ProfileData"].Skills.Length) {
             return App["ProfileData"].Skills[idx].Name
+        }
     }
     return "技能#" idx
 }
@@ -174,7 +185,7 @@ REUI_Opener_WatchAdd(owner, cfg, lv) {
 REUI_Opener_WatchEdit(owner, cfg, lv) {
     row := lv.GetNext(0,"Focused")
     if !row {
-        MsgBox "请选择一条 Watch"
+        MsgBox "请选择一条监视"
         return
     }
     w := cfg.Opener.Watch[row]
@@ -186,8 +197,9 @@ REUI_Opener_WatchEdit(owner, cfg, lv) {
 }
 REUI_Opener_WatchDel(cfg, lv) {
     row := lv.GetNext(0,"Focused")
-    if !row
+    if !row {
         return
+    }
     cfg.Opener.Watch.RemoveAt(row)
     REUI_Opener_FillWatch(lv, cfg)
 }
@@ -253,20 +265,23 @@ REUI_Opener_StepEdit(owner, cfg, lv) {
 }
 REUI_Opener_StepDel(cfg, lv) {
     row := lv.GetNext(0, "Focused")
-    if !row
+    if !row {
         return
+    }
     cfg.Opener.Steps.RemoveAt(row)
     cfg.Opener.StepsCount := cfg.Opener.Steps.Length
     REUI_Opener_FillSteps(lv, cfg)
 }
 REUI_Opener_StepMove(cfg, lv, dir) {
     row := lv.GetNext(0, "Focused")
-    if !row
+    if !row {
         return
+    }
     from := row
     to := from + dir
-    if (to < 1 || to > cfg.Opener.Steps.Length)
+    if (to < 1 || to > cfg.Opener.Steps.Length) {
         return
+    }
     item := cfg.Opener.Steps[from]
     cfg.Opener.Steps.RemoveAt(from)
     cfg.Opener.Steps.InsertAt(to, item)
@@ -276,13 +291,16 @@ REUI_Opener_StepMove(cfg, lv, dir) {
 }
 
 REUI_Opener_StepEditor_Open(owner, st, idx := 0, onSaved := 0) {
-    if !IsObject(st)
+    if !IsObject(st) {
         st := { Kind:"Skill" }
-    if !HasProp(st,"Kind")
+    }
+    if !HasProp(st,"Kind") {
         st.Kind := "Skill"
+    }
 
     g3 := Gui("+Owner" owner.Hwnd, (idx=0) ? "新增步骤" : "编辑步骤")
-    g3.MarginX := 12, g3.MarginY := 10
+    g3.MarginX := 12
+    g3.MarginY := 10
     g3.SetFont("s10","Segoe UI")
 
     g3.Add("Text","w70 Right","类型：")
@@ -348,12 +366,15 @@ REUI_Opener_StepEditor_Open(owner, st, idx := 0, onSaved := 0) {
         ShowSkill := (kcn="技能")
         ShowWait  := (kcn="等待")
         ShowSwap  := (kcn="切换")
-        for ctl in [ddSS, cbReq, edPre, edHold, cbVer]
+        for ctl in [ddSS, cbReq, edPre, edHold, cbVer] {
             ctl.Visible := ShowSkill
-        for ctl in [edDur]
+        }
+        for ctl in [edDur] {
             ctl.Visible := ShowWait
-        for ctl in [edTO, edRt]
+        }
+        for ctl in [edTO, edRt] {
             ctl.Visible := ShowSwap
+        }
     }
     SaveStep(*) {
         kcn := ddK.Text
@@ -380,16 +401,19 @@ REUI_Opener_StepEditor_Open(owner, st, idx := 0, onSaved := 0) {
             rt := (edRt.Value!="") ? Integer(edRt.Value) : 0
             ns := { Kind:"Swap", TimeoutMs: to, Retry: rt }
         }
-        if onSaved
+        if onSaved {
             onSaved(ns, (idx=0?0:idx))
+        }
         g3.Destroy()
     }
 }
 REUI_Opener_WatchEditor_Open(owner, w, idx := 0, onSaved := 0) {
-    if !IsObject(w)
+    if !IsObject(w) {
         w := { SkillIndex:1, RequireCount:1, VerifyBlack:0 }
-    g2 := Gui("+Owner" owner.Hwnd, (idx=0) ? "新增 Watch" : "编辑 Watch")
-    g2.MarginX := 12, g2.MarginY := 10
+    }
+    g2 := Gui("+Owner" owner.Hwnd, (idx=0) ? "新增监视" : "编辑监视")
+    g2.MarginX := 12
+    g2.MarginY := 10
     g2.SetFont("s10","Segoe UI")
 
     g2.Add("Text","w70 Right","技能：")
@@ -411,10 +435,10 @@ REUI_Opener_WatchEditor_Open(owner, w, idx := 0, onSaved := 0) {
         ddS.Enabled := false
     }
 
-    g2.Add("Text","xm y+8 w80 Right","Require：")
+    g2.Add("Text","xm y+8 w80 Right","计数：")
     edReq := g2.Add("Edit","x+6 w120 Number Center", HasProp(w,"RequireCount")?w.RequireCount:1)
 
-    cbVB := g2.Add("CheckBox","xm y+8","VerifyBlack")
+    cbVB := g2.Add("CheckBox","xm y+8","黑框确认")
     cbVB.Value := HasProp(w,"VerifyBlack") ? (w.VerifyBlack?1:0) : 0
 
     btnOK := g2.Add("Button","xm y+12 w90","确定")
@@ -434,8 +458,9 @@ REUI_Opener_WatchEditor_Open(owner, w, idx := 0, onSaved := 0) {
         req := (edReq.Value!="") ? Integer(edReq.Value) : 1
         vb  := cbVB.Value ? 1 : 0
         nw := { SkillIndex: si, RequireCount: req, VerifyBlack: vb }
-        if onSaved
+        if onSaved {
             onSaved(nw, idx)
+        }
         g2.Destroy()
     }
 }

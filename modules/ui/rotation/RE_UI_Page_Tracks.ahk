@@ -2,7 +2,7 @@
 #Requires AutoHotkey v2
 #Include "RE_UI_Common.ahk"
 
-; 构建“轨道”页（列表 + 轨道编辑器 + Watch 编辑器 + 规则选择器）
+; 构建“轨道”页（列表 + 轨道编辑器 + 监视编辑器 + 规则选择器）
 REUI_Page_Tracks_Build(ctx) {
     dlg := ctx.dlg
     tab := ctx.tab
@@ -12,7 +12,7 @@ REUI_Page_Tracks_Build(ctx) {
     REUI_Tracks_Ensure(&cfg)
 
     lv := dlg.Add("ListView", "xm y+8 w820 r12 +Grid"
-        , ["ID","名称","线程","最长ms","最短停留","下一轨","Watch#","规则#"])
+        , ["ID","名称","线程","最长ms","最短停留","下一轨","监视数","规则数"])
     btnAdd  := dlg.Add("Button", "xm y+8 w90", "新增")
     btnEdit := dlg.Add("Button", "x+8 w90", "编辑")
     btnDel  := dlg.Add("Button", "x+8 w90", "删除")
@@ -132,12 +132,21 @@ REUI_Tracks_OnDel(lv, cfg) {
         MsgBox "请选择一条轨道"
         return
     }
-    delId := HasProp(cfg.Tracks[row], "Id") ? cfg.Tracks[row].Id : 0
+    delId := HasProp(cfg.Tracks[row], "Id") ? Integer(cfg.Tracks[row].Id) : 0
     cfg.Tracks.RemoveAt(row)
 
+    ; 重新获取现存轨道 ID 列表
     ids := REUI_ListTrackIds(cfg)
-    if !(ids.IndexOf(delId)) {
-        cfg.DefaultTrackId := Integer(ids[1])
+
+    ; 若默认轨道已不存在，则回退到第一条
+    defId := HasProp(cfg, "DefaultTrackId") ? Integer(cfg.DefaultTrackId) : 0
+    found := REUI_ArrayContains(ids, defId)
+    if (!found) {
+        if (ids.Length >= 1) {
+            cfg.DefaultTrackId := Integer(ids[1])
+        } else {
+            cfg.DefaultTrackId := 0
+        }
     }
 
     REUI_Tracks_FillList(lv, cfg)
@@ -166,16 +175,20 @@ REUI_TrackEditor_Open(owner, cfg, t, idx := 0, onSaved := 0) {
     isNew := (idx = 0)
     defaults := Map("Id",1,"Name","轨道","ThreadId",1,"MaxDurationMs",8000,"MinStayMs",0,"NextTrackId",0)
     for k, v in defaults {
-        if !HasProp(t, k)
+        if !HasProp(t, k) {
             t.%k% := v
+        }
     }
-    if !HasProp(t,"Watch")
+    if !HasProp(t,"Watch") {
         t.Watch := []
-    if !HasProp(t,"RuleRefs")
+    }
+    if !HasProp(t,"RuleRefs") {
         t.RuleRefs := []
+    }
 
     g := Gui("+Owner" owner.Hwnd, isNew ? "新增轨道" : "编辑轨道")
-    g.MarginX := 12, g.MarginY := 10
+    g.MarginX := 12
+    g.MarginY := 10
     g.SetFont("s10", "Segoe UI")
 
     ; ID
@@ -186,20 +199,15 @@ REUI_TrackEditor_Open(owner, cfg, t, idx := 0, onSaved := 0) {
     g.Add("Text", "xm y+8 w70 Right", "名称：")
     edName := g.Add("Edit", "x+6 w220", t.Name)
 
-    ; 名称/线程
     g.Add("Text", "x+20 w50 Right", "线程：")
     ddThr := g.Add("DropDownList", "x+6 w200")
     thNames := []
-    thIds   := []
+    thIds := []
     try {
-        if (IsSet(App) && App.Has("ProfileData") && HasProp(App["ProfileData"], "Threads")
-            && IsObject(App["ProfileData"].Threads) && App["ProfileData"].Threads.Length) {
-            for _, th in App["ProfileData"].Threads {
-                thNames.Push(th.Name)
-                thIds.Push(th.Id)
-            }
+        for _, th in App["ProfileData"].Threads {
+            thNames.Push(th.Name)
+            thIds.Push(th.Id)
         }
-    } catch {
     }
     if (thNames.Length = 0) {
         thNames := ["默认线程"]
@@ -227,15 +235,17 @@ REUI_TrackEditor_Open(owner, cfg, t, idx := 0, onSaved := 0) {
     ddNext := g.Add("DropDownList", "x+6 w160")
     ids := REUI_ListTrackIds(cfg)
     if (isNew) {
-        if (ids.Length = 0 || ids[ids.Length] != t.Id)
+        if (ids.Length = 0 || ids[ids.Length] != t.Id) {
             ids.Push(t.Id)
+        }
     }
     arrNext := ["0"]
     for _, id in ids {
         arrNext.Push(id)
     }
-    if arrNext.Length
+    if arrNext.Length {
         ddNext.Add(arrNext)
+    }
     nextSel := 1
     allNext := arrNext
     for i, v in allNext {
@@ -246,9 +256,9 @@ REUI_TrackEditor_Open(owner, cfg, t, idx := 0, onSaved := 0) {
     }
     ddNext.Value := nextSel
 
-    ; Watch 列表 + 右侧按钮
-    g.Add("Text", "xm y+10", "Watch（技能计数/黑框确认）：")
-    lvW := g.Add("ListView", "xm w620 r8 +Grid", ["技能","Require","VerifyBlack"])
+    ; 监视列表 + 右侧按钮
+    g.Add("Text", "xm y+10", "监视（技能计数/黑框确认）：")
+    lvW := g.Add("ListView", "xm w620 r8 +Grid", ["技能","计数","黑框确认"])
     btnWAdd := g.Add("Button", "x+10 yp w80", "新增")
     btnWEdit := g.Add("Button", "xp yp+34 w80", "编辑")
     btnWDel := g.Add("Button", "xp yp+34 w80", "删除")
@@ -260,16 +270,16 @@ REUI_TrackEditor_Open(owner, cfg, t, idx := 0, onSaved := 0) {
     btnWDel.OnEvent("Click", (*) => REUI_WatchEditor_Del(t, lvW))
     lvW.OnEvent("DoubleClick", (*) => REUI_WatchEditor_Edit(g, t, lvW))
 
-    ; 规则集限制
-    lvW.GetPos(&lvx, &lvy, &lvw, &lvh)
-    yRule := lvy + lvh + 10
-    g.Add("Text", Format("x{} y{} w100 Right", lvx, yRule), "规则集限制：")
-    labRules := g.Add("Text", Format("x{} y{}", lvx + 106, yRule), REUI_TrackEditor_RulesLabel(t))
-    btnRules := g.Add("Button", Format("x{} y{} w120", lvx + 106 + 180 + 10, yRule - 2), "选择规则...")
+    ; 规则集限制（避免变量名与 lvW 大小写冲突）
+    lvW.GetPos(&lvX, &lvY, &lvWidth, &lvHeight)
+    yRule := lvY + lvHeight + 10
+    g.Add("Text", Format("x{} y{} w100 Right", lvX, yRule), "规则集限制：")
+    labRules := g.Add("Text", Format("x{} y{}", lvX + 106, yRule), REUI_TrackEditor_RulesLabel(t))
+    btnRules := g.Add("Button", Format("x{} y{} w120", lvX + 106 + 180 + 10, yRule - 2), "选择规则...")
     btnRules.OnEvent("Click", (*) => REUI_RuleRefsPicker_Open(g, t, labRules))
 
     ; 底部按钮
-    btnSave := g.Add("Button", Format("x{} y{} w100", lvx, yRule + 40), "保存")
+    btnSave := g.Add("Button", Format("x{} y{} w100", lvX, yRule + 40), "保存")
     btnCancel := g.Add("Button", "x+8 w100", "取消")
     btnSave.OnEvent("Click", SaveTrack)
     btnCancel.OnEvent("Click", (*) => g.Destroy())
@@ -288,8 +298,9 @@ REUI_TrackEditor_Open(owner, cfg, t, idx := 0, onSaved := 0) {
         t.MinStayMs  := (edMin.Value != "") ? Integer(edMin.Value) : 0
         t.NextTrackId := Integer(allNext[ REUI_IndexClamp(ddNext.Value, allNext.Length) ])
 
-        if onSaved
+        if onSaved {
             onSaved(t, (idx = 0 ? 0 : idx))
+        }
         g.Destroy()
         Notify(isNew ? "已新增轨道" : "已保存轨道")
     }
@@ -312,52 +323,61 @@ REUI_TrackEditor_FillWatch(lvW, t) {
 
 REUI_Watch_SkillName(idx) {
     try {
-        if (idx >= 1 && idx <= App["ProfileData"].Skills.Length)
+        if (idx >= 1 && idx <= App["ProfileData"].Skills.Length) {
             return App["ProfileData"].Skills[idx].Name
+        }
     }
     return "技能#" idx
 }
 
 REUI_WatchEditor_Add(owner, t, lvW) {
-    w := { SkillIndex:1, RequireCount:1, VerifyBlack:0 }
-    REUI_WatchEditor_Open(owner, w, 0, OnSaved)
     OnSaved(nw, i) {
         t.Watch.Push(nw)
         REUI_TrackEditor_FillWatch(lvW, t)
     }
+    w := { SkillIndex:1, RequireCount:1, VerifyBlack:0 }
+    REUI_WatchEditor_Open(owner, w, 0, OnSaved)
 }
+
 REUI_WatchEditor_Edit(owner, t, lvW) {
     row := lvW.GetNext(0, "Focused")
     if !row {
-        MsgBox "请选择一条 Watch"
+        MsgBox "请选择一条监视"
         return
     }
     w := t.Watch[row]
-    REUI_WatchEditor_Open(owner, w, row, OnSaved)
     OnSaved(nw, i) {
         t.Watch[i] := nw
         REUI_TrackEditor_FillWatch(lvW, t)
     }
+    REUI_WatchEditor_Open(owner, w, row, OnSaved)
 }
+
 REUI_WatchEditor_Del(t, lvW) {
     row := lvW.GetNext(0, "Focused")
-    if !row
+    if !row {
         return
+    }
     t.Watch.RemoveAt(row)
     REUI_TrackEditor_FillWatch(lvW, t)
 }
 
+; 监视条目编辑器（中文化）
 REUI_WatchEditor_Open(owner, w, idx := 0, onSaved := 0) {
-    if !IsObject(w)
+    if !IsObject(w) {
         w := { SkillIndex:1, RequireCount:1, VerifyBlack:0 }
-    g2 := Gui("+Owner" owner.Hwnd, (idx = 0) ? "新增 Watch" : "编辑 Watch")
-    g2.MarginX := 12, g2.MarginY := 10
+    }
+    g2 := Gui("+Owner" owner.Hwnd, (idx = 0) ? "新增监视" : "编辑监视")
+    g2.MarginX := 12
+    g2.MarginY := 10
     g2.SetFont("s10", "Segoe UI")
 
     g2.Add("Text", "w70 Right", "技能：")
     ddS := g2.Add("DropDownList", "x+6 w260")
     cnt := 0
-    try cnt := App["ProfileData"].Skills.Length
+    try {
+        cnt := App["ProfileData"].Skills.Length
+    }
     if (cnt > 0) {
         names := []
         for _, s in App["ProfileData"].Skills {
@@ -373,10 +393,10 @@ REUI_WatchEditor_Open(owner, w, idx := 0, onSaved := 0) {
         ddS.Enabled := false
     }
 
-    g2.Add("Text", "xm y+8 w70 Right", "Require：")
+    g2.Add("Text", "xm y+8 w70 Right", "计数：")
     edReq := g2.Add("Edit", "x+6 w120 Number Center", HasProp(w, "RequireCount") ? w.RequireCount : 1)
 
-    cbVB := g2.Add("CheckBox", "xm y+8", "VerifyBlack")
+    cbVB := g2.Add("CheckBox", "xm y+8", "黑框确认")
     cbVB.Value := HasProp(w, "VerifyBlack") ? (w.VerifyBlack ? 1 : 0) : 0
 
     btnOK := g2.Add("Button", "xm y+12 w90", "确定")
@@ -396,8 +416,9 @@ REUI_WatchEditor_Open(owner, w, idx := 0, onSaved := 0) {
         req := (edReq.Value != "") ? Integer(edReq.Value) : 1
         vb := cbVB.Value ? 1 : 0
         nw := { SkillIndex: si, RequireCount: req, VerifyBlack: vb }
-        if onSaved
+        if onSaved {
             onSaved(nw, idx)
+        }
         g2.Destroy()
     }
 }
@@ -409,14 +430,15 @@ REUI_TrackEditor_RulesLabel(t) {
 
 REUI_RuleRefsPicker_Open(owner, t, labRulesCtl) {
     g3 := Gui("+Owner" owner.Hwnd, "选择规则（勾选）")
-    g3.MarginX := 12, g3.MarginY := 10
+    g3.MarginX := 12
+    g3.MarginY := 10
     g3.SetFont("s10", "Segoe UI")
 
     lv := g3.Add("ListView", "xm w520 r12 +Grid +Checked", ["ID", "名称", "启用"])
     try {
         for i, r in App["ProfileData"].Rules {
             row := lv.Add("", i, r.Name, (r.Enabled ? "√" : ""))
-            if (HasProp(t, "RuleRefs") && IsObject(t.RuleRefs) && t.RuleRefs.IndexOf(i)) {
+            if (HasProp(t, "RuleRefs") && IsObject(t.RuleRefs) && REUI_ArrayContains(t.RuleRefs, i)) {
                 lv.Modify(row, "Check")
             }
         }
@@ -437,8 +459,9 @@ REUI_RuleRefsPicker_Open(owner, t, labRulesCtl) {
         row := 0
         Loop {
             row := lv.GetNext(row, "Checked")
-            if (!row)
+            if (!row) {
                 break
+            }
             id := Integer(lv.GetText(row, 1))
             sel.Push(id)
         }

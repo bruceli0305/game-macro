@@ -504,24 +504,41 @@ Rotation_GateEval(g) {
 Rotation_GateFindMatch() {
     global gRot
     cfg := gRot["Cfg"]
-    if !HasProp(cfg,"GatesEnabled") || !cfg.GatesEnabled
+    if !HasProp(cfg, "GatesEnabled") || !cfg.GatesEnabled
         return 0
-    if !HasProp(cfg,"Gates") || cfg.Gates.Length = 0
+    if !HasProp(cfg, "Gates") || cfg.Gates.Length = 0
         return 0
 
-    ; 按 Priority 升序评估（未设置 Priority 的按 0 处理，相当于靠前）
+    curId := gRot["RT"].TrackId
+    if (curId <= 0)
+        return 0
+
+    ; 复制并按 Priority 升序
     gates := []
     for _, g in cfg.Gates
         gates.Push(g)
-    gates.Sort((a, b, *) => ( (HasProp(a,"Priority")?a.Priority:0) - (HasProp(b,"Priority")?b.Priority:0) ))
+    gates.Sort((a, b, *) => ((HasProp(a,"Priority")?a.Priority:0) - (HasProp(b,"Priority")?b.Priority:0)))
 
     for _, g in gates {
+        ; 新增：来源轨限制（必须在 FromTrackId 上才评估）
+        fromId := HasProp(g, "FromTrackId") ? Integer(g.FromTrackId) : 0
+        toId   := HasProp(g, "ToTrackId")   ? Integer(g.ToTrackId)   : 0
+        if (fromId <= 0 || toId <= 0) {
+            ; 未配置 From/To，视为无效 Gate
+            continue
+        }
+        if (fromId != curId) {
+            continue
+        }
+
         ok := Rotation_GateEval(g)
         if (ok) {
-            tgt := HasProp(g, "TargetTrackId") ? g.TargetTrackId : 0
-            if (tgt > 0) {
-                Rot_Log("GATE hit -> Track#" tgt)
-                return tgt
+            ; 目标轨必须存在
+            if (Rotation_GetTrackById(toId)) {
+                Rot_Log("GATE hit From#" fromId " -> To#" toId)
+                return toId
+            } else {
+                Rot_Log("GATE hit but To#" toId " not found", "WARN")
             }
         }
     }

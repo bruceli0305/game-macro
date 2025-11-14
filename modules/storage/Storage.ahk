@@ -65,7 +65,6 @@ Storage_SaveNamedTrack(file, name, t) {
         IniWrite(rid, file, sec, "RuleRef" i)
 }
 
-; ---------- 简化保存 Gate（支持 M3 多条件，若无 Conds 则按单条件保存为 CondCount=1） ----------
 Storage_SaveGates(file, rot) {
     IniWrite(HasProp(rot, "GatesEnabled") ? rot.GatesEnabled : 0, file, "Rotation", "GatesEnabled")
     IniWrite(HasProp(rot, "GateCooldownMs") ? rot.GateCooldownMs : 0, file, "Rotation", "GateCooldownMs")
@@ -74,8 +73,10 @@ Storage_SaveGates(file, rot) {
     for gi, g in garr {
         gsec := "Rotation.Gate" gi
         IniWrite(HasProp(g, "Priority") ? g.Priority : gi, file, gsec, "Priority")
-        IniWrite(HasProp(g, "TargetTrackId") ? g.TargetTrackId : 0, file, gsec, "TargetTrackId")
-        ; 多条件 Gate
+        ; 新版：必须写 From/To
+        IniWrite(HasProp(g, "FromTrackId") ? g.FromTrackId : 0, file, gsec, "FromTrackId")
+        IniWrite(HasProp(g, "ToTrackId")   ? g.ToTrackId   : 0, file, gsec, "ToTrackId")
+
         if (HasProp(g, "Conds") && g.Conds.Length > 0) {
             IniWrite(HasProp(g, "Logic") ? g.Logic : "AND", file, gsec, "Logic")
             IniWrite(g.Conds.Length, file, gsec, "CondCount")
@@ -94,7 +95,7 @@ Storage_SaveGates(file, rot) {
                 IniWrite(HasProp(c,"ElapsedMs") ? c.ElapsedMs : 0, file, csec, "ElapsedMs")
             }
         } else {
-            ; 兼容 M2 的单条件 Gate：保存成 CondCount=1
+            ; 仍保留 M2 单条件的保存方式（与 From/To 无关）
             IniWrite("AND", file, gsec, "Logic")
             IniWrite(1, file, gsec, "CondCount")
             csec := "Rotation.Gate" gi ".Cond1"
@@ -338,65 +339,61 @@ Storage_LoadProfile(name) {
         }
     }
 
-    ; Gates（M2 简单 + M3 多条件，统一读为数组 g.Conds）
+    ; ===== Gates（新版：必须 FromTrackId/ToTrackId；仍兼容单/多条件字段） =====
     rot.Gates := []
     gcnt := Integer(IniRead(file, "Rotation", "GateCount", 0))
     loop gcnt {
         gi := A_Index
         gsec := "Rotation.Gate" gi
         condCount := Integer(IniRead(file, gsec, "CondCount", 0))
+        g := { Priority: Integer(IniRead(file, gsec, "Priority", gi))
+            , FromTrackId: Integer(IniRead(file, gsec, "FromTrackId", 0))
+            , ToTrackId:   Integer(IniRead(file, gsec, "ToTrackId", 0))
+            , Logic: IniRead(file, gsec, "Logic", "AND")
+            , Conds: [] }
         if (condCount <= 0) {
-            ; 兼容 M2：单条件 Gate 写法
+            ; 兼容旧式单条件字段的读取（仅条件层面），From/To 必须在新字段
             kind := IniRead(file, gsec, "Kind", "")
-            if (kind = "")
-                continue
-            g := { Priority: Integer(IniRead(file, gsec, "Priority", gi))
-                 , TargetTrackId: Integer(IniRead(file, gsec, "TargetTrackId", 0))
-                 , Logic: "AND", Conds: [] }
-            c := {
-                Kind: kind
-              , RefType: IniRead(file, gsec, "RefType", "Skill")
-              , RefIndex: Integer(IniRead(file, gsec, "RefIndex", 0))
-              , Op: IniRead(file, gsec, "Op", "NEQ")
-              , Color: IniRead(file, gsec, "Color", "0x000000")
-              , Tol: Integer(IniRead(file, gsec, "Tol", 16))
-              , RuleId: Integer(IniRead(file, gsec, "RuleId", 0))
-              , QuietMs: Integer(IniRead(file, gsec, "QuietMs", 0))
-              , Cmp: IniRead(file, gsec, "Cmp", "GE")
-              , Value: Integer(IniRead(file, gsec, "Value", 0))
-              , ElapsedMs: Integer(IniRead(file, gsec, "ElapsedMs", 0))
+            if (kind != "") {
+                c := {
+                    Kind: kind
+                , RefType:  IniRead(file, gsec, "RefType", "Skill")
+                , RefIndex: Integer(IniRead(file, gsec, "RefIndex", 0))
+                , Op:       IniRead(file, gsec, "Op", "NEQ")
+                , Color:    IniRead(file, gsec, "Color", "0x000000")
+                , Tol:      Integer(IniRead(file, gsec, "Tol", 16))
+                , RuleId:   Integer(IniRead(file, gsec, "RuleId", 0))
+                , QuietMs:  Integer(IniRead(file, gsec, "QuietMs", 0))
+                , Cmp:      IniRead(file, gsec, "Cmp", "GE")
+                , Value:    Integer(IniRead(file, gsec, "Value", 0))
+                , ElapsedMs:Integer(IniRead(file, gsec, "ElapsedMs", 0))
+                }
+                g.Conds.Push(c)
             }
-            g.Conds.Push(c)
-            rot.Gates.Push(g)
         } else {
-            g := { Priority: Integer(IniRead(file, gsec, "Priority", gi))
-                 , TargetTrackId: Integer(IniRead(file, gsec, "TargetTrackId", 0))
-                 , Logic: IniRead(file, gsec, "Logic", "AND")
-                 , Conds: [] }
             loop condCount {
                 ci := A_Index
                 csec := "Rotation.Gate" gi ".Cond" ci
                 kind := IniRead(file, csec, "Kind", "")
-                if (kind = "") {
+                if (kind = "")
                     continue
-                }
                 c := {
                     Kind: kind
-                  , RefType: IniRead(file, csec, "RefType", "Skill")
-                  , RefIndex: Integer(IniRead(file, csec, "RefIndex", 0))
-                  , Op: IniRead(file, csec, "Op", "NEQ")
-                  , Color: IniRead(file, csec, "Color", "0x000000")
-                  , Tol: Integer(IniRead(file, csec, "Tol", 16))
-                  , RuleId: Integer(IniRead(file, csec, "RuleId", 0))
-                  , QuietMs: Integer(IniRead(file, csec, "QuietMs", 0))
-                  , Cmp: IniRead(file, csec, "Cmp", "GE")
-                  , Value: Integer(IniRead(file, csec, "Value", 0))
-                  , ElapsedMs: Integer(IniRead(file, csec, "ElapsedMs", 0))
+                , RefType:  IniRead(file, csec, "RefType", "Skill")
+                , RefIndex: Integer(IniRead(file, csec, "RefIndex", 0))
+                , Op:       IniRead(file, csec, "Op", "NEQ")
+                , Color:    IniRead(file, csec, "Color", "0x000000")
+                , Tol:      Integer(IniRead(file, csec, "Tol", 16))
+                , RuleId:   Integer(IniRead(file, csec, "RuleId", 0))
+                , QuietMs:  Integer(IniRead(file, csec, "QuietMs", 0))
+                , Cmp:      IniRead(file, csec, "Cmp", "GE")
+                , Value:    Integer(IniRead(file, csec, "Value", 0))
+                , ElapsedMs:Integer(IniRead(file, csec, "ElapsedMs", 0))
                 }
                 g.Conds.Push(c)
             }
-            rot.Gates.Push(g)
         }
+        rot.Gates.Push(g)
     }
 
     ; Swap 验证（M2）

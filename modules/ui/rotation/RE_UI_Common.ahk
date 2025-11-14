@@ -122,3 +122,26 @@ REUI_IndexClamp(v, vmax) {
     }
     return v
 }
+; 数组工具：返回索引（未找到返回 0）
+REUI_ArrayIndexOf(arr, value) {
+    if (!IsObject(arr)) {
+        return 0
+    }
+    for i, v in arr {
+        same := false
+        try {
+            same := (Integer(v) = Integer(value))
+        } catch {
+            same := (v = value)
+        }
+        if (same) {
+            return i
+        }
+    }
+    return 0
+}
+
+; 数组工具：是否包含
+REUI_ArrayContains(arr, value) {
+    return REUI_ArrayIndexOf(arr, value) != 0
+}
