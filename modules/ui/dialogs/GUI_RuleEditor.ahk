@@ -147,26 +147,26 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
     dlg.MarginX := 12, dlg.MarginY := 10
     dlg.SetFont("s10", "Segoe UI")
 
-    dlg.Add("Text", "w60", "名称：")
-    tbName := dlg.Add("Edit", "x+6 w240", rule.Name)
+    dlg.Add("Text", "w90 Right", "名称：")
+    tbName := dlg.Add("Edit", "x+6 w160", rule.Name)
 
     cbEn := dlg.Add("CheckBox", "x+12 w80 vRuleEnabled", "启用")
     cbEn.Value := rule.Enabled ? 1 : 0
 
-    dlg.Add("Text", "xm y+8 w60", "逻辑：")
-    ddLogic := dlg.Add("DropDownList", "x+6 w120", ["AND", "OR"])
+    dlg.Add("Text", "xm y+16 w90 Right", "逻辑：")
+    ddLogic := dlg.Add("DropDownList", "x+6 w160", ["AND", "OR"])
     ddLogic.Value := (StrUpper(rule.Logic) = "OR") ? 2 : 1
 
-    dlg.Add("Text", "x+20 w70", "冷却(ms)：")
-    edCd := dlg.Add("Edit", "x+6 w100 Number", rule.CooldownMs)
+    dlg.Add("Text", "x+20 w90 Right", "冷却(ms)：")
+    edCd := dlg.Add("Edit", "x+6 w160 Number", rule.CooldownMs)
 
-    dlg.Add("Text", "x+20 w70", "优先级：")
-    edPrio := dlg.Add("Edit", "x+6 w80 Number", rule.Priority)
+    dlg.Add("Text", "x+20 w90 Right", "优先级：")
+    edPrio := dlg.Add("Edit", "x+6 w160 Number", rule.Priority)
 
-    dlg.Add("Text", "xm y+10 w80", "动作间隔(ms)：")
-    edGap := dlg.Add("Edit", "x+6 w100 Number", rule.ActionGapMs)
+    dlg.Add("Text", "xm y+10 w90 Right", "间隔(ms)：")
+    edGap := dlg.Add("Edit", "x+6 w160 Number", rule.ActionGapMs)
 
-    dlg.Add("Text", "x+20 w60", "线程：")
+    dlg.Add("Text", "x+20 w90 Right", "线程：")
     ddThread := dlg.Add("DropDownList", "x+6 w160")
     names := []
     for _, t in App["ProfileData"].Threads
@@ -382,36 +382,36 @@ CondEditor_Open(cond, idx := 0, onSaved := 0) {
     dlg.SetFont("s10", "Segoe UI")
 
     ; 条件类型
-    dlg.Add("Text", "w80", "条件类型：")
+    dlg.Add("Text", "w90 Right", "条件类型：")
     ddKind := dlg.Add("DropDownList", "x+6 w160", ["像素(Pixel)","计数(Counter)"])
     ddKind.Value := (StrUpper(cond.Kind) = "COUNTER") ? 2 : 1
 
     ; ---------- Pixel 区 ----------
-    txtType := dlg.Add("Text", "xm y+10 w80", "引用类型：")
-    ddType  := dlg.Add("DropDownList", "x+6 w120", ["Skill", "Point"])
+    txtType := dlg.Add("Text", "xm y+10 w90 Right", "引用类型：")
+    ddType  := dlg.Add("DropDownList", "x+6 w160", ["Skill", "Point"])
     ddType.Value := (StrUpper(HasProp(cond,"RefType") ? cond.RefType : "Skill") = "POINT") ? 2 : 1
 
-    txtObj := dlg.Add("Text", "xm w80", "引用对象：")
-    ddObj  := dlg.Add("DropDownList", "x+6 w240")
+    txtObj := dlg.Add("Text", "xm w90 Right", "引用对象：")
+    ddObj  := dlg.Add("DropDownList", "x+6 w160")
 
-    txtOp  := dlg.Add("Text", "xm w80", "操作：")
-    ddOp   := dlg.Add("DropDownList", "x+6 w120", ["等于", "不等于"])
+    txtOp  := dlg.Add("Text", "xm w90 Right", "操作：")
+    ddOp   := dlg.Add("DropDownList", "x+6 w160", ["等于", "不等于"])
     ddOp.Value := (StrUpper(HasProp(cond,"Op") ? cond.Op : "EQ") = "NEQ") ? 2 : 1
 
-    txtInfo := dlg.Add("Text", "xm y+10", "对象详情：")
-    labX    := dlg.Add("Text", "xm w42 Right", "X:")
-    edRefX  := dlg.Add("Edit", "x+6 w120 ReadOnly Center")
-    labY    := dlg.Add("Text", "x+18 w42 Right", "Y:")
-    edRefY  := dlg.Add("Edit", "x+6 w120 ReadOnly Center")
+    txtInfo := dlg.Add("Text", "xm y+10 w90 Right", "对象详情：")
+    labX    := dlg.Add("Text", "xm w48 Right", "X:")
+    edRefX  := dlg.Add("Edit", "x+6 w100 ReadOnly Center")
+    labY    := dlg.Add("Text", "x+18 w48 Right", "Y:")
+    edRefY  := dlg.Add("Edit", "x+6 w100 ReadOnly Center")
     labC    := dlg.Add("Text", "x+18 w48 Right", "颜色:")
-    edRefCol:= dlg.Add("Edit", "x+6 w120 ReadOnly Center")
+    edRefCol:= dlg.Add("Edit", "x+6 w100 ReadOnly Center")
     labT    := dlg.Add("Text", "x+18 w48 Right", "容差:")
-    edRefTol:= dlg.Add("Edit", "x+6 w80 ReadOnly Center")
+    edRefTol:= dlg.Add("Edit", "x+6 w100 ReadOnly Center")
 
     grpPixel := [txtType, ddType, txtObj, ddObj, txtOp, ddOp, txtInfo, labX, edRefX, labY, edRefY, labC, edRefCol, labT, edRefTol]
 
     ; ---------- Counter 区 ----------
-    txtCntSkill := dlg.Add("Text", "xm y+10 w80", "计数技能：")
+    txtCntSkill := dlg.Add("Text", "xm y+10 w90 Right", "计数技能：")
     ddCntSkill  := dlg.Add("DropDownList", "x+6 w240")
     names := []
     for _, s in App["ProfileData"].Skills
@@ -420,14 +420,14 @@ CondEditor_Open(cond, idx := 0, onSaved := 0) {
         ddCntSkill.Add(names)
     ddCntSkill.Value := Min(Max(HasProp(cond,"SkillIndex") ? cond.SkillIndex : 1, 1), Max(names.Length, 1))
 
-    txtCmp := dlg.Add("Text", "xm w80", "比较：")
+    txtCmp := dlg.Add("Text", "xm w90 Right", "比较：")
     ddCmp  := dlg.Add("DropDownList", "x+6 w120", [">=","==",">","<=","<"])
     cmpMapT2K := Map(">=","GE","==","EQ",">","GT","<=","LE","<","LT")
     cmpMapK2T := Map("GE",">=","EQ","==","GT",">","LE","<=","LT","<")
     defCmp := StrUpper(HasProp(cond,"Cmp") ? cond.Cmp : "GE")
     ddCmp.Value := (defCmp="GE")?1:(defCmp="EQ")?2:(defCmp="GT")?3:(defCmp="LE")?4:(defCmp="LT")?5:1
 
-    txtVal := dlg.Add("Text", "xm w80", "阈值：")
+    txtVal := dlg.Add("Text", "xm w90 Right", "阈值：")
     edVal  := dlg.Add("Edit", "x+6 w120 Number", HasProp(cond,"Value") ? cond.Value : 1)
 
     cbReset := dlg.Add("CheckBox", "xm y+8", "触发后清零")
@@ -435,6 +435,51 @@ CondEditor_Open(cond, idx := 0, onSaved := 0) {
 
     grpCounter := [txtCntSkill, ddCntSkill, txtCmp, ddCmp, txtVal, edVal, cbReset]
 
+    ; 计算一组控件的左上角
+    Group_GetTopLeft(grp, &minX, &minY) {
+        first := true
+        for ctl in grp {
+            ctl.GetPos(&x, &y)
+            if (first) {
+                minX := x, minY := y
+                first := false
+            } else {
+                if (x < minX)
+                    minX := x
+                if (y < minY)
+                    minY := y
+            }
+        }
+    }
+
+    ; 将一组控件整体平移
+    Group_Offset(grp, dx, dy) {
+        for ctl in grp {
+            ctl.GetPos(&x, &y, &w, &h)
+            ctl.Move(x + dx, y + dy, w, h)
+        }
+    }
+
+    ; 计算一组控件的整体边界
+    Group_GetBounds(grp, &minX, &minY, &maxX, &maxY) {
+        first := true
+        for ctl in grp {
+            ctl.GetPos(&x, &y, &w, &h)
+            if (first) {
+                minX := x, minY := y, maxX := x + w, maxY := y + h
+                first := false
+            } else {
+                if (x < minX)
+                    minX := x
+                if (y < minY)
+                    minY := y
+                if (x + w > maxX)
+                    maxX := x + w
+                if (y + h > maxY)
+                    maxY := y + h
+            }
+        }
+    }
     ; 底部按钮
     btnSave := dlg.Add("Button", "xm y+12 w100", "保存")
     btnCancel := dlg.Add("Button", "x+8 w100", "取消")
@@ -450,6 +495,32 @@ CondEditor_Open(cond, idx := 0, onSaved := 0) {
     FillObj()
     UpdateInfo()
     ToggleKind(0)
+    ; 两组对齐到同一块区域（计数组对齐到像素组）
+    Group_GetTopLeft(grpPixel,  &px, &py)
+    Group_GetTopLeft(grpCounter, &cx, &cy)
+    Group_Offset(grpCounter, px - cx, py - cy)
+
+    ; 按当前可见组重新放置保存/取消，并让窗口按内容自适应高度
+    PlaceButtons() {
+        isCounter := (ddKind.Value = 2)
+        minX := 0, minY := 0, maxX := 0, maxY := 0
+        if (isCounter) {
+            Group_GetBounds(grpCounter, &minX, &minY, &maxX, &maxY)
+        } else {
+            Group_GetBounds(grpPixel,   &minX, &minY, &maxX, &maxY)
+        }
+        btnY := maxY + 12
+        btnSave.GetPos(&sx, &sy, &sw, &sh)
+        btnCancel.GetPos(&cx, &cy, &cw, &ch)
+        btnSave.Move(, btnY)         ; 只改 Y
+        btnCancel.Move(, btnY)
+        ; 让对话框按可见内容自适应高度
+        try dlg.Show("AutoSize")
+    }
+
+    ; 初次布局
+    PlaceButtons()
+
     dlg.Show()
 
     ToggleKind(*) {
@@ -458,6 +529,7 @@ CondEditor_Open(cond, idx := 0, onSaved := 0) {
             ctl.Visible := !isCounter
         for _, ctl in grpCounter
             ctl.Visible := isCounter
+        PlaceButtons()   ; 切换后重排按钮并收缩窗口
     }
 
     FillObj() {
@@ -561,7 +633,7 @@ ActEditor_Open(act, idx := 0, onSaved := 0) {
     dlg.SetFont("s10", "Segoe UI")
     dlg.MarginX := 12, dlg.MarginY := 10
 
-    dlg.Add("Text", "w70", "技能：")
+    dlg.Add("Text", "w90 Right", "技能：")
     names := []
     for _, s in App["ProfileData"].Skills
         names.Push(s.Name)
@@ -570,8 +642,8 @@ ActEditor_Open(act, idx := 0, onSaved := 0) {
         ddS.Add(names)
     ddS.Value := Min(Max(act.SkillIndex, 1), Max(names.Length, 1))
 
-    dlg.Add("Text", "xm w70", "延时(ms)：")
-    edD := dlg.Add("Edit", "x+6 w120 Number", act.DelayMs)
+    dlg.Add("Text", "xm w90 Right", "延时(ms)：")
+    edD := dlg.Add("Edit", "x+6 w240 Number", act.DelayMs)
 
     btnSave := dlg.Add("Button", "xm y+10 w100", "保存")
     btnCancel := dlg.Add("Button", "x+8 w100", "取消")
