@@ -34,7 +34,6 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 #Include "modules\runtime\Hotkeys.ahk"
 #Include "modules\workers\WorkerPool.ahk"
 #Include "modules\storage\Exporter.ahk"
-#Include "modules\ui\dialogs\UI_DefaultSkillDlg.ahk"
 #Include "modules\ui\dialogs\GUI_SkillEditor.ahk"
 #Include "modules\ui\dialogs\GUI_PointEditor.ahk"
 #Include "modules\ui\dialogs\GUI_RuleEditor.ahk"
