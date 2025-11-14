@@ -38,7 +38,6 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 #Include "modules\ui\dialogs\GUI_PointEditor.ahk"
 #Include "modules\ui\dialogs\GUI_RuleEditor.ahk"
 #Include "modules\ui\dialogs\GUI_BuffEditor.ahk"
-#Include "modules\ui\dialogs\GUI_Threads.ahk"
 #Include "modules\ui\UI_Layout.ahk"
 #Include "modules\ui\UI_Shell.ahk"
 ; ========= Bootstrap =========
