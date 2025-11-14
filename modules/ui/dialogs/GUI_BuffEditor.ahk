@@ -147,22 +147,22 @@ BuffEditor_Open(buff, idx := 0, onSaved := 0) {
     dlg.SetFont("s10", "Segoe UI")
     dlg.MarginX := 12, dlg.MarginY := 10
 
-    dlg.Add("Text", "w60", "名称：")
+    dlg.Add("Text", "w90 Right", "名称：")
     tbName := dlg.Add("Edit", "x+6 w240", buff.Name)
-    cbEn := dlg.Add("CheckBox", "x+12 w80", "启用")
+    cbEn := dlg.Add("CheckBox", "x+20 w80", "启用")
     cbEn.Value := buff.Enabled ? 1 : 0
 
-    dlg.Add("Text", "xm y+8 w70", "持续(ms)：")
-    edDur := dlg.Add("Edit", "x+6 w120 Number", buff.DurationMs)
+    dlg.Add("Text", "xm y+16 w90 Right", "持续(ms)：")
+    edDur := dlg.Add("Edit", "x+6 w240 Number", buff.DurationMs)
 
-    dlg.Add("Text", "x+20 w90", "提前续(ms)：")
-    edRef := dlg.Add("Edit", "x+6 w120 Number", buff.RefreshBeforeMs)
+    dlg.Add("Text", "x+20 w90 Right", "提前续(ms)：")
+    edRef := dlg.Add("Edit", "x+6 w240 Number", buff.RefreshBeforeMs)
 
     cbReady := dlg.Add("CheckBox", "xm y+8 w160", "检测技能就绪(像素)")
     cbReady.Value := buff.CheckReady ? 1 : 0
 
-    dlg.Add("Text", "xm y+8 w60", "线程：")
-    ddThread := dlg.Add("DropDownList", "x+6 w200")
+    dlg.Add("Text", "xm y+8 w90", "线程：")
+    ddThread := dlg.Add("DropDownList", "x+6 w240")
     names := []
     for _, t in App["ProfileData"].Threads
         names.Push(t.Name)
