@@ -17,19 +17,19 @@ PointEditor_Open(point, idx := 0, onSaved := 0) {
     dlg.MarginX := 14, dlg.MarginY := 12
     dlg.SetFont("s10", "Segoe UI")
 
-    dlg.Add("Text", "w70", "名称：")
-    tbName := dlg.Add("Edit", "x+10 w260", point.Name)
+    dlg.Add("Text", "w70 Right", "名称：")
+    tbName := dlg.Add("Edit", "x+10 w336", point.Name)
 
-    dlg.Add("Text", "xm w70", "坐标X：")
+    dlg.Add("Text", "xm w70 Right", "坐标X：")
     tbX := dlg.Add("Edit", "x+10 w120 Number", point.X)
-    dlg.Add("Text", "x+16 w70", "坐标Y：")
+    dlg.Add("Text", "x+16 w70 Right", "坐标Y：")
     tbY := dlg.Add("Edit", "x+10 w120 Number", point.Y)
-    btnPick := dlg.Add("Button", "x+16 w96 h28", "拾取像素")
+    btnPick := dlg.Add("Button", "x+16 w110 h28", "拾取像素")
 
-    dlg.Add("Text", "xm w70", "颜色：")
-    tbColor := dlg.Add("Edit", "x+10 w160", point.Color)
-    dlg.Add("Text", "x+16 w70", "容差：")
-    tbTol := dlg.Add("Edit", "x+10 w96 Number", point.Tol)
+    dlg.Add("Text", "xm w70 Right", "颜色：")
+    tbColor := dlg.Add("Edit", "x+10 w120", point.Color)
+    dlg.Add("Text", "x+16 w70 Right", "容差：")
+    tbTol := dlg.Add("Edit", "x+10 w120 Number", point.Tol)
 
     btnSave := dlg.Add("Button", "xm w96 h30", "保存")
     btnCancel := dlg.Add("Button", "x+8 w96 h30", "取消")

@@ -11,25 +11,27 @@ DefaultSkillEditor_Show() {
 
     dlg := Gui("+Owner" UI.Main.Hwnd, T("dlg.defaultSkill","默认技能（兜底触发）"))
     dlg.SetFont("s10", "Segoe UI")
-    dlg.MarginX := 12, dlg.MarginY := 10
+    dlg.MarginX := 14, dlg.MarginY := 12
 
-    cbEn := dlg.Add("CheckBox", "xm w160", T("label.enableDefault","启用默认技能"))
+    cbEn := dlg.Add("CheckBox", "xm w200", T("label.enableDefault","启用默认技能"))
     cbEn.Value := ds.Enabled ? 1 : 0
 
-    dlg.Add("Text", "xm y+8 w70", T("label.skill","技能："))
+    ; 第二行：技能和检测就绪
+    dlg.Add("Text", "xm w70 Right", T("label.skill","技能："))
     names := []
     for _, s in App["ProfileData"].Skills
         names.Push(s.Name)
-    ddSkill := dlg.Add("DropDownList", "x+6 w260")
+    ddSkill := dlg.Add("DropDownList", "x+10 w240")
     if names.Length
         ddSkill.Add(names)
     ddSkill.Value := (ds.SkillIndex >= 1 && ds.SkillIndex <= names.Length) ? ds.SkillIndex : (names.Length ? 1 : 0)
 
-    cbReady := dlg.Add("CheckBox", "xm y+8 w180", T("label.checkReady","检测就绪(像素)"))
+    cbReady := dlg.Add("CheckBox", "x+16 w160", T("label.checkReady","检测就绪(像素)"))
     cbReady.Value := ds.CheckReady ? 1 : 0
 
-    dlg.Add("Text", "xm y+8 w60", T("label.thread","线程："))
-    ddThread := dlg.Add("DropDownList", "x+6 w200")
+    ; 第三行：线程、冷却、预延时
+    dlg.Add("Text", "xm w70 Right", T("label.thread","线程："))
+    ddThread := dlg.Add("DropDownList", "x+10 w180")
     threadIds := []
     threadNames := []
     if HasProp(App["ProfileData"], "Threads") {
@@ -51,14 +53,14 @@ DefaultSkillEditor_Show() {
         }
     ddThread.Value := sel
 
-    dlg.Add("Text", "xm y+8 w80", T("label.cooldown","冷却(ms)："))
-    edCd := dlg.Add("Edit", "x+6 w120 Number", HasProp(ds,"CooldownMs") ? ds.CooldownMs : 600)
+    dlg.Add("Text", "x+16 w70 Right", T("label.cooldown","冷却(ms)："))
+    edCd := dlg.Add("Edit", "x+10 w100 Number", HasProp(ds,"CooldownMs") ? ds.CooldownMs : 600)
 
-    dlg.Add("Text", "x+20 w90", T("label.predelay","预延时(ms)："))
-    edPre := dlg.Add("Edit", "x+6 w120 Number", HasProp(ds,"PreDelayMs") ? ds.PreDelayMs : 0)
+    dlg.Add("Text", "x+16 w70 Right", T("label.predelay","预延时(ms)："))
+    edPre := dlg.Add("Edit", "x+10 w100 Number", HasProp(ds,"PreDelayMs") ? ds.PreDelayMs : 0)
 
-    btnSave := dlg.Add("Button", "xm y+12 w100", T("btn.save","保存"))
-    btnCancel := dlg.Add("Button", "x+8 w100", T("btn.cancel","取消"))
+    btnSave := dlg.Add("Button", "xm y+16 w96 h30", T("btn.save","保存"))
+    btnCancel := dlg.Add("Button", "x+8 w96 h30", T("btn.cancel","取消"))
     btnSave.OnEvent("Click", (*) => OnSave())
     btnCancel.OnEvent("Click", (*) => dlg.Destroy())
 
