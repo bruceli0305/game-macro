@@ -303,14 +303,14 @@ REUI_Opener_StepEditor_Open(owner, st, idx := 0, onSaved := 0) {
     g3.MarginY := 10
     g3.SetFont("s10","Segoe UI")
 
-    g3.Add("Text","w70 Right","类型：")
-    ddK := g3.Add("DropDownList","x+6 w180", ["技能","等待","切换"])
+    g3.Add("Text","w100 Right","类型：")
+    ddK := g3.Add("DropDownList","x+6 w120", ["技能","等待","切换"])
     kdef := StrUpper(HasProp(st,"Kind") ? st.Kind : "SKILL")
     ddK.Value := (kdef="SKILL")?1:(kdef="WAIT")?2:3
 
     ; 技能
-    g3.Add("Text","xm y+10 w70 Right","技能：")
-    ddSS := g3.Add("DropDownList","x+6 w260")
+    g3.Add("Text","xm y+10 w100 Right","技能：")
+    ddSS := g3.Add("DropDownList","x+6 w120")
     cnt := 0
     try cnt := App["ProfileData"].Skills.Length
     if (cnt>0) {
@@ -331,10 +331,10 @@ REUI_Opener_StepEditor_Open(owner, st, idx := 0, onSaved := 0) {
     cbReq := g3.Add("CheckBox","xm y+8","需就绪")
     cbReq.Value := HasProp(st,"RequireReady") ? (st.RequireReady?1:0) : 0
 
-    g3.Add("Text","xm y+8 w80 Right","预延时(ms)：")
+    g3.Add("Text","xm y+8 w100 Right","预延时(ms)：")
     edPre := g3.Add("Edit","x+6 w120 Number", HasProp(st,"PreDelayMs")?st.PreDelayMs:0)
 
-    g3.Add("Text","x+20 w80 Right","按住(ms)：")
+    g3.Add("Text","x+20 w100 Right","按住(ms)：")
     edHold := g3.Add("Edit","x+6 w120 Number", HasProp(st,"HoldMs")?st.HoldMs:0)
 
     cbVer := g3.Add("CheckBox","xm y+8","发送后验证")
@@ -416,7 +416,7 @@ REUI_Opener_WatchEditor_Open(owner, w, idx := 0, onSaved := 0) {
     g2.MarginY := 10
     g2.SetFont("s10","Segoe UI")
 
-    g2.Add("Text","w70 Right","技能：")
+    g2.Add("Text","w90 Right","技能：")
     ddS := g2.Add("DropDownList","x+6 w260")
     cnt := 0
     try cnt := App["ProfileData"].Skills.Length
@@ -435,8 +435,8 @@ REUI_Opener_WatchEditor_Open(owner, w, idx := 0, onSaved := 0) {
         ddS.Enabled := false
     }
 
-    g2.Add("Text","xm y+8 w80 Right","计数：")
-    edReq := g2.Add("Edit","x+6 w120 Number Center", HasProp(w,"RequireCount")?w.RequireCount:1)
+    g2.Add("Text","xm y+8 w90 Right","计数：")
+    edReq := g2.Add("Edit","x+6 w260 Number Center", HasProp(w,"RequireCount")?w.RequireCount:1)
 
     cbVB := g2.Add("CheckBox","xm y+8","黑框确认")
     cbVB.Value := HasProp(w,"VerifyBlack") ? (w.VerifyBlack?1:0) : 0
