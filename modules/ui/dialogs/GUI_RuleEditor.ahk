@@ -166,6 +166,9 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
     dlg.Add("Text", "xm y+10 w90 Right", "间隔(ms)：")
     edGap := dlg.Add("Edit", "x+6 w160 Number", rule.ActionGapMs)
 
+    dlg.Add("Text", "x+20 w90 Right", "会话超时(ms)：")
+    edSessTO := dlg.Add("Edit", "x+6 w160 Number", HasProp(rule,"SessionTimeoutMs") ? rule.SessionTimeoutMs : 0)
+    
     dlg.Add("Text", "x+20 w90 Right", "线程：")
     ddThread := dlg.Add("DropDownList", "x+6 w160")
     names := []
@@ -187,7 +190,7 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
 
     ; 动作
     dlg.Add("Text", "xm y+10", "动作（释放技能步骤）：")
-    lvA := dlg.Add("ListView", "xm w760 r6 +Grid", ["序", "技能名", "延时(ms)"])
+    lvA := dlg.Add("ListView", "xm w760 r6 +Grid", ["序", "技能名", "延时(ms)", "按住(ms)", "需就绪"])
     btnAAdd := dlg.Add("Button", "xm w110", "新增动作")
     btnAEdit:= dlg.Add("Button", "x+8  w110", "编辑动作")
     btnADel := dlg.Add("Button", "x+8  w110", "删除动作")
@@ -264,9 +267,12 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
             sName := (a.SkillIndex <= App["ProfileData"].Skills.Length)
                 ? App["ProfileData"].Skills[a.SkillIndex].Name
                 : ("技能#" . a.SkillIndex)
-            lvA.Add("", i, sName, a.DelayMs)
+            lvA.Add("", i, sName
+                , (HasProp(a,"DelayMs") ? a.DelayMs : 0)
+                , (HasProp(a,"HoldMs") ? a.HoldMs : -1)
+                , ((HasProp(a,"RequireReady") && a.RequireReady) ? "√" : ""))
         }
-        loop 3
+        loop 5
             lvA.ModifyCol(A_Index, "AutoHdr")
         lvA.Opt("+Redraw")
     }
@@ -364,6 +370,7 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
         rule.Priority := (edPrio.Value != "") ? Integer(edPrio.Value) : 1
         rule.ActionGapMs := (edGap.Value != "") ? Integer(edGap.Value) : 60
         rule.ThreadId := ddThread.Value ? ddThread.Value : 1
+        rule.SessionTimeoutMs := (edSessTO.Value != "") ? Integer(edSessTO.Value) : 0
         if onSaved
             onSaved(rule, idx)
         dlg.Destroy()
@@ -661,6 +668,12 @@ ActEditor_Open(act, idx := 0, onSaved := 0) {
     dlg.Add("Text", "xm w90 Right", "延时(ms)：")
     edD := dlg.Add("Edit", "x+6 w240 Number", act.DelayMs)
 
+    dlg.Add("Text", "xm w90 Right", "按住(ms)：")
+    edHold := dlg.Add("Edit", "x+6 w240 Number", HasProp(act,"HoldMs") ? act.HoldMs : -1)
+
+    cbReady := dlg.Add("CheckBox", "xm y+8", "需就绪")
+    cbReady.Value := HasProp(act,"RequireReady") ? (act.RequireReady ? 1 : 0) : 0
+
     btnSave := dlg.Add("Button", "xm y+10 w100", "保存")
     btnCancel := dlg.Add("Button", "x+8 w100", "取消")
     btnSave.OnEvent("Click", OnSave)
@@ -670,7 +683,9 @@ ActEditor_Open(act, idx := 0, onSaved := 0) {
     OnSave(*) {
         idxS := ddS.Value ? ddS.Value : 1
         d := (edD.Value != "") ? Integer(edD.Value) : 0
-        newA := { SkillIndex: idxS, DelayMs: d }
+        h := (edHold.Value != "") ? Integer(edHold.Value) : -1
+        rr := cbReady.Value ? 1 : 0
+        newA := { SkillIndex: idxS, DelayMs: d, HoldMs: h, RequireReady: rr }
         if onSaved
             onSaved(newA, idx)
         dlg.Destroy()

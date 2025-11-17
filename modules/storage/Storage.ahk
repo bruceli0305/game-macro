@@ -222,10 +222,15 @@ Storage_LoadProfile(name) {
             aSec := "Rule" rIdx "_Act" A_Index
             sIdx := Integer(IniRead(file, aSec, "SkillIndex", 1))
             dMs  := Integer(IniRead(file, aSec, "DelayMs", 0))
+            hMs  := Integer(IniRead(file, aSec, "HoldMs", -1))           ; 新增：按住
+            req  := Integer(IniRead(file, aSec, "RequireReady", 0))      ; 新增：需就绪
             acts.Push({ SkillIndex: sIdx, DelayMs: dMs })
         }
+        rSessionTo := Integer(IniRead(file, rSec, "SessionTimeoutMs", 0))
         data.Rules.Push({ Name: rName, Enabled: rEnabled, Logic: rLogic, CooldownMs: rCd, Priority: rPrio
-                        , ActionGapMs: rGap, ThreadId: rThread, Conditions: conds, Actions: acts, LastFire: 0 })
+                        , ActionGapMs: rGap, ThreadId: rThread, Conditions: conds, Actions: acts, LastFire: 0
+                        , SessionTimeoutMs: rSessionTo
+                    })
     }
 
     ; ===== Threads =====
@@ -490,6 +495,7 @@ Storage_SaveProfile(data) {
         IniWrite(r.Conditions.Length, file, rSec, "CondCount")
         IniWrite(r.Actions.Length, file, rSec, "ActCount")
         IniWrite(HasProp(r, "ThreadId") ? r.ThreadId : 1, file, rSec, "ThreadId")
+        IniWrite(HasProp(r, "SessionTimeoutMs") ? r.SessionTimeoutMs : 0, file, rSec, "SessionTimeoutMs")
         for cIdx, c in r.Conditions {
             cSec := "Rule" rIdx "_Cond" cIdx
             kind := HasProp(c, "Kind") ? c.Kind : "Pixel"
@@ -512,6 +518,8 @@ Storage_SaveProfile(data) {
             aSec := "Rule" rIdx "_Act" aIdx
             IniWrite(a.SkillIndex, file, aSec, "SkillIndex")
             IniWrite(a.DelayMs, file, aSec, "DelayMs")
+            IniWrite(HasProp(a, "HoldMs") ? a.HoldMs : -1, file, aSec, "HoldMs")
+            IniWrite(HasProp(a, "RequireReady") ? a.RequireReady : 0, file, aSec, "RequireReady")
         }
     }
 

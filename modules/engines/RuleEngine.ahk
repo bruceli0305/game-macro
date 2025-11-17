@@ -5,9 +5,13 @@
 global RE_Debug := false                 ; 总开关：日志开/关
 global RE_DebugVerbose := false          ; 详细级：打印每个条件细节
 global RE_ShowTips := false              ; 屏幕提示（默认关）
-
 ; 规则过滤（由 Rotation 设置，优先 AllowRuleIds，再用 AllowSkills）
 global RE_Filter := { Enabled:false, AllowSkills:0, AllowRuleIds:0 }
+; 规则过滤（由 Rotation 设置，优先 AllowRuleIds，再用 AllowSkills）
+global RE_Session := { Active:false, RuleId:0, ThreadId:1
+                     , Index:1, StartedAt:0, NextAt:0
+                     , HadAnySend:false, LockWaitUntil:0
+                     , TimeoutAt:0 }
 
 ; 规则最后触发时间（供 Gate:RuleQuiet 使用）
 global RE_LastFireTick := Map()
@@ -44,6 +48,18 @@ RuleEngine_SessionBegin(prof, rIdx, rule) {
         }
     }
     RE_Session.NextAt := A_TickCount + firstDelay
+    ; 规则级会话超时（0 表示不限制）
+    sessTo := 0
+    try {
+        if (HasProp(rule, "SessionTimeoutMs")) {
+            sessTo := Max(0, Integer(rule.SessionTimeoutMs))
+        }
+    }
+    if (sessTo > 0) {
+        RE_Session.TimeoutAt := A_TickCount + sessTo
+    } else {
+        RE_Session.TimeoutAt := 0
+    }
 }
 
 ; 推进一步：若满足条件则发送当前动作；返回本帧是否发出
@@ -57,7 +73,11 @@ RuleEngine_SessionStep() {
     rule := prof.Rules[rIdx]
     acts := rule.Actions
     now := A_TickCount
-
+     ; 会话超时
+    if (RE_Session.TimeoutAt > 0 && now >= RE_Session.TimeoutAt) {
+        RE_Session.Active := false
+        return false
+    }
     ; 完成判定
     if (RE_Session.Index > acts.Length) {
         ; 会话结束，记 lastFire（与 RuleQuiet 一致）
@@ -114,8 +134,28 @@ RuleEngine_SessionStep() {
         RE_Session.Active := false
         return false
     }
-
-    sent := WorkerPool_SendSkillIndex(thr, si, "RuleSession:" rule.Name)
+    ; M2：需就绪（像素等于技能目标色，使用帧缓存）
+    needReady := 0
+    try {
+        needReady := (HasProp(act, "RequireReady") && act.RequireReady) ? 1 : 0
+    }
+    if (needReady) {
+        ready := RuleEngine_CheckSkillReady(prof, si)
+        if (!ready) {
+            ; 不阻塞，下一帧再检查（可按需加最小间隔）
+            return false
+        }
+    }
+    ; M2：按住时长（holdOverride），未配置则用 -1 表示不覆盖
+    holdOverride := -1
+    try {
+        if (HasProp(act, "HoldMs")) {
+            hm := Integer(act.HoldMs)
+            if (hm >= 0)
+                holdOverride := hm
+        }
+    }
+    sent := WorkerPool_SendSkillIndex(thr, si, "RuleSession:" rule.Name, holdOverride)
     if (!sent) {
         ; 发送失败（非锁）→ 中止（M1）
         RE_Session.Active := false
