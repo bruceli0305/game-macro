@@ -1,194 +1,146 @@
 # Game Macro - AutoHotkey Automation Tool
 
-A game automation tool developed with AutoHotkey v2, supporting advanced features like pixel detection, skill rotation, buff timers, and more.
+An advanced game automation tool developed with AutoHotkey v2, supporting powerful features like pixel detection, skill cycling, BUFF timing, DXGI screen capture, and rotation engine.
 
 ## Features
 
-### 🎯 Core Features
-- **Advanced Pixel Detection**: Support for DXGI screen capture, ROI detection, and GDI fallback methods
+### 🎯 Core Functions
+- **Advanced Pixel Detection**: Support DXGI screen capture, ROI detection, GDI fallback
 - **Multi-threading Support**: Multiple independent skill execution threads with worker pool management
-- **Smart Avoidance**: Automatic mouse avoidance during color picking to prevent game interference
-- **Rule Engine**: Conditional automation rule system with pixel and counter conditions
-- **Buff Timers**: Automatic buff renewal functionality with priority-based execution
+- **Smart Evasion**: Automatic mouse avoidance to prevent interference during color sampling
+- **Rule Engine**: Conditional automation rule system supporting pixel and counter conditions
+- **BUFF Timer**: Automatic BUFF refresh functionality with priority execution
 - **DXGI Screen Capture**: High-performance screen capture using DirectX Graphics Infrastructure
-- **Rotation Management**: Complex skill rotation sequences with opener, tracks, and gates
+- **Rotation Management**: Complex skill cycling sequences supporting opener, tracks, and gates
 - **Internationalization**: Multi-language support with configurable language packs
-- **Automation Pages**: Comprehensive UI pages for managing threads, buffs, rules, and rotations
-- **Real-time Monitoring**: Live status monitoring with summary pages and detailed lists
+- **Automation Pages**: Complete thread, BUFF, rule, and cycle management interface
+- **Real-time Monitoring**: Real-time status monitoring with summary pages and detailed lists
 
 ### 🛠️ Configuration Management
-- **Multi-character Profiles**: Independent JSON-based configurations for different game characters
-- **Visual Editor**: Graphical interface for configuring skills, points, rules, and rotations
-- **Export Functionality**: Package configurations as standalone scripts
-- **Internationalization Support**: Multi-language interface with INI-based language packs
-- **Modular Architecture**: Organized code structure for easy maintenance and extension
-- **Skill Management**: Comprehensive skill editor with pixel detection settings
-- **Point Management**: Color detection point configuration with tolerance controls
-- **Rule System**: Advanced rule editor with conditions and actions
-- **Rotation Editor**: Complex rotation sequences with multiple phases
+- **Multi-profile Support**: Independent JSON format configuration files supporting different game characters
+- **Visual Editing**: Complete graphical interface for configuring skills, points, rules, and rotations
+- **Configuration Export**: Package configurations as standalone scripts
+- **Internationalization Support**: Multi-language interface based on INI language pack system
+- **Modular Architecture**: Well-organized code structure for easy maintenance and extension
+- **Skill Management**: Comprehensive skill editor supporting pixel detection configuration
+- **Point Management**: Color detection point configuration with tolerance control
+- **Rule System**: Advanced rule editor supporting condition and action configuration
+- **Rotation Editor**: Complex cycling sequences supporting multi-stage configuration
 
 ## Quick Start
 
 ### Option 1: Portable EXE (Recommended for Beginners)
-1. **Download the latest release** from the `releases/` folder
-2. **Extract the ZIP file** to any directory
-3. **Run `game-macro.exe`** - No installation required
+1. **Download Latest Release**: Download ZIP file from `releases/` folder
+2. **Extract ZIP File**: Extract to any directory
+3. **Run `game-macro.exe`**: No installation required, run directly
 
-### Option 2: Source Code (For Developers)
+### Option 2: Source Code Version (For Developers)
 #### System Requirements
-- Windows operating system
-- AutoHotkey v2.0 or higher
-- DirectX 11 compatible graphics card (for DXGI screen capture)
+- **Windows Operating System**
+- **AutoHotkey v2.0 or higher**
+- **DirectX 11 compatible graphics card** (for DXGI screen capture)
 
 #### Installation Steps
 1. Download and install [AutoHotkey v2](https://www.autohotkey.com/)
-2. Clone or download this project to your local machine
-3. Double-click `Main.ahk` to start the configuration tool
+2. Clone or download this project locally
+3. Double-click `Main.ahk` to launch the configuration tool
 
-### Basic Usage
-1. **Start Tool**: Run `Main.ahk` to open the configuration interface
-2. **Create Profile**: Click "New" to create a character configuration
+### Basic Usage Flow
+1. **Launch Tool**: Run `Main.ahk` to open configuration interface
+2. **Create Configuration**: Click "New" to create character configuration
 3. **Configure Skills**: Add skills in the "Skill List" tab
-4. **Set Hotkey**: Configure start/stop hotkey (default: F9)
-5. **Save Configuration**: Click "Save Configuration" button
-6. **Start Using**: Press the hotkey in-game to activate the macro
+4. **Setup Rotation**: Configure skill cycling sequences (optional)
+5. **Create Rules**: Set up conditional automation rules (optional)
+6. **Configure BUFF**: Add automatic BUFF refresh timers (optional)
+7. **Set Hotkeys**: Configure start/stop hotkeys (default: F9)
+8. **Save Configuration**: Click "Save Configuration" button
+9. **Start Using**: Press hotkey in game to start macro
 
 ## Detailed Configuration
 
 ### Skill Configuration
-Each skill includes the following parameters:
+Each skill contains the following parameters:
 - **Skill Name**: Custom name
-- **Key**: In-game skill hotkey
-- **Coordinates**: Screen position of skill icon
-- **Color**: Pixel color when skill is ready
+- **Key**: Skill hotkey in game
+- **Coordinates**: Position of skill icon on screen
+- **Color**: Pixel color when skill cooldown is complete
 - **Tolerance**: Color matching tolerance range
 
 ### Point Configuration
-Independent color detection points for game state monitoring:
+Independent color sampling points for detecting game state:
 - **Name**: Point description
 - **Coordinates**: Screen coordinates
 - **Color**: Expected color value
 - **Tolerance**: Color matching tolerance
 
 ### Rule System
-Condition-based automation rules:
-- **Conditions**: Pixel detection, counter conditions, etc.
-- **Actions**: Execute skills, delays, etc.
-- **Threads**: Specify execution thread
+Conditional automation rules:
+- **Conditions**: Pixel detection, counter and other condition judgments
+- **Actions**: Execute skills, delays and other operations
+- **Thread**: Specified execution thread
 - **Priority**: Rule execution priority
 
-### Buff Timers
-Automatic buff renewal functionality:
-- **Buff Name**: Custom name
-- **Duration**: Buff duration (milliseconds)
-- **Refresh Before**: Early refresh time
-- **Associated Skills**: Skills used for buff renewal
+### BUFF Timer
+Automatic BUFF refresh functionality:
+- **BUFF Name**: Custom name
+- **Duration**: BUFF duration (milliseconds)
+- **Early Refresh**: Early refresh time
+- **Related Skill**: Skill used for BUFF refresh
 
-## Project Structure
+## Project Architecture
 
-```
-game-macro/
-├── Main.ahk                    # Main program entry
-├── Config/                     # Application configuration
-│   └── AppConfig.ini          # Main configuration file
-├── Languages/                  # Internationalization files
-│   ├── en-US.ini              # English language pack
-│   └── zh-CN.ini              # Chinese language pack
-├── modules/                    # Functional modules
-│   ├── core/                   # Core functionality modules
-│   │   ├── AppConfig.ahk      # Configuration management
-│   │   └── Core.ahk           # Core system functions
-│   ├── engines/                # Engine modules
-│   │   ├── BuffEngine.ahk     # Buff management engine
-│   │   ├── Dup.ahk            # DXGI screen capture engine
-│   │   ├── Pixel.ahk          # Pixel detection engine
-│   │   ├── Rotation.ahk        # Rotation management engine
-│   │   └── RuleEngine.ahk      # Rule processing engine
-│   ├── i18n/                   # Internationalization
-│   │   └── Lang.ahk            # Language management
-│   ├── lib/                    # External libraries
-│   │   ├── dxgi_dup.cpp       # DXGI duplication C++ source
-│   │   └── dxgi_dup.dll       # DXGI duplication library
-│   ├── runtime/                # Runtime modules
-│   │   ├── Counters.ahk        # Counter management
-│   │   ├── Hotkeys.ahk         # Hotkey handling
-│   │   └── Poller.ahk          # Polling system
-│   ├── storage/                # Storage modules
-│   │   ├── Exporter.ahk        # Configuration export
-│   │   └── Storage.ahk         # Data storage
-│   ├── ui/                     # User interface modules
-│   │   ├── UI_Framework.ahk    # UI framework and page management
-│   │   ├── UI_Layout.ahk       # Layout management
-│   │   ├── UI_Shell.ahk        # Shell interface
-│   │   ├── dialogs/            # Dialog components
-│   │   │   ├── GUI_BuffEditor.ahk      # Buff editor dialog
-│   │   │   ├── GUI_PointEditor.ahk    # Point editor dialog
-│   │   │   ├── GUI_RuleEditor.ahk      # Rule editor dialog
-│   │   │   ├── GUI_SkillEditor.ahk     # Skill editor dialog
-│   │   │   ├── GUI_Threads.ahk         # Threads manager dialog
-│   │   │   └── UI_DefaultSkillDlg.ahk  # Default skill dialog
-│   │   ├── pages/              # Page components
-│   │   │   ├── automation/            # Automation management pages
-│   │   │   │   ├── Page_Buffs_Summary.ahk    # Buffs summary page
-│   │   │   │   ├── Page_Rules_Summary.ahk    # Rules summary page
-│   │   │   │   └── Page_Threads_Summary.ahk  # Threads summary page
-│   │   │   ├── UI_Page_Config.ahk      # Configuration page
-│   │   │   └── UI_Page_Settings.ahk    # Settings page
-│   │   └── rotation/           # Rotation editor components
-│   │       ├── RE_UI_Common.ahk         # Common rotation UI
-│   │       ├── RE_UI_Page_Gates.ahk    # Gates page
-│   │       ├── RE_UI_Page_General.ahk  # General page
-│   │       ├── RE_UI_Page_Opener.ahk  # Opener page
-│   │       ├── RE_UI_Page_Tracks.ahk   # Tracks page
-│   │       └── RE_UI_Shell.ahk          # Rotation shell
-│   ├── util/                   # Utility modules
-│   │   └── Utils.ahk           # Utility functions
-│   └── workers/                # Worker modules
-│       ├── WorkerHost.ahk       # Worker host management
-│       └── WorkerPool.ahk       # Worker pool management
-├── Profiles/                   # Character profile directory
-└── Logs/                       # Log directory
-```
+The project adopts a modular architecture design with clear module responsibilities for easy maintenance and extension:
+
+- **Core Module** (`core/`): Application configuration management and core system functionality
+- **Engine Module** (`engines/`): Pixel detection, rule processing, BUFF management, rotation management, DXGI capture, etc.
+- **UI Module** (`ui/`): Graphical interface framework, page management, dialog components
+- **Runtime Module** (`runtime/`): Hotkey processing, polling system, counter management
+- **Storage Module** (`storage/`): Configuration export and data storage
+- **Internationalization Module** (`i18n/`): Multi-language support
+- **Utility Module** (`util/`): General utility functions
+- **Worker Module** (`workers/`): Worker pool management
+
+For detailed project structure and implementation, please refer to the documentation in the `docs/` directory.
 
 ## Usage Examples
 
-### Basic Skill Rotation
-1. Add skills for rotation
-2. Set detection coordinates and colors
-3. Configure polling interval (default: 25ms)
-4. Set global delay to prevent skill spamming
+### Basic Skill Cycling
+1. Add skills that need to be cycled
+2. Set skill detection coordinates and colors
+3. Configure polling interval (default 25ms)
+4. Set global delay to prevent skill spam
 
 ### Conditional Trigger Rules
-1. Create rules with conditions
+1. Create rules and set conditions
 2. Configure actions when conditions are met
-3. Set rule priority and cooldown
+3. Set rule priority and cooldown time
 4. Specify execution thread
 
-### Automatic Buff Renewal
-1. Add buff timer
-2. Set buff duration and early refresh time
-3. Associate buff renewal skills
+### BUFF Auto Refresh
+1. Add BUFF timers
+2. Set BUFF duration and early refresh time
+3. Associate refresh skills
 4. Configure detection conditions
 
-## Important Notes
+## Notes
 
 ### ⚠️ Important Reminders
 - This tool is for learning and research purposes only
-- Please comply with game service terms, use automation features responsibly
-- Excessive use may result in account risks
-- Recommended for use in single-player games or permitted environments
+- Please comply with game service terms and use automation features reasonably
+- Excessive use may pose account risks
+- Recommended for use in single-player games or allowed environments
 
 ### 🔧 Technical Limitations
-- Relies on screen pixel detection, resolution changes require reconfiguration
+- Depends on screen pixel detection; resolution changes require reconfiguration
 - Game updates may cause configurations to become invalid
-- Does not support full-screen exclusive mode games
+- Does not support games in full-screen exclusive mode
 
-## Development Information
+## Development Guide
 
-### Extending Functionality
-The project uses modular design, making it easy to extend:
-- Add new modules by including them in `Main.ahk`
-- Follow existing naming and interface conventions
+### Extension Development
+The project adopts a modular design for easy extension of new features:
+- New modules only need to be included in `Main.ahk`
+- Follow existing naming and interface specifications
 - Use global `App` Map for state management
 
 ### Debugging Tips
@@ -198,11 +150,11 @@ The project uses modular design, making it easy to extend:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project uses the MIT License - see [LICENSE](LICENSE) file for details.
 
 ### License Summary
 
-MIT License is a permissive open-source license that allows:
+The MIT License is a permissive open source license that allows:
 - ✅ Commercial use
 - ✅ Modification and distribution
 - ✅ Private use
@@ -210,36 +162,47 @@ MIT License is a permissive open-source license that allows:
 
 The only requirement is to retain the original copyright notice and license text.
 
-### Important Usage Reminder
+### Important Reminder
 
-While this software is open-source, please use it responsibly:
-- Comply with game service terms
-- Use automation features only in permitted environments
+Although this software is open source, please use it responsibly:
+- Follow game service terms
+- Only use automation features in allowed environments
 - Avoid affecting other players' gaming experience
 
 ## Changelog
 
-### v0.0.1-Alpha-0.2 (Current)
-- **UI Framework Enhancement**: Added comprehensive automation management pages
-- **Real-time Monitoring**: Implemented summary pages for threads, buffs, and rules
-- **Layout Optimization**: Improved UI layout calculations for better visual presentation
-- **Dynamic Height Calculation**: Enhanced GroupBox height calculations based on content
-- **Button Positioning**: Optimized button placement for better user experience
+### v0.0.3 (Current Version)
+- **DXGI Screen Capture Engine**: Integrated high-performance DirectX screen capture functionality
+- **Advanced Rotation System**: Support for complex skill cycling with opener, tracks, and gates
+- **Rule Engine Upgrade**: Enhanced conditional judgment and action execution system
+- **Multi-language Support**: Complete internationalization system supporting Chinese and English switching
+- **Modular Refactoring**: Clearer code architecture and module organization
+
+### v0.0.1-Alpha-0.2
+- **UI Framework Enhancement**: Added complete automation management pages
+- **Real-time Monitoring**: Implemented summary pages for threads, BUFFs, and rules
+- **Layout Optimization**: Improved UI layout calculation for better visual effects
+- **Dynamic Height Calculation**: Enhanced GroupBox height calculation based on content
+- **Button Position Optimization**: Optimized button positions for better user experience
 
 ### v0.0.1-Alpha-0.1
 - Initial version release
 - Basic skill detection functionality
 - Graphical configuration interface
-- Rule engine and buff timers
+- Rule engine and BUFF timer
 
 ## Contributing
 
-Welcome to submit Issues and Pull Requests to improve the project.
+Issue and Pull Request submissions are welcome to improve the project.
 
 ## Support
 
-If you encounter problems, please check:
-1. Error messages in log files
-2. Verify skill coordinates and color configurations
-3. Confirm game window is not obscured
-4. Adjust detection parameters for better accuracy
+For questions, please check:
+1. Check error information in log files
+2. Verify skill coordinates and color configuration
+3. Confirm game window is not blocked
+4. Adjust detection parameters to optimize accuracy
+
+---
+
+**中文版本**: [README_CN.md](README_CN.md)
