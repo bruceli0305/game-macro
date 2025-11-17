@@ -12,43 +12,49 @@ Page_DefaultSkill_Build(page) {
     page.Controls := []
 
     ; 分组
-    UI.DS_GB := UI.Main.Add("GroupBox", Format("x{} y{} w{} h150", rc.X, rc.Y, rc.W), T("ds.title", "默认技能（兜底）"))
+    UI.DS_GB := UI.Main.Add("GroupBox", Format("x{} y{} w{} h260", rc.X, rc.Y, rc.W), T("ds.title", "默认技能（兜底）"))
     page.Controls.Push(UI.DS_GB)
 
-    ; 行1：开关 + 技能 + 检测就绪
+    ; 行1：启用默认技能（独立显示）
     x0 := rc.X + 12
     y0 := rc.Y + 26
-    UI.DS_Enable := UI.Main.Add("CheckBox", Format("x{} y{} w120", x0, y0), T("ds.enable", "启用默认技能"))
+    UI.DS_Enable := UI.Main.Add("CheckBox", Format("x{} y{} w160", x0, y0), T("ds.enable", "启用默认技能"))
     page.Controls.Push(UI.DS_Enable)
 
-    UI.DS_L_Skill := UI.Main.Add("Text", Format("x{} y{} w60 Right", x0 + 160, y0 + 4), T("ds.skill", "技能："))
+    ; 行2：技能 + 检测就绪
+    y1 := y0 + 36
+    UI.DS_L_Skill := UI.Main.Add("Text", Format("x{} y{} w90 Right", x0, y1 + 4), T("ds.skill", "技能："))
     page.Controls.Push(UI.DS_L_Skill)
-    UI.DS_DdSkill := UI.Main.Add("DropDownList", "x+6 w260")
+    UI.DS_DdSkill := UI.Main.Add("DropDownList", "x+10 w160")
     page.Controls.Push(UI.DS_DdSkill)
 
-    UI.DS_CbReady := UI.Main.Add("CheckBox", "x+12 w120", T("ds.ready", "检测就绪"))
+    UI.DS_CbReady := UI.Main.Add("CheckBox", "x+20 w160", T("ds.ready", "检测就绪"))
     page.Controls.Push(UI.DS_CbReady)
 
-    ; 行2：线程 + 冷却 + 预延时
-    y1 := y0 + 36
-    UI.DS_L_Thread := UI.Main.Add("Text", Format("x{} y{} w60 Right", x0, y1 + 4), T("ds.thread", "线程："))
+    ; 行3：线程
+    y2 := y1 + 36
+    UI.DS_L_Thread := UI.Main.Add("Text", Format("x{} y{} w90 Right", x0, y2 + 4), T("ds.thread", "线程："))
     page.Controls.Push(UI.DS_L_Thread)
-    UI.DS_DdThread := UI.Main.Add("DropDownList", "x+6 w200")
+    UI.DS_DdThread := UI.Main.Add("DropDownList", "x+10 w160")
     page.Controls.Push(UI.DS_DdThread)
 
-    UI.DS_L_Cd := UI.Main.Add("Text", Format("x{} y{} w90 Right", x0 + 310, y1 + 4), T("ds.cooldown", "冷却(ms)："))
+    ; 行4：冷却
+    y3 := y2 + 36
+    UI.DS_L_Cd := UI.Main.Add("Text", Format("x{} y{} w90 Right", x0, y3 + 4), T("ds.cooldown", "冷却(ms)："))
     page.Controls.Push(UI.DS_L_Cd)
-    UI.DS_EdCd := UI.Main.Add("Edit", "x+6 w120 Number")
+    UI.DS_EdCd := UI.Main.Add("Edit", "x+10 w160 Number")
     page.Controls.Push(UI.DS_EdCd)
 
-    UI.DS_L_Pre := UI.Main.Add("Text", "x+20 w100 Right", T("ds.predelay", "预延时(ms)："))
+    ; 行5：预延时
+    y4 := y3 + 36
+    UI.DS_L_Pre := UI.Main.Add("Text", Format("x{} y{} w90 Right", x0, y4 + 4), T("ds.predelay", "预延时(ms)："))
     page.Controls.Push(UI.DS_L_Pre)
-    UI.DS_EdPre := UI.Main.Add("Edit", "x+6 w120 Number")
+    UI.DS_EdPre := UI.Main.Add("Edit", "x+10 w160 Number")
     page.Controls.Push(UI.DS_EdPre)
 
-    ; 行3：按钮
-    y2 := y1 + 40
-    UI.DS_BtnSave := UI.Main.Add("Button", Format("x{} y{} w100 h28", x0, y2), T("btn.save", "保存"))
+    ; 行6：保存按钮
+    y5 := y4 + 40
+    UI.DS_BtnSave := UI.Main.Add("Button", Format("x{} y{} w96 h30", x0, y5), T("btn.save", "保存"))
     page.Controls.Push(UI.DS_BtnSave)
 
     ; 事件

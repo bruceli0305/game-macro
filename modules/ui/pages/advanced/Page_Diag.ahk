@@ -16,7 +16,7 @@ Page_Diag_Build(page) {
     UI.DG_Info := UI.Main.Add("Edit", Format("x{} y{} w{} r8 ReadOnly", rc.X + 12, rc.Y + 26, rc.W - 24))
     page.Controls.Push(UI.DG_Info)
 
-    UI.DG_L_Out := UI.Main.Add("Text", Format("x{} y{} w70 Right", rc.X + 12, rc.Y + 26 + 8*22 + 12), "输出索引：")
+    UI.DG_L_Out := UI.Main.Add("Text", Format("x{} y{} w90 Right", rc.X + 12, rc.Y + 26 + 8*22 + 12), "输出索引：")
     page.Controls.Push(UI.DG_L_Out)
     UI.DG_DdOut := UI.Main.Add("DropDownList", "x+6 w260")
     page.Controls.Push(UI.DG_DdOut)

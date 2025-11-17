@@ -186,21 +186,21 @@ REUI_TrackEditor_Open(owner, cfg, t, idx := 0, onSaved := 0) {
         t.RuleRefs := []
     }
 
-    g := Gui("+Owner" owner.Hwnd, isNew ? "新增轨道" : "编辑轨道")
+    g := Gui("+Owner" owner.Hwnd, isNew ? "" : "编辑轨道")
     g.MarginX := 12
     g.MarginY := 10
     g.SetFont("s10", "Segoe UI")
 
     ; ID
-    g.Add("Text", "xm ym w70 Right", "ID：")
-    edId := g.Add("Edit", "x+6 w100 ReadOnly", t.Id)
+    g.Add("Text", "xm ym w100 Right", "ID：")
+    edId := g.Add("Edit", "x+6 w120 ReadOnly", t.Id)
 
     ; 名称/线程
-    g.Add("Text", "xm y+8 w70 Right", "名称：")
-    edName := g.Add("Edit", "x+6 w220", t.Name)
+    g.Add("Text", "xm y+8 w100 Right", "名称：")
+    edName := g.Add("Edit", "x+6 w120", t.Name)
 
-    g.Add("Text", "x+20 w50 Right", "线程：")
-    ddThr := g.Add("DropDownList", "x+6 w200")
+    g.Add("Text", "x+20 w100 Right", "线程：")
+    ddThr := g.Add("DropDownList", "x+6 w120")
     thNames := []
     thIds := []
     try {
@@ -224,15 +224,15 @@ REUI_TrackEditor_Open(owner, cfg, t, idx := 0, onSaved := 0) {
     ddThr.Value := sel
 
     ; 时长/最短停留
-    g.Add("Text", "xm y+8 w70 Right", "最长(ms)：")
+    g.Add("Text", "xm y+8 w100 Right", "最长(ms)：")
     edMax := g.Add("Edit", "x+6 w120 Number Center", t.MaxDurationMs)
 
-    g.Add("Text", "x+20 w90 Right", "最短停留(ms)：")
+    g.Add("Text", "x+20 w100 Right", "最短停留：")
     edMin := g.Add("Edit", "x+6 w120 Number Center", HasProp(t,"MinStayMs") ? t.MinStayMs : 0)
 
     ; 下一轨
-    g.Add("Text", "xm y+8 w70 Right", "下一轨：")
-    ddNext := g.Add("DropDownList", "x+6 w160")
+    g.Add("Text", "xm y+8 w100 Right", "下一轨：")
+    ddNext := g.Add("DropDownList", "x+6 w120")
     ids := REUI_ListTrackIds(cfg)
     if (isNew) {
         if (ids.Length = 0 || ids[ids.Length] != t.Id) {
@@ -394,7 +394,7 @@ REUI_WatchEditor_Open(owner, w, idx := 0, onSaved := 0) {
     }
 
     g2.Add("Text", "xm y+8 w70 Right", "计数：")
-    edReq := g2.Add("Edit", "x+6 w120 Number Center", HasProp(w, "RequireCount") ? w.RequireCount : 1)
+    edReq := g2.Add("Edit", "x+6 w260 Number Center", HasProp(w, "RequireCount") ? w.RequireCount : 1)
 
     cbVB := g2.Add("CheckBox", "xm y+8", "黑框确认")
     cbVB.Value := HasProp(w, "VerifyBlack") ? (w.VerifyBlack ? 1 : 0) : 0

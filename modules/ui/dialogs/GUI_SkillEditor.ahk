@@ -14,26 +14,27 @@ SkillEditor_Open(skill, idx := 0, onSaved := 0) {
     dlg.MarginX := 14, dlg.MarginY := 12
     dlg.SetFont("s10", "Segoe UI")
 
-    dlg.Add("Text", "w70", "技能名：")
-    tbName := dlg.Add("Edit", "x+10 w260", skill.Name)
+    dlg.Add("Text", "w70 Right", "技能名：")
+    tbName := dlg.Add("Edit", "x+10 w336", skill.Name)
 
-    dlg.Add("Text", "xm w70", "键位：")
-    hkKey := dlg.Add("Hotkey", "x+10 w160", skill.Key)
+    dlg.Add("Text", "xm w70 Right", "键位：")
+    hkKey := dlg.Add("Hotkey", "x+10 w336", skill.Key)
     
-    btnMouseKey := dlg.Add("Button", "x+8 w110 h28", "捕获鼠标键")   ; 新增
+    btnMouseKey := dlg.Add("Button", "x+8 w110 h28", "捕获鼠标键")
 
-    dlg.Add("Text", "xm w70", "坐标X：")
+    dlg.Add("Text", "xm w70 Right", "坐标X：")
     tbX := dlg.Add("Edit", "x+10 w120 Number", skill.X)
-    dlg.Add("Text", "x+16 w70", "坐标Y：")
+    dlg.Add("Text", "x+16 w70 Right", "坐标Y：")
     tbY := dlg.Add("Edit", "x+10 w120 Number", skill.Y)
-    btnPick := dlg.Add("Button", "x+16 w96 h28", "拾取像素")
+    btnPick := dlg.Add("Button", "x+8 w110 h28", "拾取像素")
 
-    dlg.Add("Text", "xm w70", "颜色：")
-    tbColor := dlg.Add("Edit", "x+10 w160", skill.Color)
-    dlg.Add("Text", "x+16 w70", "容差：")
-    tbTol := dlg.Add("Edit", "x+10 w96 Number", skill.Tol)
-    dlg.Add("Text", "x+16 w70", "读条(ms)：")
-    tbCast := dlg.Add("Edit", "x+10 w96 Number", HasProp(skill,"CastMs") ? skill.CastMs : 0)
+    dlg.Add("Text", "xm w70 Right", "颜色：")
+    tbColor := dlg.Add("Edit", "x+10 w120", skill.Color)
+    dlg.Add("Text", "x+16 w70 Right", "容差：")
+    tbTol := dlg.Add("Edit", "x+10 w120 Number", skill.Tol)
+
+    dlg.Add("Text", "xm w70 Right", "读条：")
+    tbCast := dlg.Add("Edit", "x+10 w120 Number", HasProp(skill,"CastMs") ? skill.CastMs : 0)
 
     btnSave := dlg.Add("Button", "xm w96 h30", "保存")
     btnCancel := dlg.Add("Button", "x+8 w96 h30", "取消")
@@ -41,7 +42,7 @@ SkillEditor_Open(skill, idx := 0, onSaved := 0) {
     btnPick.OnEvent("Click", OnPick)
     btnSave.OnEvent("Click", OnSave)
     btnCancel.OnEvent("Click", (*) => dlg.Destroy())
-    btnMouseKey.OnEvent("Click", OnCapMouse)                      ; 新增
+    btnMouseKey.OnEvent("Click", OnCapMouse)
 
     dlg.Show()
 
@@ -49,14 +50,14 @@ SkillEditor_Open(skill, idx := 0, onSaved := 0) {
         global App
         offY := App["ProfileData"].PickHoverEnabled ? App["ProfileData"].PickHoverOffsetY : 0
         dwell := App["ProfileData"].PickHoverEnabled ? App["ProfileData"].PickHoverDwellMs : 0
-        res := Pixel_PickPixel(dlg, offY, dwell)   ; 修正：传入避让参数
+        res := Pixel_PickPixel(dlg, offY, dwell)
         if res {
             tbX.Value := res.X
             tbY.Value := res.Y
             tbColor.Value := Pixel_ColorToHex(res.Color)
         }
     }
-    ; 新增：捕获 MButton / XButton1 / XButton2
+    
     OnCapMouse(*) {
         ToolTip "请按下 鼠标中键/侧键（Esc 取消）"
         key := ""

@@ -16,19 +16,19 @@ Page_ToolsQuick_Build(page) {
     x0 := rc.X + 12
     y0 := rc.Y + 26
 
-    UI.TQ_L_Key := UI.Main.Add("Text", Format("x{} y{} w80 Right", x0, y0 + 4), "键序列：")
+    UI.TQ_L_Key := UI.Main.Add("Text", Format("x{} y{} w90 Right", x0, y0 + 4), "键序列：")
     page.Controls.Push(UI.TQ_L_Key)
-    UI.TQ_EdKey := UI.Main.Add("Edit", "x+6 w320")
+    UI.TQ_EdKey := UI.Main.Add("Edit", "x+6 w120")
     page.Controls.Push(UI.TQ_EdKey)
 
     UI.TQ_L_Delay := UI.Main.Add("Text", "x+16 w90 Right", "延时(ms)：")
     page.Controls.Push(UI.TQ_L_Delay)
-    UI.TQ_EdDelay := UI.Main.Add("Edit", "x+6 w90 Number")
+    UI.TQ_EdDelay := UI.Main.Add("Edit", "x+6 w120 Number")
     page.Controls.Push(UI.TQ_EdDelay)
 
-    UI.TQ_L_Hold := UI.Main.Add("Text", "x+16 w100 Right", "按住(ms)：")
+    UI.TQ_L_Hold := UI.Main.Add("Text", "x+16 w90 Right", "按住(ms)：")
     page.Controls.Push(UI.TQ_L_Hold)
-    UI.TQ_EdHold := UI.Main.Add("Edit", "x+6 w90 Number")
+    UI.TQ_EdHold := UI.Main.Add("Edit", "x+6 w120 Number")
     page.Controls.Push(UI.TQ_EdHold)
 
     y1 := y0 + 34

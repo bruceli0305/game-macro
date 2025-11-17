@@ -82,7 +82,7 @@ Page_Profile_Build(page := 0) {
     padTop := 26
     ctrlGap:= 8
 
-    rows := 8
+    rows := 9
     genH := padTop + rows * rowH + 14
 
     gy := rc.Y + 80 + 10
@@ -113,8 +113,15 @@ Page_Profile_Build(page := 0) {
         } catch {
         }
     }
+    ; 鼠标热键回显（Hotkey 控件不支持显示鼠标键，这里单独显示）
+    UI.LblStartEcho := UI.Main.Add("Text", Format("x{} y{} w120", xCtrl + 180 + 8, yLine1 + 4), "")
+    if (IsObject(pg)) {
+        try pg.Controls.Push(UI.LblStartEcho)
+    }
 
-    UI.BtnCapStartMouse := UI.Main.Add("Button", Format("x{} y{} w110 h26", xCtrl + 100 + ctrlGap, yLine1 - 2), T("btn.captureMouse","捕获鼠标键"))
+    ; 当用户在 Hotkey 控件内手动输入/修改键盘热键时，清空鼠标热键回显与缓存
+    try UI.HkStart.OnEvent("Change", Profile_OnHotkeyChanged)
+    UI.BtnCapStartMouse := UI.Main.Add("Button", Format("x{} y{} w110 h26", xCtrl, yLine1 + rowH - 2), T("btn.captureMouse","捕获鼠标键"))
     if (IsObject(pg)) {
         try {
             pg.Controls.Push(UI.BtnCapStartMouse)
@@ -122,7 +129,7 @@ Page_Profile_Build(page := 0) {
         }
     }
 
-    y2 := yLine1 + rowH
+    y2 := yLine1 + rowH * 2
     UI.LblPoll := UI.Main.Add("Text", Format("x{} y{} w{} Right", xLabel, y2 + 4, labelW), T("label.pollMs","轮询(ms)："))
     if (IsObject(pg)) {
         try {
@@ -274,7 +281,7 @@ Page_Profile_Layout(rc := 0) {
     } catch {
     }
 
-    rows := 8
+    rows := 9
     genH := padTop + rows * rowH + 14
     gy   := rc.Y + 80 + 10
 
@@ -295,12 +302,17 @@ Page_Profile_Layout(rc := 0) {
         UI.HkStart.Move(xCtrl, y1, 180)
     } catch {
     }
+    ; 新增/替换：按钮放在下一行，左对齐 Hotkey
     try {
-        UI.BtnCapStartMouse.Move(xCtrl + 100 + ctrlGap, y1 - 2)
+        UI.BtnCapStartMouse.Move(xCtrl, y1 + rowH - 2, 110, 26)
+    } catch {
+    }
+    try {
+        UI.LblStartEcho.Move(xCtrl + 180 + 8, y1 + 4, 120)
     } catch {
     }
 
-    y2 := y1 + rowH
+    y2 := y1 + rowH * 2
     try {
         UI.LblPoll.Move(xLabel, y2 + 4, labelW)
     } catch {
@@ -374,6 +386,12 @@ Page_Profile_OnEnter(*) {
     } catch as e {
         UI_Trace("Page_Profile_OnEnter exception: " e.Message)
     }
+    try {
+        if IsSet(App) && App.Has("ProfileData") {
+            Profile_UI_SetStartHotkeyEcho(App["ProfileData"].StartHotkey)
+        }
+    } catch {
+    }
 }
 
 Profile_OnProfilesChanged(*) {
@@ -401,6 +419,9 @@ Profile_OnProfilesChanged(*) {
     try {
         ok := Profile_SwitchProfile_Strong(name)
         UI_Trace("ProfilesChanged switched ok=" ok)
+        if (ok) {
+            try Profile_UI_SetStartHotkeyEcho(App["ProfileData"].StartHotkey)
+        }
     } catch as e {
         UI_Trace("ProfilesChanged switch exception: " e.Message)
     }
@@ -540,7 +561,15 @@ Profile_OnCaptureStartMouse(*) {
     ToolTip()
     if (key != "") {
         try {
-            UI.HkStart.Value := key
+            UI.HkStart.Value := ""
+        } catch {
+        }
+        try {
+            UI.HkStart.Tag  := key
+        } catch {
+        }
+        try {
+            UI.LblStartEcho.Text := "鼠标: " key
         } catch {
         }
         try {
@@ -550,7 +579,15 @@ Profile_OnCaptureStartMouse(*) {
     }
     UI_Trace("Profile_OnCaptureStartMouse end key=" key)
 }
-
+Profile_OnHotkeyChanged(*) {
+    global UI, g_Profile_Populating
+    if (g_Profile_Populating) {
+        return
+    }
+    ; 用户手动输入键盘热键 → 清空鼠标回显与缓存
+    try UI.HkStart.Tag := ""
+    try UI.LblStartEcho.Text := ""
+}
 Profile_OnApplyGeneral(*) {
     global App, UI
     UI_Trace("Profile_OnApplyGeneral")
@@ -563,7 +600,15 @@ Profile_OnApplyGeneral(*) {
         }
         prof := App["ProfileData"]
 
-        prof.StartHotkey := UI.HkStart.Value
+        hk := ""
+        try {
+            hk := UI.HkStart.Value
+        } catch {
+        }
+        if (hk = "") {
+            try hk := UI.HkStart.Tag
+        }
+        prof.StartHotkey := hk
 
         pi := 25
         if (UI.PollEdit.Value != "") {
@@ -600,7 +645,10 @@ Profile_OnApplyGeneral(*) {
         prof.PickConfirmKey := UI.DdPickKey.Text
 
         Storage_SaveProfile(prof)
-
+        try {
+            Profile_UI_SetStartHotkeyEcho(prof.StartHotkey)
+        } catch {
+        }
         try {
             Hotkeys_BindStartHotkey(prof.StartHotkey)
         } catch {
@@ -642,4 +690,30 @@ UI_Profile_FallbackRect() {
     } catch {
         return { X: 12, Y: 10, W: 700, H: 500 }
     }
+}
+
+; 判断是否为鼠标类热键（支持 ~ 前缀）
+Profile_IsMouseHotkey(hk) {
+    if (hk = "")
+        return false
+    return RegExMatch(hk, "i)^(~?)(XButton1|XButton2|MButton|Wheel(Up|Down|Left|Right))$")
+}
+
+; 按“已保存/指定”的热键更新UI显示（键盘→Hotkey；鼠标→标签）
+Profile_UI_SetStartHotkeyEcho(hk) {
+    global UI, g_Profile_Populating
+    g_Profile_Populating := true
+    try {
+        if Profile_IsMouseHotkey(hk) {
+            try UI.HkStart.Value := ""          ; Hotkey 控件不显示鼠标
+            try UI.HkStart.Tag   := hk          ; 在 Tag 里缓存鼠标热键
+            try UI.LblStartEcho.Text := "鼠标: " hk
+        } else {
+            try UI.HkStart.Tag   := ""          ; 清掉鼠标缓存
+            try UI.LblStartEcho.Text := ""      ; 清掉回显
+            try UI.HkStart.Value := hk          ; 键盘热键回填 Hotkey
+        }
+    } catch {
+    }
+    g_Profile_Populating := false
 }

@@ -190,12 +190,12 @@ REUI_GateEditor_Open(owner, cfg, g, idx := 0, onSaved := 0) {
     ge.MarginY := 10
     ge.SetFont("s10", "Segoe UI")
 
-    ge.Add("Text", "w80 Right", "优先级：")
+    ge.Add("Text", "w90 Right", "优先级：")
     edPri := ge.Add("Edit", "x+6 w120 Number", g.Priority)
 
     ; 来源轨
-    ge.Add("Text", "xm y+8 w100 Right", "来源轨：")
-    ddFrom := ge.Add("DropDownList", "x+6 w160")
+    ge.Add("Text", "xm y+8 w90 Right", "来源轨：")
+    ddFrom := ge.Add("DropDownList", "x+6 w120")
     trackIds := REUI_ListTrackIds(cfg)
     arrFrom := []
     for _, id in trackIds {
@@ -214,8 +214,8 @@ REUI_GateEditor_Open(owner, cfg, g, idx := 0, onSaved := 0) {
     ddFrom.Value := selFrom
 
     ; 目标轨
-    ge.Add("Text", "x+20 w80 Right", "目标轨：")
-    ddTo := ge.Add("DropDownList", "x+6 w160")
+    ge.Add("Text", "x+20 w90 Right", "目标轨：")
+    ddTo := ge.Add("DropDownList", "x+6 w120")
     arrTo := []
     for _, id in trackIds {
         arrTo.Push(id)
@@ -232,7 +232,7 @@ REUI_GateEditor_Open(owner, cfg, g, idx := 0, onSaved := 0) {
     }
     ddTo.Value := selTo
 
-    ge.Add("Text", "xm y+8 w70 Right", "逻辑：")
+    ge.Add("Text", "xm y+8 w90 Right", "逻辑：")
     ddLogic := ge.Add("DropDownList", "x+6 w120", ["AND", "OR"])
     ddLogic.Value := (StrUpper(g.Logic) = "OR") ? 2 : 1
 

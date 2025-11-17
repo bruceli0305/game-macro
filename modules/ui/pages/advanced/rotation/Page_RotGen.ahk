@@ -2,7 +2,6 @@
 #Requires AutoHotkey v2
 #Include "..\..\..\rotation\RE_UI_Common.ahk"
 
-; 轮换配置 - 常规页
 Page_RotGen_Build(page) {
     global UI, App
     rc := UI_GetPageRect()
@@ -15,109 +14,131 @@ Page_RotGen_Build(page) {
     }
 
     prof := App["ProfileData"]
-    if !HasProp(prof, "Rotation") {
+    if !HasProp(prof,"Rotation")
         prof.Rotation := {}
-    }
     cfg := prof.Rotation
     REUI_EnsureRotationDefaults(&cfg)
-    prof.Rotation := cfg
 
-    ; 行距与列宽
     x := rc.X
     y := rc.Y
-    labelW := 110
-    colW := 160
-    gapX := 10
-    gapY := 10
+    rowH := 34
+    fullW := rc.W - 20
 
-    ; 启用
-    UI.RG_cbEnable := UI.Main.Add("CheckBox", Format("x{} y{} w160", x, y), "启用轮换")
+    ; ============ 第一行：启用 =============
+    UI.RG_cbEnable := UI.Main.Add("CheckBox", Format("x{} y{} w200", x, y), "启用轮换")
     page.Controls.Push(UI.RG_cbEnable)
+    y += rowH
 
-    ; 默认轨道 + 忙窗 + 黑色容差
-    y := y + 34
-    UI.RG_labDef := UI.Main.Add("Text", Format("x{} y{} w{} Right", x, y, labelW), "默认轨道：")
-    UI.RG_ddDefTrack := UI.Main.Add("DropDownList", Format("x+{} w{}", gapX, colW))
-    page.Controls.Push(UI.RG_labDef), page.Controls.Push(UI.RG_ddDefTrack)
+    ; ============ 默认轨道 ============
+    UI.RG_labDef := UI.Main.Add("Text", Format("x{} y{} w120 Right", x, y), "默认轨道：")
+    UI.RG_ddDefTrack := UI.Main.Add("DropDownList", Format("x+10 w200"))
+    page.Controls.Push(UI.RG_labDef, UI.RG_ddDefTrack)
+    y += rowH
 
-    UI.RG_labBusy := UI.Main.Add("Text", Format("x+{} w{} Right", 20, labelW), "忙窗(ms)：")
-    UI.RG_edBusy := UI.Main.Add("Edit", Format("x+{} w120 Number Center", gapX))
-    page.Controls.Push(UI.RG_labBusy), page.Controls.Push(UI.RG_edBusy)
+    ; ============ 忙窗 ============
+    UI.RG_labBusy := UI.Main.Add("Text", Format("x{} y{} w120 Right", x, y), "忙窗(ms)：")
+    UI.RG_edBusy := UI.Main.Add("Edit", "x+10 w200 Number Center")
+    page.Controls.Push(UI.RG_labBusy, UI.RG_edBusy)
+    y += rowH
 
-    UI.RG_labTol := UI.Main.Add("Text", Format("x+{} w{} Right", 20, 110), "黑色容差：")
-    UI.RG_edTol := UI.Main.Add("Edit", Format("x+{} w120 Number Center", gapX))
-    page.Controls.Push(UI.RG_labTol), page.Controls.Push(UI.RG_edTol)
+    ; ============ 黑色容差 ============
+    UI.RG_labTol := UI.Main.Add("Text", Format("x{} y{} w120 Right", x, y), "黑色容差：")
+    UI.RG_edTol := UI.Main.Add("Edit", "x+10 w200 Number Center")
+    page.Controls.Push(UI.RG_labTol, UI.RG_edTol)
+    y += rowH
 
-    ; 尊重施法锁
-    y := y + 36
+    ; ============ 切换键（附带验证） ============
+    UI.RG_labSwap := UI.Main.Add("Text", Format("x{} y{} w120 Right", x, y), "切换键：")
+    UI.RG_hkSwap := UI.Main.Add("Hotkey", "x+10 w200")
+    UI.RG_cbVerifySwap := UI.Main.Add("CheckBox", "x+20 w120", "验证切换")
+    page.Controls.Push(UI.RG_labSwap, UI.RG_hkSwap, UI.RG_cbVerifySwap)
+    y += rowH
+
+    ; ============ 切换超时 ============
+    UI.RG_labSwapTO := UI.Main.Add("Text", Format("x{} y{} w120 Right", x, y), "切换超时(ms)：")
+    UI.RG_edSwapTO := UI.Main.Add("Edit", "x+10 w200 Number Center")
+    page.Controls.Push(UI.RG_labSwapTO, UI.RG_edSwapTO)
+    y += rowH
+
+    ; ============ 重试次数 ============
+    UI.RG_labSwapRetry := UI.Main.Add("Text", Format("x{} y{} w120 Right", x, y), "重试次数：")
+    UI.RG_edSwapRetry := UI.Main.Add("Edit", "x+10 w200 Number Center")
+    page.Controls.Push(UI.RG_labSwapRetry, UI.RG_edSwapRetry)
+    y += rowH
+
+    ; ============ 尊重施法锁 ============
     UI.RG_cbCast := UI.Main.Add("CheckBox", Format("x{} y{} w200", x, y), "尊重施法锁")
     page.Controls.Push(UI.RG_cbCast)
+    y += rowH
 
-    ; 切换键/验证
-    y := y + 34
-    UI.RG_labSwap := UI.Main.Add("Text", Format("x{} y{} w{} Right", x, y, labelW), "切换键：")
-    UI.RG_hkSwap := UI.Main.Add("Hotkey", Format("x+{} w{}", gapX, colW))
-    UI.RG_cbVerifySwap := UI.Main.Add("CheckBox", "x+12 w120", "验证切换")
-    page.Controls.Push(UI.RG_labSwap), page.Controls.Push(UI.RG_hkSwap), page.Controls.Push(UI.RG_cbVerifySwap)
+    ; ============ 启用跳轨 + 冷却 ============
+    UI.RG_cbGates := UI.Main.Add("CheckBox", Format("x{} y{} w120", x, y), "启用跳轨")
+    UI.RG_labGateCd := UI.Main.Add("Text", "x+10 w80", "冷却(ms)：")
+    UI.RG_edGateCd := UI.Main.Add("Edit", "x+10 w110 Number Center")
+    page.Controls.Push(UI.RG_cbGates, UI.RG_labGateCd, UI.RG_edGateCd)
+    y += (rowH + 12)
 
-    ; 切换超时/重试
-    y := y + 36
-    UI.RG_labSwapTO := UI.Main.Add("Text", Format("x{} y{} w{} Right", x, y, labelW), "切换超时(ms)：")
-    UI.RG_edSwapTO := UI.Main.Add("Edit", Format("x+{} w120 Number Center", gapX))
-    UI.RG_labSwapRetry := UI.Main.Add("Text", "x+20 w100 Right", "重试次数：")
-    UI.RG_edSwapRetry := UI.Main.Add("Edit", "x+6 w120 Number Center")
-    page.Controls.Push(UI.RG_labSwapTO), page.Controls.Push(UI.RG_edSwapTO), page.Controls.Push(UI.RG_labSwapRetry), page.Controls.Push(UI.RG_edSwapRetry)
-
-    ; 启用跳轨 + 冷却
-    y := y + 36
-    UI.RG_cbGates := UI.Main.Add("CheckBox", Format("x{} y{} w200", x, y), "启用跳轨")
-    UI.RG_labGateCd := UI.Main.Add("Text", "x+12 w100 Right", "跳轨冷却(ms)：")
-    UI.RG_edGateCd := UI.Main.Add("Edit", "x+6 w120 Number Center")
-    page.Controls.Push(UI.RG_cbGates), page.Controls.Push(UI.RG_labGateCd), page.Controls.Push(UI.RG_edGateCd)
-
-    ; 黑框防抖 Group
-    y := y + 48
-    UI.RG_gbBG := UI.Main.Add("GroupBox", Format("x{} y{} w{} h150", x, y, rc.W), "黑框防抖")
+    ; ============================================================
+    ;                     黑框防抖（每行独立）  
+    ; ============================================================
+    UI.RG_gbBG := UI.Main.Add("GroupBox", Format("x{} y{} w{} h290", x, y, fullW), "黑框防抖")
     page.Controls.Push(UI.RG_gbBG)
 
-    UI.RG_cbBG := UI.Main.Add("CheckBox", Format("x{} y{} w80", x + 12, y + 26), "启用")
-    UI.RG_labBG_Samp := UI.Main.Add("Text", "x+10 w70 Right", "采样数：")
-    UI.RG_edBG_Samp := UI.Main.Add("Edit", "x+6 w80 Number Center")
-    page.Controls.Push(UI.RG_cbBG), page.Controls.Push(UI.RG_labBG_Samp), page.Controls.Push(UI.RG_edBG_Samp)
+    gy := y + 26
 
-    UI.RG_labBG_Ratio := UI.Main.Add("Text", "x+16 w110 Right", "黑像素阈值：")
-    UI.RG_edBG_Ratio := UI.Main.Add("Edit", "x+6 w100 Center")
-    page.Controls.Push(UI.RG_labBG_Ratio), page.Controls.Push(UI.RG_edBG_Ratio)
+    ; 启用
+    UI.RG_cbBG := UI.Main.Add("CheckBox", Format("x{} y{} w120", x+10, gy), "启用")
+    page.Controls.Push(UI.RG_cbBG)
+    gy += rowH
 
-    UI.RG_labBG_Win := UI.Main.Add("Text", "x+16 w100 Right", "冻结窗(ms)：")
-    UI.RG_edBG_Win := UI.Main.Add("Edit", "x+6 w100 Number Center")
-    page.Controls.Push(UI.RG_labBG_Win), page.Controls.Push(UI.RG_edBG_Win)
+    ; 采样数
+    UI.RG_labBG_Samp := UI.Main.Add("Text", Format("x{} y{} w120 Right", x+10, gy), "采样数：")
+    UI.RG_edBG_Samp := UI.Main.Add("Edit", "x+10 w200 Number Center")
+    page.Controls.Push(UI.RG_labBG_Samp, UI.RG_edBG_Samp)
+    gy += rowH
 
-    y2 := y + 26 + 28
-    UI.RG_labBG_Cool := UI.Main.Add("Text", Format("x{} y{} w100 Right", x + 12, y2), "冷却(ms)：")
-    UI.RG_edBG_Cool := UI.Main.Add("Edit", "x+6 w100 Number Center")
-    page.Controls.Push(UI.RG_labBG_Cool), page.Controls.Push(UI.RG_edBG_Cool)
+    ; 黑像素阈值
+    UI.RG_labBG_Ratio := UI.Main.Add("Text", Format("x{} y{} w120 Right", x+10, gy), "黑像素阈值：")
+    UI.RG_edBG_Ratio := UI.Main.Add("Edit", "x+10 w200 Center")
+    page.Controls.Push(UI.RG_labBG_Ratio, UI.RG_edBG_Ratio)
+    gy += rowH
 
-    UI.RG_labBG_Min := UI.Main.Add("Text", "x+16 w120 Right", "黑窗最小延迟(ms)：")
-    UI.RG_edBG_Min := UI.Main.Add("Edit", "x+6 w100 Number Center")
-    page.Controls.Push(UI.RG_labBG_Min), page.Controls.Push(UI.RG_edBG_Min)
+    ; 冻结窗
+    UI.RG_labBG_Win := UI.Main.Add("Text", Format("x{} y{} w120 Right", x+10, gy), "冻结窗(ms)：")
+    UI.RG_edBG_Win := UI.Main.Add("Edit", "x+10 w200 Number Center")
+    page.Controls.Push(UI.RG_labBG_Win, UI.RG_edBG_Win)
+    gy += rowH
 
-    UI.RG_labBG_Max := UI.Main.Add("Text", "x+16 w120 Right", "黑窗最大延迟(ms)：")
-    UI.RG_edBG_Max := UI.Main.Add("Edit", "x+6 w100 Number Center")
-    page.Controls.Push(UI.RG_labBG_Max), page.Controls.Push(UI.RG_edBG_Max)
+    ; 冷却
+    UI.RG_labBG_Cool := UI.Main.Add("Text", Format("x{} y{} w120 Right", x+10, gy), "冷却(ms)：")
+    UI.RG_edBG_Cool := UI.Main.Add("Edit", "x+10 w200 Number Center")
+    page.Controls.Push(UI.RG_labBG_Cool, UI.RG_edBG_Cool)
+    gy += rowH
 
-    UI.RG_cbBG_Uniq := UI.Main.Add("CheckBox", "x+16 w140", "需要唯一黑框")
+    ; 黑窗最小延迟
+    UI.RG_labBG_Min := UI.Main.Add("Text", Format("x{} y{} w120 Right", x+10, gy), "最小延迟(ms)：")
+    UI.RG_edBG_Min := UI.Main.Add("Edit", "x+10 w200 Number Center")
+    page.Controls.Push(UI.RG_labBG_Min, UI.RG_edBG_Min)
+    gy += rowH
+
+    ; 黑窗最大延迟
+    UI.RG_labBG_Max := UI.Main.Add("Text", Format("x{} y{} w120 Right", x+10, gy), "最大延迟(ms)：")
+    UI.RG_edBG_Max := UI.Main.Add("Edit", "x+10 w200 Number Center")
+    page.Controls.Push(UI.RG_labBG_Max, UI.RG_edBG_Max)
+    gy += rowH
+
+    ; 唯一黑框
+    UI.RG_cbBG_Uniq := UI.Main.Add("CheckBox", Format("x{} y{} w140", x+10, gy), "需要唯一黑框")
     page.Controls.Push(UI.RG_cbBG_Uniq)
 
     ; 保存按钮
-    yBtn := y + 150 + 12
-    UI.RG_btnSave := UI.Main.Add("Button", Format("x{} y{} w120", x, yBtn), "保存")
-    page.Controls.Push(UI.RG_btnSave)
+    UI.RG_btnSave := UI.Main.Add("Button", Format("x{} y{} w120", x, y+300), "保存")
     UI.RG_btnSave.OnEvent("Click", Page_RotGen_OnSave)
+    page.Controls.Push(UI.RG_btnSave)
 
-    ; 初次填充
     Page_RotGen_Refresh()
 }
+
 
 Page_RotGen_Layout(rc) {
     try {
