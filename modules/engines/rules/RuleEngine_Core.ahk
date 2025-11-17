@@ -19,7 +19,7 @@ RE_ClearFilter() {
 
 ; 会话优先；无会话则扫描命中：非计数→开启会话；计数→走旧路径 Fire
 RuleEngine_Tick() {
-    global App
+    global App, RE_ScanOrder, RE_Filter
     if (RE_SessionActive()) {
         return RuleEngine_SessionStep()
     }
@@ -29,42 +29,57 @@ RuleEngine_Tick() {
     }
 
     now := A_TickCount
-    for rIdx, r in prof.Rules {
-        if !r.Enabled
-            continue
 
-        ; 过滤
+    TryEvalRule(rIdx) {
+        r := prof.Rules[rIdx]
+        if !r.Enabled
+            return false
+
+        ; 冷却
+        last := HasProp(r, "LastFire") ? r.LastFire : 0
+        if (r.CooldownMs - (now - last) > 0)
+            return false
+
+        ; 过滤（若外部仍开启）
         if (RE_Filter.Enabled) {
             if (RE_Filter.AllowRuleIds) {
                 if !RE_Filter.AllowRuleIds.Has(rIdx)
-                    continue
+                    return false
             } else if (RE_Filter.AllowSkills) {
                 if (r.Actions.Length = 0)
-                    continue
+                    return false
                 a1 := r.Actions[1]
                 sIdx1 := HasProp(a1,"SkillIndex") ? a1.SkillIndex : 0
                 if !(RE_Filter.AllowSkills.Has(sIdx1))
-                    continue
+                    return false
             }
         }
 
-        last := HasProp(r, "LastFire") ? r.LastFire : 0
-        if (r.CooldownMs - (now - last) > 0)
-            continue
-
         if !RuleEngine_EvalRule(r, prof)
-            continue
+            return false
 
         if RuleEngine_HasCounterCond(r) {
-            ; 计数模式：旧路径一次只发一个
-            if (RuleEngine_Fire(r, prof, rIdx))
-                return true
-            continue
+            return RuleEngine_Fire(r, prof, rIdx)
         }
-
-        ; 非计数：开启会话并尝试首动作
         RuleEngine_SessionBegin(prof, rIdx, r)
         return RuleEngine_SessionStep()
+    }
+
+    ; 若注入了扫描顺序，仅按该顺序评估
+    if (IsObject(RE_ScanOrder) && RE_ScanOrder.Length > 0) {
+        for _, id in RE_ScanOrder {
+            if (id >= 1 && id <= prof.Rules.Length) {
+                if (TryEvalRule(id))
+                    return true
+            }
+        }
+        return false
+    }
+
+    ; 否则按全局顺序
+    for rIdx, _ in prof.Rules {
+        if (TryEvalRule(rIdx))
+            return true
     }
     return false
 }
@@ -209,4 +224,12 @@ RuleEngine_Fire(rule, prof, ruleIndex := 0) {
             Counters_ResetMany(resetList)
     }
     return anySent
+}
+RE_SetScanOrder(arr) {
+    global RE_ScanOrder
+    RE_ScanOrder := IsObject(arr) ? arr.Clone() : []
+}
+RE_ClearScanOrder() {
+    global RE_ScanOrder
+    RE_ScanOrder := []
 }

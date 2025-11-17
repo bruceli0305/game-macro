@@ -13,10 +13,12 @@ Rotation_RunRules_ForCurrentTrack() {
         try {
             Rot_Log("Track#" rt.TrackId " filter=RuleRefs count=" tr.RuleRefs.Length)
             RE_SetAllowedRules(allow)
+            RE_SetScanOrder(tr.RuleRefs)          ; 新增：按轨道顺序扫描
             acted := RuleEngine_Tick()
         } catch {
         } finally {
             try RE_ClearFilter()
+            try RE_ClearScanOrder()               ; 新增：清理
         }
     } else {
         allowS := Map()

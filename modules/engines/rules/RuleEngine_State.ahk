@@ -29,6 +29,8 @@ global RE_VerifyForCounterOnly := IsSet(RE_VerifyForCounterOnly) ? RE_VerifyForC
 global RE_VerifyWaitMs := IsSet(RE_VerifyWaitMs) ? RE_VerifyWaitMs : 150
 global RE_VerifyTimeoutMs := IsSet(RE_VerifyTimeoutMs) ? RE_VerifyTimeoutMs : 600
 global RE_VerifyRetry := IsSet(RE_VerifyRetry) ? RE_VerifyRetry : 1
+; 扫描顺序（轨道内的有序 RuleRefs 注入）
+global RE_ScanOrder := IsSet(RE_ScanOrder) ? RE_ScanOrder : []
 
 RE_SessionActive() {
     return (IsObject(RE_Session) && RE_Session.Active)
