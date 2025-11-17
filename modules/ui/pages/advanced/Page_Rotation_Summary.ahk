@@ -67,30 +67,12 @@ Page_Rotation_Refresh(*) {
         } else {
             rot := HasProp(App["ProfileData"], "Rotation") ? App["ProfileData"].Rotation : {}
             en  := HasProp(rot,"Enabled") ? rot.Enabled : 0
-            def := HasProp(rot,"DefaultTrackId") ? rot.DefaultTrackId : 1
+            def := HasProp(rot,"DefaultTrackId") ? rot.DefaultTrackId : 0
             busy:= HasProp(rot,"BusyWindowMs") ? rot.BusyWindowMs : 200
             tol := HasProp(rot,"ColorTolBlack") ? rot.ColorTolBlack : 16
             swap:= HasProp(rot,"SwapKey") ? rot.SwapKey : ""
-            tracks := 0
-            gates  := 0
-
-            if (HasProp(rot,"Tracks") && IsObject(rot.Tracks)) {
-                tracks := rot.Tracks.Length
-            } else {
-                tracks := 0
-                if HasProp(rot,"Track1") {
-                    tracks += 1
-                }
-                if HasProp(rot,"Track2") {
-                    tracks += 1
-                }
-            }
-
-            if (HasProp(rot,"Gates") && IsObject(rot.Gates)) {
-                gates := rot.Gates.Length
-            } else {
-                gates := 0
-            }
+            tracks := (HasProp(rot,"Tracks") && IsObject(rot.Tracks)) ? rot.Tracks.Length : 0
+            gates  := (HasProp(rot,"Gates")  && IsObject(rot.Gates))  ? rot.Gates.Length  : 0
 
             text := ""
             text .= "Enabled: " en "`r`n"
