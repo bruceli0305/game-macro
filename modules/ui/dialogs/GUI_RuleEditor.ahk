@@ -169,6 +169,9 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
     dlg.Add("Text", "x+20 w90 Right", "会话超时(ms)：")
     edSessTO := dlg.Add("Edit", "x+6 w160 Number", HasProp(rule,"SessionTimeoutMs") ? rule.SessionTimeoutMs : 0)
     
+    dlg.Add("Text", "x+20 w100 Right", "中止冷却(ms)：")
+    edAbortCd := dlg.Add("Edit", "x+6 w160 Number", HasProp(rule,"AbortCooldownMs") ? rule.AbortCooldownMs : 0)
+
     dlg.Add("Text", "x+20 w90 Right", "线程：")
     ddThread := dlg.Add("DropDownList", "x+6 w160")
     names := []
@@ -190,7 +193,7 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
 
     ; 动作
     dlg.Add("Text", "xm y+10", "动作（释放技能步骤）：")
-    lvA := dlg.Add("ListView", "xm w760 r6 +Grid", ["序", "技能名", "延时(ms)", "按住(ms)", "需就绪"])
+    lvA := dlg.Add("ListView", "xm w760 r6 +Grid", ["序", "技能名", "延时(ms)", "按住(ms)", "需就绪", "验证", "重试"])
     btnAAdd := dlg.Add("Button", "xm w110", "新增动作")
     btnAEdit:= dlg.Add("Button", "x+8  w110", "编辑动作")
     btnADel := dlg.Add("Button", "x+8  w110", "删除动作")
@@ -244,7 +247,7 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
                 lvC.Add("", refType, refName, opText, (HasProp(c,"UseRefXY") && c.UseRefXY ? "是" : "否"), c.X, c.Y)
             }
         }
-        loop 6
+        loop 7
             lvC.ModifyCol(A_Index, "AutoHdr")
         lvC.Opt("+Redraw")
     }
@@ -371,6 +374,7 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
         rule.ActionGapMs := (edGap.Value != "") ? Integer(edGap.Value) : 60
         rule.ThreadId := ddThread.Value ? ddThread.Value : 1
         rule.SessionTimeoutMs := (edSessTO.Value != "") ? Integer(edSessTO.Value) : 0
+        rule.AbortCooldownMs  := (edAbortCd.Value != "") ? Integer(edAbortCd.Value) : 0
         if onSaved
             onSaved(rule, idx)
         dlg.Destroy()
@@ -674,6 +678,18 @@ ActEditor_Open(act, idx := 0, onSaved := 0) {
     cbReady := dlg.Add("CheckBox", "xm y+8", "需就绪")
     cbReady.Value := HasProp(act,"RequireReady") ? (act.RequireReady ? 1 : 0) : 0
 
+    cbVerify := dlg.Add("CheckBox", "xm y+8", "验证")
+    cbVerify.Value := HasProp(act,"Verify") ? (act.Verify ? 1 : 0) : 0
+
+    dlg.Add("Text", "xm w110 Right", "验证超时(ms)：")
+    edVto := dlg.Add("Edit", "x+6 w240 Number", HasProp(act,"VerifyTimeoutMs") ? act.VerifyTimeoutMs : 600)
+
+    dlg.Add("Text", "xm w110 Right", "重试次数：")
+    edRetry := dlg.Add("Edit", "x+6 w240 Number", HasProp(act,"Retry") ? act.Retry : 0)
+
+    dlg.Add("Text", "xm w110 Right", "重试间隔(ms)：")
+    edRgap := dlg.Add("Edit", "x+6 w120 Number", HasProp(act,"RetryGapMs") ? act.RetryGapMs : 150)
+
     btnSave := dlg.Add("Button", "xm y+10 w100", "保存")
     btnCancel := dlg.Add("Button", "x+8 w100", "取消")
     btnSave.OnEvent("Click", OnSave)
@@ -685,7 +701,13 @@ ActEditor_Open(act, idx := 0, onSaved := 0) {
         d := (edD.Value != "") ? Integer(edD.Value) : 0
         h := (edHold.Value != "") ? Integer(edHold.Value) : -1
         rr := cbReady.Value ? 1 : 0
-        newA := { SkillIndex: idxS, DelayMs: d, HoldMs: h, RequireReady: rr }
+        vf := cbVerify.Value ? 1 : 0
+        vto := (edVto.Value != "") ? Integer(edVto.Value) : 600
+        rt := (edRetry.Value != "") ? Integer(edRetry.Value) : 0
+        rg := (edRgap.Value != "") ? Integer(edRgap.Value) : 150
+        newA := { SkillIndex: idxS, DelayMs: d, HoldMs: h
+                , RequireReady: rr, Verify: vf, VerifyTimeoutMs: vto
+                , Retry: rt, RetryGapMs: rg }
         if onSaved
             onSaved(newA, idx)
         dlg.Destroy()

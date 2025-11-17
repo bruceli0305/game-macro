@@ -7,22 +7,24 @@ global RE_DebugVerbose := false          ; 详细级：打印每个条件细节
 global RE_ShowTips := false              ; 屏幕提示（默认关）
 ; 规则过滤（由 Rotation 设置，优先 AllowRuleIds，再用 AllowSkills）
 global RE_Filter := { Enabled:false, AllowSkills:0, AllowRuleIds:0 }
-; 规则过滤（由 Rotation 设置，优先 AllowRuleIds，再用 AllowSkills）
-global RE_Session := { Active:false, RuleId:0, ThreadId:1
-                     , Index:1, StartedAt:0, NextAt:0
-                     , HadAnySend:false, LockWaitUntil:0
-                     , TimeoutAt:0 }
-
 ; 规则最后触发时间（供 Gate:RuleQuiet 使用）
 global RE_LastFireTick := Map()
-; ===== 会话（Session）全局状态（M1，非阻塞驱动） =====
-global RE_Session := { Active:false, RuleId:0, ThreadId:1
-                     , Index:1, StartedAt:0, NextAt:0
-                     , HadAnySend:false, LockWaitUntil:0 }
-
+; 会话（Session）全局状态（M3：含 Verify 状态）
+global RE_Session := IsSet(RE_Session) ? RE_Session : { Active:false, RuleId:0, ThreadId:1
+                                                      , Index:1, StartedAt:0, NextAt:0
+                                                      , HadAnySend:false, LockWaitUntil:0
+                                                      , TimeoutAt:0
+                                                      , VerActive:false, VerSkillIndex:0
+                                                      , VerTargetInt:0, VerTol:0
+                                                      , VerLastTick:0, VerElapsed:0
+                                                      , VerTimeoutMs:0, VerRetryLeft:0, VerRetryGapMs:150 }
 ; 余量/上限参数（可调）
-global RE_Session_CastMarginMs := 100     ; LockWaitBudget = 上一动作 CastMs + 余量
-global RE_Session_BusyPerActionMax := 120 ; 每动作的建议忙窗上限（M1 不强制使用）
+global RE_Session_CastMarginMs := IsSet(RE_Session_CastMarginMs) ? RE_Session_CastMarginMs : 100
+global RE_Session_BusyPerActionMax := IsSet(RE_Session_BusyPerActionMax) ? RE_Session_BusyPerActionMax : 120
+
+; 规则过滤兜底（避免 #Warn）
+global RE_Filter := IsSet(RE_Filter) ? RE_Filter : { Enabled:false, AllowSkills:0, AllowRuleIds:0 }
+global RE_LastFireTick := IsSet(RE_LastFireTick) ? RE_LastFireTick : Map()
 ; 会话是否活跃
 RE_SessionActive() {
     return (IsObject(RE_Session) && RE_Session.Active)
@@ -48,6 +50,16 @@ RuleEngine_SessionBegin(prof, rIdx, rule) {
         }
     }
     RE_Session.NextAt := A_TickCount + firstDelay
+    ; 清空验证状态
+    RE_Session.VerActive := false
+    RE_Session.VerSkillIndex := 0
+    RE_Session.VerTargetInt := 0
+    RE_Session.VerTol := 0
+    RE_Session.VerLastTick := 0
+    RE_Session.VerElapsed := 0
+    RE_Session.VerTimeoutMs := 0
+    RE_Session.VerRetryLeft := 0
+    RE_Session.VerRetryGapMs := 150
     ; 规则级会话超时（0 表示不限制）
     sessTo := 0
     try {
@@ -73,14 +85,104 @@ RuleEngine_SessionStep() {
     rule := prof.Rules[rIdx]
     acts := rule.Actions
     now := A_TickCount
-     ; 会话超时
+
+    ; 1) 会话超时
     if (RE_Session.TimeoutAt > 0 && now >= RE_Session.TimeoutAt) {
+        ; 中止：可选设置中止冷却
+        abortCd := 0
+        try {
+            if (HasProp(rule, "AbortCooldownMs")) {
+                abortCd := Max(0, Integer(rule.AbortCooldownMs))
+            }
+        }
+        if (abortCd > 0) {
+            try {
+                rule.LastFire := now - rule.CooldownMs + abortCd
+                RE_LastFireTick[rIdx] := rule.LastFire
+            }
+        }
         RE_Session.Active := false
         return false
     }
-    ; 完成判定
+
+    ; 2) 若存在“发送后的验证”，优先推进验证（跨帧）
+    if (RE_Session.VerActive) {
+        ; 冻结窗内不计时不判断
+        if (RE_Session_FreezeActive()) {
+            RE_Session.VerLastTick := now
+            return false
+        }
+        ; 累计非冻结耗时
+        if (RE_Session.VerLastTick = 0) {
+            RE_Session.VerLastTick := now
+            return false
+        }
+        dt := now - RE_Session.VerLastTick
+        if (dt > 0) {
+            RE_Session.VerElapsed := RE_Session.VerElapsed + dt
+            RE_Session.VerLastTick := now
+        }
+        ; 取帧缓存像素，判“非就绪”（与技能目标色不相等）
+        si := RE_Session.VerSkillIndex
+        if (si >= 1 && si <= prof.Skills.Length) {
+            s := prof.Skills[si]
+            cur := Pixel_FrameGet(s.X, s.Y)
+            match := Pixel_ColorMatch(cur, RE_Session.VerTargetInt, RE_Session.VerTol)
+            if (!match) {
+                ; 验证通过 → 清除验证，推进到下一动作
+                RE_Session.VerActive := false
+                RE_Session.VerSkillIndex := 0
+                RE_Session.VerTargetInt := 0
+                RE_Session.VerTol := 0
+                ; 推进：前一帧已发送，该帧只是在验证 → 现在才能真正 Index++
+                RE_Session.Index := RE_Session.Index + 1
+                ; 计划下一动作的最早时间（ActionGap + 下一个 Delay）
+                gap := (HasProp(rule,"ActionGapMs") ? Max(0, Integer(rule.ActionGapMs)) : 0)
+                nextDelay := 0
+                if (RE_Session.Index <= acts.Length) {
+                    nextAct := acts[RE_Session.Index]
+                    nextDelay := (HasProp(nextAct,"DelayMs") ? Max(0, Integer(nextAct.DelayMs)) : 0)
+                }
+                RE_Session.NextAt := now + gap + nextDelay
+                return false
+            }
+        }
+        ; 验证超时 → 重试或中止
+        if (RE_Session.VerElapsed >= RE_Session.VerTimeoutMs) {
+            if (RE_Session.VerRetryLeft > 0) {
+                ; 准备重试发送：先等待重试间隔，再重新发送该动作
+                RE_Session.VerRetryLeft := RE_Session.VerRetryLeft - 1
+                RE_Session.VerElapsed := 0
+                RE_Session.VerLastTick := now
+                ; 对应动作的重试发送由“发送阶段”负责，这里仅清除验证标记以便回到发送逻辑
+                RE_Session.VerActive := false
+                ; 让 NextAt 稍后一点（重试间隔）
+                RE_Session.NextAt := now + RE_Session.VerRetryGapMs
+                return false
+            } else {
+                ; 无重试 → 中止
+                abortCd := 0
+                try {
+                    if (HasProp(rule, "AbortCooldownMs")) {
+                        abortCd := Max(0, Integer(rule.AbortCooldownMs))
+                    }
+                }
+                if (abortCd > 0) {
+                    try {
+                        rule.LastFire := now - rule.CooldownMs + abortCd
+                        RE_LastFireTick[rIdx] := rule.LastFire
+                    }
+                }
+                RE_Session.Active := false
+                return false
+            }
+        }
+        ; 验证进行中，未到超时
+        return false
+    }
+
+    ; 3) 正常推进到发送阶段
     if (RE_Session.Index > acts.Length) {
-        ; 会话结束，记 lastFire（与 RuleQuiet 一致）
         if (RE_Session.HadAnySend) {
             try {
                 rule.LastFire := now
@@ -91,7 +193,6 @@ RuleEngine_SessionStep() {
         return false
     }
 
-    ; 时间窗（ActionGap/Delay 已转化到 NextAt）
     if (now < RE_Session.NextAt) {
         return false
     }
@@ -100,7 +201,6 @@ RuleEngine_SessionStep() {
     thr := RE_Session.ThreadId
     lk := WorkerPool_CastIsLocked(thr)
     if (lk.Locked) {
-        ; 计算本动作的锁等待预算：上一动作的 CastMs + 余量
         budget := 0
         if (RE_Session.Index > 1) {
             prevAct := acts[RE_Session.Index - 1]
@@ -117,24 +217,35 @@ RuleEngine_SessionStep() {
         if (now < RE_Session.LockWaitUntil) {
             return false
         }
-        ; 超时仍锁 → 中止会话（M1 默认 Critical）
+        ; 超时仍锁 → 中止
+        abortCd := 0
+        try {
+            if (HasProp(rule, "AbortCooldownMs")) {
+                abortCd := Max(0, Integer(rule.AbortCooldownMs))
+            }
+        }
+        if (abortCd > 0) {
+            try {
+                rule.LastFire := now - rule.CooldownMs + abortCd
+                RE_LastFireTick[rIdx] := rule.LastFire
+            }
+        }
         RE_Session.Active := false
         return false
     } else {
-        ; 已解锁，清掉等待点
         RE_Session.LockWaitUntil := 0
     }
 
-    ; 尝试发送当前动作
+    ; 发送当前动作
     idx := RE_Session.Index
     act := acts[idx]
     si  := HasProp(act,"SkillIndex") ? act.SkillIndex : 0
     if (si < 1 || si > prof.Skills.Length) {
-        ; 非法动作 → 中止（也可选择跳过；M1 简化为中止）
         RE_Session.Active := false
         return false
     }
-    ; M2：需就绪（像素等于技能目标色，使用帧缓存）
+
+    ; 需就绪（像素等于目标色）
     needReady := 0
     try {
         needReady := (HasProp(act, "RequireReady") && act.RequireReady) ? 1 : 0
@@ -142,11 +253,11 @@ RuleEngine_SessionStep() {
     if (needReady) {
         ready := RuleEngine_CheckSkillReady(prof, si)
         if (!ready) {
-            ; 不阻塞，下一帧再检查（可按需加最小间隔）
             return false
         }
     }
-    ; M2：按住时长（holdOverride），未配置则用 -1 表示不覆盖
+
+    ; Hold 覆盖
     holdOverride := -1
     try {
         if (HasProp(act, "HoldMs")) {
@@ -155,19 +266,67 @@ RuleEngine_SessionStep() {
                 holdOverride := hm
         }
     }
+
     sent := WorkerPool_SendSkillIndex(thr, si, "RuleSession:" rule.Name, holdOverride)
     if (!sent) {
-        ; 发送失败（非锁）→ 中止（M1）
+        ; 发送失败 → 尝试按 Retry 重试（使用与 Verify 相同的 Retry 字段）
+        retryLeft := 0
+        retryGap := 150
+        try {
+            retryLeft := Max(0, Integer(HasProp(act,"Retry") ? act.Retry : 0))
+            retryGap := Max(0, Integer(HasProp(act,"RetryGapMs") ? act.RetryGapMs : 150))
+        }
+        if (retryLeft > 0) {
+            RE_Session.NextAt := now + retryGap
+            return false
+        }
+        ; 否则中止
+        abortCd := 0
+        try {
+            if (HasProp(rule, "AbortCooldownMs")) {
+                abortCd := Max(0, Integer(rule.AbortCooldownMs))
+            }
+        }
+        if (abortCd > 0) {
+            try {
+                rule.LastFire := now - rule.CooldownMs + abortCd
+                RE_LastFireTick[rIdx] := rule.LastFire
+            }
+        }
         RE_Session.Active := false
         return false
     }
 
-    ; 发送成功：推进
+    ; 成功发送
     RE_Session.HadAnySend := true
-    RE_Session.Index := idx + 1
 
-    ; 计划下一动作的最早时间点（ActionGap + 下一个动作 Delay）
-    gap  := (HasProp(rule,"ActionGapMs") ? Max(0, Integer(rule.ActionGapMs)) : 0)
+    ; 若需要验证：启动验证状态，不立即推进 Index
+    needVerify := 0
+    try {
+        needVerify := (HasProp(act, "Verify") && act.Verify) ? 1 : 0
+    }
+    if (needVerify) {
+        if (si >= 1 && si <= prof.Skills.Length) {
+            s := prof.Skills[si]
+            RE_Session.VerActive := true
+            RE_Session.VerSkillIndex := si
+            RE_Session.VerTargetInt := Pixel_HexToInt(s.Color)
+            RE_Session.VerTol := s.Tol
+            RE_Session.VerLastTick := now
+            RE_Session.VerElapsed := 0
+            try {
+                RE_Session.VerTimeoutMs := Max(0, Integer(HasProp(act,"VerifyTimeoutMs") ? act.VerifyTimeoutMs : 600))
+                RE_Session.VerRetryLeft := Max(0, Integer(HasProp(act,"Retry") ? act.Retry : 0))
+                RE_Session.VerRetryGapMs := Max(0, Integer(HasProp(act,"RetryGapMs") ? act.RetryGapMs : 150))
+            }
+        }
+        ; 验证期间先不动 NextAt，留给验证逻辑掌控时序
+        return true
+    }
+
+    ; 不需要验证：直接推进 Index 并设置下一时间点
+    RE_Session.Index := idx + 1
+    gap := (HasProp(rule,"ActionGapMs") ? Max(0, Integer(rule.ActionGapMs)) : 0)
     nextDelay := 0
     if (RE_Session.Index <= acts.Length) {
         nextAct := acts[RE_Session.Index]
@@ -301,7 +460,6 @@ RE_List(arr) {
     }
     return out
 }
-; ====================================
 
 ; ========== 发送回执校验（可选） ==========
 global RE_VerifySend := true              ; 是否启用发送后像素回执校验
@@ -659,4 +817,15 @@ RuleEngine_Fire(rule, prof, ruleIndex := 0) {
     }
 
     return anySent
+}
+; 冻结窗是否激活（起手/轨道的黑屏冻结），冻结期内不推进验证计时
+RE_Session_FreezeActive() {
+    try {
+        global gRot
+        if (IsObject(gRot) && gRot.Has("RT")) {
+            return (A_TickCount < gRot["RT"].FreezeUntil)
+        }
+    } catch {
+    }
+    return false
 }

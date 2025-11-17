@@ -223,13 +223,19 @@ Storage_LoadProfile(name) {
             sIdx := Integer(IniRead(file, aSec, "SkillIndex", 1))
             dMs  := Integer(IniRead(file, aSec, "DelayMs", 0))
             hMs  := Integer(IniRead(file, aSec, "HoldMs", -1))           ; 新增：按住
-            req  := Integer(IniRead(file, aSec, "RequireReady", 0))      ; 新增：需就绪
-            acts.Push({ SkillIndex: sIdx, DelayMs: dMs })
+            rr   := Integer(IniRead(file, aSec, "RequireReady", 0))
+            vfy  := Integer(IniRead(file, aSec, "Verify", 0))
+            vto  := Integer(IniRead(file, aSec, "VerifyTimeoutMs", 600))
+            rty  := Integer(IniRead(file, aSec, "Retry", 0))
+            rgap := Integer(IniRead(file, aSec, "RetryGapMs", 150))
+            acts.Push({ SkillIndex: sIdx, DelayMs: dMs, HoldMs: hMs, RequireReady: rr
+                      , Verify: vfy, VerifyTimeoutMs: vto, Retry: rty, RetryGapMs: rgap })
         }
         rSessionTo := Integer(IniRead(file, rSec, "SessionTimeoutMs", 0))
+        rAbortCd   := Integer(IniRead(file, rSec, "AbortCooldownMs", 0))
         data.Rules.Push({ Name: rName, Enabled: rEnabled, Logic: rLogic, CooldownMs: rCd, Priority: rPrio
                         , ActionGapMs: rGap, ThreadId: rThread, Conditions: conds, Actions: acts, LastFire: 0
-                        , SessionTimeoutMs: rSessionTo
+                        , SessionTimeoutMs: rSessionTo, AbortCooldownMs: rAbortCd
                     })
     }
 
@@ -496,6 +502,7 @@ Storage_SaveProfile(data) {
         IniWrite(r.Actions.Length, file, rSec, "ActCount")
         IniWrite(HasProp(r, "ThreadId") ? r.ThreadId : 1, file, rSec, "ThreadId")
         IniWrite(HasProp(r, "SessionTimeoutMs") ? r.SessionTimeoutMs : 0, file, rSec, "SessionTimeoutMs")
+        IniWrite(HasProp(r, "AbortCooldownMs") ? r.AbortCooldownMs : 0, file, rSec, "AbortCooldownMs")
         for cIdx, c in r.Conditions {
             cSec := "Rule" rIdx "_Cond" cIdx
             kind := HasProp(c, "Kind") ? c.Kind : "Pixel"
@@ -520,6 +527,10 @@ Storage_SaveProfile(data) {
             IniWrite(a.DelayMs, file, aSec, "DelayMs")
             IniWrite(HasProp(a, "HoldMs") ? a.HoldMs : -1, file, aSec, "HoldMs")
             IniWrite(HasProp(a, "RequireReady") ? a.RequireReady : 0, file, aSec, "RequireReady")
+            IniWrite(HasProp(a, "Verify") ? a.Verify : 0, file, aSec, "Verify")
+            IniWrite(HasProp(a, "VerifyTimeoutMs") ? a.VerifyTimeoutMs : 600, file, aSec, "VerifyTimeoutMs")
+            IniWrite(HasProp(a, "Retry") ? a.Retry : 0, file, aSec, "Retry")
+            IniWrite(HasProp(a, "RetryGapMs") ? a.RetryGapMs : 150, file, aSec, "RetryGapMs")
         }
     }
 
