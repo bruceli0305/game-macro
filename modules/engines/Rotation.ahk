@@ -395,7 +395,7 @@ Rotation_RunRules_ForCurrentTrack() {
         try {
             Rot_Log("Track#" rt.TrackId " filter=RuleRefs count=" tr.RuleRefs.Length)
             RE_SetAllowedRules(allow)
-            acted := RuleEngine_RunTick()
+            acted := RuleEngine_Tick()
         } catch {
         } finally {
             try RE_ClearFilter()
@@ -410,7 +410,7 @@ Rotation_RunRules_ForCurrentTrack() {
         try {
             Rot_Log("Track#" rt.TrackId " filter=AllowSkills count=" allowS.Count)
             RE_SetAllowedSkills(allowS)
-            acted := RuleEngine_RunTick()
+            acted := RuleEngine_Tick()
         } catch {
         } finally {
             try RE_ClearFilter()
@@ -569,7 +569,7 @@ Rotation_Tick() {
                 return true
             }
             acted := false
-            try acted := RuleEngine_RunTick()
+            try acted := RuleEngine_Tick()
             catch
             if (acted) {
                 rt.BusyUntil := A_TickCount + cfg.BusyWindowMs
@@ -592,7 +592,7 @@ Rotation_Tick() {
                 return true
             }
             acted := false
-            try acted := RuleEngine_RunTick()
+            try acted := RuleEngine_Tick()
             catch
             if (acted) {
                 rt.BusyUntil := A_TickCount + cfg.BusyWindowMs
