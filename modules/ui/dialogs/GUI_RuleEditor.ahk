@@ -191,6 +191,8 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
     btnAAdd := dlg.Add("Button", "xm w110", "新增动作")
     btnAEdit:= dlg.Add("Button", "x+8  w110", "编辑动作")
     btnADel := dlg.Add("Button", "x+8  w110", "删除动作")
+    btnAUp  := dlg.Add("Button", "x+20 w90", "上移")
+    btnADn  := dlg.Add("Button", "x+8  w90", "下移")
 
     btnSave := dlg.Add("Button", "xm y+10 w100", "保存")
     btnCancel := dlg.Add("Button", "x+8 w100", "取消")
@@ -205,6 +207,8 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
     btnAAdd.OnEvent("Click", (*) => ActAdd())
     btnAEdit.OnEvent("Click", (*) => ActEditSel())
     btnADel.OnEvent("Click", (*) => ActDelSel())
+    btnAUp.OnEvent("Click",  (*) => ActMove(-1))
+    btnADn.OnEvent("Click",  (*) => ActMove(1))
 
     btnSave.OnEvent("Click", (*) => SaveRule())
     btnCancel.OnEvent("Click", (*) => dlg.Destroy())
@@ -334,7 +338,19 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
         rule.Actions.RemoveAt(row)
         RefreshA()
     }
-
+    ActMove(dir) {
+        row := lvA.GetNext(0, "Focused")
+        if !row
+            return
+        from := row, to := from + dir
+        if (to < 1 || to > rule.Actions.Length)
+            return
+        item := rule.Actions[from]
+        rule.Actions.RemoveAt(from)
+        rule.Actions.InsertAt(to, item)
+        RefreshA()
+        lvA.Modify(to, "Select Focus Vis")
+    }
     SaveRule() {
         name := Trim(tbName.Value)
         if (name = "") {

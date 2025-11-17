@@ -11,6 +11,199 @@ global RE_Filter := { Enabled:false, AllowSkills:0, AllowRuleIds:0 }
 
 ; 规则最后触发时间（供 Gate:RuleQuiet 使用）
 global RE_LastFireTick := Map()
+; ===== 会话（Session）全局状态（M1，非阻塞驱动） =====
+global RE_Session := { Active:false, RuleId:0, ThreadId:1
+                     , Index:1, StartedAt:0, NextAt:0
+                     , HadAnySend:false, LockWaitUntil:0 }
+
+; 余量/上限参数（可调）
+global RE_Session_CastMarginMs := 100     ; LockWaitBudget = 上一动作 CastMs + 余量
+global RE_Session_BusyPerActionMax := 120 ; 每动作的建议忙窗上限（M1 不强制使用）
+; 会话是否活跃
+RE_SessionActive() {
+    return (IsObject(RE_Session) && RE_Session.Active)
+}
+
+; 开始会话（从规则 rIdx/rule 构建 Session；首动作 Delay 体现在 NextAt）
+RuleEngine_SessionBegin(prof, rIdx, rule) {
+    global RE_Session
+    RE_Session.Active      := true
+    RE_Session.RuleId      := rIdx
+    RE_Session.ThreadId    := (HasProp(rule,"ThreadId") ? rule.ThreadId : 1)
+    RE_Session.Index       := 1
+    RE_Session.StartedAt   := A_TickCount
+    RE_Session.HadAnySend  := false
+    RE_Session.LockWaitUntil := 0
+
+    ; 首动作预延时（DelayMs）
+    firstDelay := 0
+    try {
+        if (rule.Actions.Length >= 1) {
+            a1 := rule.Actions[1]
+            firstDelay := (HasProp(a1,"DelayMs") ? Max(0, Integer(a1.DelayMs)) : 0)
+        }
+    }
+    RE_Session.NextAt := A_TickCount + firstDelay
+}
+
+; 推进一步：若满足条件则发送当前动作；返回本帧是否发出
+RuleEngine_SessionStep() {
+    global App, RE_Session, RE_LastFireTick, RE_Session_CastMarginMs
+    if (!RE_Session.Active) {
+        return false
+    }
+    prof := App["ProfileData"]
+    rIdx := RE_Session.RuleId
+    rule := prof.Rules[rIdx]
+    acts := rule.Actions
+    now := A_TickCount
+
+    ; 完成判定
+    if (RE_Session.Index > acts.Length) {
+        ; 会话结束，记 lastFire（与 RuleQuiet 一致）
+        if (RE_Session.HadAnySend) {
+            try {
+                rule.LastFire := now
+                RE_LastFireTick[rIdx] := now
+            }
+        }
+        RE_Session.Active := false
+        return false
+    }
+
+    ; 时间窗（ActionGap/Delay 已转化到 NextAt）
+    if (now < RE_Session.NextAt) {
+        return false
+    }
+
+    ; 施法锁等待
+    thr := RE_Session.ThreadId
+    lk := WorkerPool_CastIsLocked(thr)
+    if (lk.Locked) {
+        ; 计算本动作的锁等待预算：上一动作的 CastMs + 余量
+        budget := 0
+        if (RE_Session.Index > 1) {
+            prevAct := acts[RE_Session.Index - 1]
+            prevSi  := HasProp(prevAct,"SkillIndex") ? prevAct.SkillIndex : 0
+            if (prevSi >= 1 && prevSi <= prof.Skills.Length) {
+                try budget := Max(0, Integer(HasProp(prof.Skills[prevSi],"CastMs") ? prof.Skills[prevSi].CastMs : 0))
+            }
+        }
+        budget := budget + RE_Session_CastMarginMs
+        if (RE_Session.LockWaitUntil = 0) {
+            RE_Session.LockWaitUntil := now + budget
+            return false
+        }
+        if (now < RE_Session.LockWaitUntil) {
+            return false
+        }
+        ; 超时仍锁 → 中止会话（M1 默认 Critical）
+        RE_Session.Active := false
+        return false
+    } else {
+        ; 已解锁，清掉等待点
+        RE_Session.LockWaitUntil := 0
+    }
+
+    ; 尝试发送当前动作
+    idx := RE_Session.Index
+    act := acts[idx]
+    si  := HasProp(act,"SkillIndex") ? act.SkillIndex : 0
+    if (si < 1 || si > prof.Skills.Length) {
+        ; 非法动作 → 中止（也可选择跳过；M1 简化为中止）
+        RE_Session.Active := false
+        return false
+    }
+
+    sent := WorkerPool_SendSkillIndex(thr, si, "RuleSession:" rule.Name)
+    if (!sent) {
+        ; 发送失败（非锁）→ 中止（M1）
+        RE_Session.Active := false
+        return false
+    }
+
+    ; 发送成功：推进
+    RE_Session.HadAnySend := true
+    RE_Session.Index := idx + 1
+
+    ; 计划下一动作的最早时间点（ActionGap + 下一个动作 Delay）
+    gap  := (HasProp(rule,"ActionGapMs") ? Max(0, Integer(rule.ActionGapMs)) : 0)
+    nextDelay := 0
+    if (RE_Session.Index <= acts.Length) {
+        nextAct := acts[RE_Session.Index]
+        nextDelay := (HasProp(nextAct,"DelayMs") ? Max(0, Integer(nextAct.DelayMs)) : 0)
+    }
+    RE_Session.NextAt := now + gap + nextDelay
+
+    return true
+}
+
+; RuleEngine_Tick：会话优先；若无会话则扫描并创建会话或走旧路径（计数规则）
+RuleEngine_Tick() {
+    global App, RE_Filter, RE_LastFireTick
+    prof := App["ProfileData"]
+
+    ; 先驱动会话
+    if (RE_SessionActive()) {
+        return RuleEngine_SessionStep()
+    }
+
+    ; 无会话 → 按旧逻辑扫描（但不阻塞；命中非计数规则时开始会话）
+    if (prof.Rules.Length = 0) {
+        return false
+    }
+
+    now := A_TickCount
+    for rIdx, r in prof.Rules {
+        if !r.Enabled {
+            continue
+        }
+        ; 过滤：RuleIds > AllowSkills
+        if (RE_Filter.Enabled) {
+            if (RE_Filter.AllowRuleIds) {
+                if !RE_Filter.AllowRuleIds.Has(rIdx) {
+                    continue
+                }
+            } else if (RE_Filter.AllowSkills) {
+                if (r.Actions.Length = 0) {
+                    continue
+                }
+                a1 := r.Actions[1]
+                sIdx1 := HasProp(a1,"SkillIndex") ? a1.SkillIndex : 0
+                if !(RE_Filter.AllowSkills.Has(sIdx1)) {
+                    continue
+                }
+            }
+        }
+
+        last := HasProp(r, "LastFire") ? r.LastFire : 0
+        remain := r.CooldownMs - (now - last)
+        if (remain > 0) {
+            continue
+        }
+
+        ok := RuleEngine_EvalRule(r, prof)
+        if !ok {
+            continue
+        }
+
+        ; 含计数条件 → 保持旧路径（只发首个就绪动作）
+        if RuleEngine_HasCounterCond(r) {
+            sent := RuleEngine_Fire(r, prof, rIdx)
+            if (sent) {
+                ; 旧路径内部会更新 LastFire/RE_LastFireTick
+                return true
+            }
+            continue
+        }
+
+        ; 非计数 → 开始会话并尝试首动作
+        RuleEngine_SessionBegin(prof, rIdx, r)
+        acted := RuleEngine_SessionStep()
+        return acted
+    }
+    return false
+}
 
 RE_SetAllowedRules(mapRuleIds) {
     global RE_Filter
