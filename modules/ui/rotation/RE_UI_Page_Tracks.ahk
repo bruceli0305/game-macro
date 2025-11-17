@@ -429,40 +429,138 @@ REUI_TrackEditor_RulesLabel(t) {
 }
 
 REUI_RuleRefsPicker_Open(owner, t, labRulesCtl) {
-    g3 := Gui("+Owner" owner.Hwnd, "选择规则（勾选）")
-    g3.MarginX := 12
-    g3.MarginY := 10
+    g3 := Gui("+Owner" owner.Hwnd, "选择规则（勾选并排序）")
+    g3.MarginX := 12, g3.MarginY := 10
     g3.SetFont("s10", "Segoe UI")
 
-    lv := g3.Add("ListView", "xm w520 r12 +Grid +Checked", ["ID", "名称", "启用"])
+    ; 左：所有规则
+    g3.Add("Text", "xm", "所有规则：")
+    lvAll := g3.Add("ListView", "xm w360 r12 +Grid", ["ID", "名称", "启用"])
     try {
         for i, r in App["ProfileData"].Rules {
-            row := lv.Add("", i, r.Name, (r.Enabled ? "√" : ""))
-            if (HasProp(t, "RuleRefs") && IsObject(t.RuleRefs) && REUI_ArrayContains(t.RuleRefs, i)) {
-                lv.Modify(row, "Check")
-            }
+            lvAll.Add("", i, r.Name, (r.Enabled ? "√" : ""))
         }
     }
     Loop 3 {
-        lv.ModifyCol(A_Index, "AutoHdr")
+        Loop 3 {
+            try lvAll.ModifyCol(A_Index, "AutoHdr")
+        }
     }
 
-    btnOK := g3.Add("Button", "xm y+10 w90", "确定")
-    btnCA := g3.Add("Button", "x+8 w90", "取消")
-    btnOK.OnEvent("Click", SaveSel)
-    btnCA.OnEvent("Click", (*) => g3.Destroy())
-    g3.OnEvent("Close", (*) => g3.Destroy())
+    ; 右：已选择（可排序）
+    g3.Add("Text", "x+16 yp", "已选择（顺序生效）：")
+    lvSel := g3.Add("ListView", "x+0 w360 r12 +Grid", ["序", "ID", "名称"])
+    Loop 3 {
+        try lvSel.ModifyCol(A_Index, "AutoHdr")
+    }
+
+    ; 默认填充已选（按现有顺序）
+    try {
+        if (HasProp(t, "RuleRefs") && IsObject(t.RuleRefs)) {
+            idx := 0
+            for _, id in t.RuleRefs {
+                if (id>=1 && id<=App["ProfileData"].Rules.Length) {
+                    idx++
+                    r := App["ProfileData"].Rules[id]
+                    lvSel.Add("", idx, id, r.Name)
+                }
+            }
+        }
+    }
+
+    ; 中间/右侧按钮
+    btnAdd  := g3.Add("Button", "xm y+8 w90", "加入 >>")
+    btnRem  := g3.Add("Button", "x+8 w90", "<< 移除")
+    btnUp   := g3.Add("Button", "x+20 w80", "上移")
+    btnDn   := g3.Add("Button", "x+8 w80", "下移")
+    btnClr  := g3.Add("Button", "x+8 w80", "清空")
+
+    btnOK := g3.Add("Button", "xm y+12 w100", "确定")
+    btnCA := g3.Add("Button", "x+8 w100", "取消")
+
+    ; 事件
+    btnAdd.OnEvent("Click", (*) => AddSel())
+    btnRem.OnEvent("Click", (*) => RemoveSel())
+    btnUp.OnEvent("Click",  (*) => MoveSel(-1))
+    btnDn.OnEvent("Click",  (*) => MoveSel(1))
+    btnClr.OnEvent("Click", (*) => ClearSel())
+    btnOK.OnEvent("Click",  (*) => SaveSel())
+    btnCA.OnEvent("Click",  (*) => g3.Destroy())
+    g3.OnEvent("Close",     (*) => g3.Destroy())
+
     g3.Show()
 
-    SaveSel(*) {
+    ExistsInSel(id) {
+        cnt := lvSel.GetCount()
+        if (cnt <= 0)
+            return 0
+        Loop cnt {
+            if (Integer(lvSel.GetText(A_Index, 2)) = Integer(id))
+                return A_Index
+        }
+        return 0
+    }
+    RenumberSel() {
+        cnt := lvSel.GetCount()
+        if (cnt <= 0)
+            return
+        Loop cnt {
+            lvSel.Modify(A_Index, , A_Index)  ; 第一列“序”
+        }
+    }
+
+    AddSel() {
+        row := lvAll.GetNext(0, "Focused")
+        if (!row) {
+            return
+        }
+        id := Integer(lvAll.GetText(row, 1))
+        if (ExistsInSel(id)) {
+            return
+        }
+        name := lvAll.GetText(row, 2)
+        pos := lvSel.GetCount() + 1
+        lvSel.Add("", pos, id, name)
+        lvSel.Modify(pos, "Select Focus Vis")
+    }
+    RemoveSel() {
+        row := lvSel.GetNext(0, "Focused")
+        if (!row) {
+            return
+        }
+        lvSel.Delete(row)
+        RenumberSel()
+        ; 选中新的当前位置
+        cnt := lvSel.GetCount()
+        if (cnt >= 1) {
+            to := Min(row, cnt)
+            lvSel.Modify(to, "Select Focus Vis")
+        }
+    }
+    MoveSel(dir) {
+        row := lvSel.GetNext(0, "Focused")
+        if (!row)
+            return
+        to := row + dir
+        cnt := lvSel.GetCount()
+        if (to < 1 || to > cnt)
+            return
+        id := lvSel.GetText(row, 2)
+        name := lvSel.GetText(row, 3)
+        lvSel.Delete(row)
+        lvSel.Insert(to, "", 0, id, name)
+        RenumberSel()
+        lvSel.Modify(to, "Select Focus Vis")
+    }
+    ClearSel() {
+        lvSel.Delete()
+    }
+
+    SaveSel() {
         sel := []
-        row := 0
-        Loop {
-            row := lv.GetNext(row, "Checked")
-            if (!row) {
-                break
-            }
-            id := Integer(lv.GetText(row, 1))
+        cnt := lvSel.GetCount()
+        Loop cnt {
+            id := Integer(lvSel.GetText(A_Index, 2))  ; 第2列是ID
             sel.Push(id)
         }
         t.RuleRefs := sel
