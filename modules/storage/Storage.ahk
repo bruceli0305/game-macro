@@ -322,7 +322,7 @@ Storage_LoadProfile(name) {
         }
     }
 
-    ; Tracks（M3：TrackCount；兼容 Track1/Track2）
+    ; ===== Tracks（仅 Tracks[]，不兼容 Track1/Track2） =====
     rot.Tracks := []
     tcount := Integer(IniRead(file, "Rotation", "TrackCount", 0))
     if (tcount > 0) {
@@ -331,23 +331,9 @@ Storage_LoadProfile(name) {
             t := Storage_ReadNamedTrack(file, "Track" i, i)
             rot.Tracks.Push(t)
         }
-        ; 同步映射 Track1/Track2（兼容旧代码）
-        if (rot.Tracks.Length >= 1) {
-            rot.Track1 := rot.Tracks[1]
-        }
-        if (rot.Tracks.Length >= 2) {
-            rot.Track2 := rot.Tracks[2]
-        }
     } else {
-        ; 旧格式：仅 Track1/Track2
-        rot.Track1 := Storage_ReadNamedTrack(file, "Track1", 1)
-        rot.Track2 := Storage_ReadNamedTrack(file, "Track2", 2)
-        if (rot.Track1) {
-            rot.Tracks.Push(rot.Track1)
-        }
-        if (rot.Track2) {
-            rot.Tracks.Push(rot.Track2)
-        }
+        ; 无 Track 定义 -> 留空（上层应做容错处理）
+        rot.Tracks := []
     }
 
     ; ===== Gates（新版：必须 FromTrackId/ToTrackId；仍兼容单/多条件字段） =====
@@ -423,8 +409,6 @@ Storage_LoadProfile(name) {
     if (rot.Enabled = 0) {
         hasWatchAll := 0
         try hasWatchAll += (rot.Opener.Watch.Length)
-        try hasWatchAll += (rot.Track1.Watch.Length)
-        try hasWatchAll += (rot.Track2.Watch.Length)
         if (hasWatchAll > 0)
             rot.Enabled := 1
     }
@@ -550,95 +534,13 @@ Storage_SaveProfile(data) {
         }
     }
 
-    ; ===== Rotation 保存（含 M2/M3） =====
-    if HasProp(data, "Rotation") {
-        rot := data.Rotation
-        IniWrite(HasProp(rot,"Enabled") ? rot.Enabled : 0, file, "Rotation", "Enabled")
-        IniWrite(HasProp(rot,"DefaultTrackId") ? rot.DefaultTrackId : 1, file, "Rotation", "DefaultTrackId")
-        IniWrite(HasProp(rot,"SwapKey") ? rot.SwapKey : "", file, "Rotation", "SwapKey")
-        IniWrite(HasProp(rot,"BusyWindowMs") ? rot.BusyWindowMs : 200, file, "Rotation", "BusyWindowMs")
-        IniWrite(HasProp(rot,"ColorTolBlack") ? rot.ColorTolBlack : 16, file, "Rotation", "ColorTolBlack")
-
-        ; BlackGuard
-        if HasProp(rot, "BlackGuard") {
-            bg := rot.BlackGuard
-            IniWrite(HasProp(bg,"Enabled")?bg.Enabled:1, file, "Rotation.BlackGuard", "Enabled")
-            IniWrite(HasProp(bg,"SampleCount")?bg.SampleCount:5, file, "Rotation.BlackGuard", "SampleCount")
-            IniWrite(HasProp(bg,"BlackRatioThresh")?bg.BlackRatioThresh:0.7, file, "Rotation.BlackGuard", "BlackRatioThresh")
-            IniWrite(HasProp(bg,"WindowMs")?bg.WindowMs:120, file, "Rotation.BlackGuard", "WindowMs")
-            IniWrite(HasProp(bg,"CooldownMs")?bg.CooldownMs:600, file, "Rotation.BlackGuard", "CooldownMs")
-            IniWrite(HasProp(bg,"MinAfterSendMs")?bg.MinAfterSendMs:60, file, "Rotation.BlackGuard", "MinAfterSendMs")
-            IniWrite(HasProp(bg,"MaxAfterSendMs")?bg.MaxAfterSendMs:800, file, "Rotation.BlackGuard", "MaxAfterSendMs")
-            IniWrite(HasProp(bg,"UniqueRequired")?bg.UniqueRequired:1, file, "Rotation.BlackGuard", "UniqueRequired")
-        }
-
-        ; Opener 保存（Watch/Steps）
-        op := rot.Opener
-        IniWrite(HasProp(op,"Enabled")?op.Enabled:0, file, "Rotation.Opener", "Enabled")
-        IniWrite(HasProp(op,"MaxDurationMs")?op.MaxDurationMs:4000, file, "Rotation.Opener", "MaxDurationMs")
-        IniWrite(op.Watch.Length, file, "Rotation.Opener", "WatchCount")
-        for i, w in op.Watch {
-            s := "Rotation.Opener.Watch" i
-            IniWrite(w.SkillIndex, file, s, "SkillIndex")
-            IniWrite(HasProp(w,"RequireCount")?w.RequireCount:1, file, s, "RequireCount")
-            IniWrite(HasProp(w,"VerifyBlack")?w.VerifyBlack:0, file, s, "VerifyBlack")
-        }
-        IniWrite(HasProp(op,"StepsCount")?op.StepsCount:0, file, "Rotation.Opener", "StepsCount")
-        if (HasProp(op,"Steps") && op.Steps.Length>0) {
-            loop op.Steps.Length {
-                si2 := A_Index
-                ssec := "Rotation.Opener.Step" si2
-                stp := op.Steps[si2]
-                IniWrite(HasProp(stp,"Kind")?stp.Kind:"", file, ssec, "Kind")
-                IniWrite(HasProp(stp,"SkillIndex")?stp.SkillIndex:0, file, ssec, "SkillIndex")
-                IniWrite(HasProp(stp,"RequireReady")?stp.RequireReady:0, file, ssec, "RequireReady")
-                IniWrite(HasProp(stp,"PreDelayMs")?stp.PreDelayMs:0, file, ssec, "PreDelayMs")
-                IniWrite(HasProp(stp,"HoldMs")?stp.HoldMs:0, file, ssec, "HoldMs")
-                IniWrite(HasProp(stp,"Verify")?stp.Verify:0, file, ssec, "Verify")
-                IniWrite(HasProp(stp,"TimeoutMs")?stp.TimeoutMs:1200, file, ssec, "TimeoutMs")
-                IniWrite(HasProp(stp,"DurationMs")?stp.DurationMs:0, file, ssec, "DurationMs")
-            }
-        }
-
-        ; Gates 保存（支持多条件）
-        Storage_SaveGates(file, rot)
-
-        ; Swap 验证
-        IniWrite(HasProp(rot,"VerifySwap")?rot.VerifySwap:0, file, "Rotation", "VerifySwap")
-        IniWrite(HasProp(rot,"SwapTimeoutMs")?rot.SwapTimeoutMs:800, file, "Rotation", "SwapTimeoutMs")
-        IniWrite(HasProp(rot,"SwapRetry")?rot.SwapRetry:0, file, "Rotation", "SwapRetry")
-        if HasProp(rot, "SwapVerify") {
-            sv := rot.SwapVerify
-            IniWrite(HasProp(sv,"RefType")?sv.RefType:"Skill", file, "Rotation.SwapVerify", "RefType")
-            IniWrite(HasProp(sv,"RefIndex")?sv.RefIndex:0, file, "Rotation.SwapVerify", "RefIndex")
-            IniWrite(HasProp(sv,"Op")?sv.Op:"NEQ", file, "Rotation.SwapVerify", "Op")
-            IniWrite(HasProp(sv,"Color")?sv.Color:"0x000000", file, "Rotation.SwapVerify", "Color")
-            IniWrite(HasProp(sv,"Tol")?sv.Tol:16, file, "Rotation.SwapVerify", "Tol")
-        }
-
-        ; Tracks 保存：优先 Tracks 数组；若无则保存 Track1/Track2
-        if (HasProp(rot,"Tracks") && rot.Tracks.Length>0) {
-            IniWrite(rot.Tracks.Length, file, "Rotation", "TrackCount")
-            ; 先清理旧 Track1/Track2（可选）
-            loop 2 {
-                name := "Track" A_Index
-                ; 不强制删除小节；保持简单
-            }
-            loop rot.Tracks.Length {
-                i := A_Index
-                Storage_SaveNamedTrack(file, "Track" i, rot.Tracks[i])
-            }
-            ; 同步写 Track1/Track2（兼容旧模块）
-            if (rot.Tracks.Length >=1) {
-                Storage_SaveNamedTrack(file, "Track1", rot.Tracks[1])
-            }
-            if (rot.Tracks.Length >=2) {
-                Storage_SaveNamedTrack(file, "Track2", rot.Tracks[2])
-            }
-        } else {
-            Storage_SaveNamedTrack(file, "Track1", rot.Track1)
-            Storage_SaveNamedTrack(file, "Track2", rot.Track2)
-            IniWrite(0, file, "Rotation", "TrackCount")
+    ; Tracks：仅数组，不再写 Track1/Track2
+    rot := HasProp(data, "Rotation") ? data.Rotation : {}
+    IniWrite(HasProp(rot,"Tracks") ? rot.Tracks.Length : 0, file, "Rotation", "TrackCount")
+    if (HasProp(rot,"Tracks") && IsObject(rot.Tracks)) {
+        loop rot.Tracks.Length {
+            i := A_Index
+            Storage_SaveNamedTrack(file, "Track" i, rot.Tracks[i])
         }
     }
 }
