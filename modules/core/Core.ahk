@@ -53,8 +53,6 @@ Core_DefaultProfileData() {
                       , WindowMs: 120, CooldownMs: 600, MinAfterSendMs: 60
                       , MaxAfterSendMs: 800, UniqueRequired: 1 }
         , Opener: { Enabled: 0, MaxDurationMs: 4000, Watch: [] }
-        , Track1: { Id:1, Name:"轨道1", ThreadId:1, MaxDurationMs:8000, Watch:[], RuleRefs:[] }
-        , Track2: { Id:2, Name:"轨道2", ThreadId:1, MaxDurationMs:8000, Watch:[], RuleRefs:[] }
       }
     }
 }

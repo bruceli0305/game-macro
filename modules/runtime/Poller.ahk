@@ -56,15 +56,21 @@ Poller_Tick() {
     global App, gPoller
     if !gPoller.running
         return
-    ; 隐藏任何屏幕提示，避免轮询时在鼠标旁出现 ToolTip
     try ToolTip()
-    ; 先抓 ROI，再清帧缓存（如未启用 ROI，此步骤会自动跳过）
-    ; 先抓 ROI（DXGI 可用则跳过），再清帧缓存
     try if !DX_IsReady()
         Pixel_ROI_BeginSnapshot()
     try Pixel_FrameBegin()
 
-    ; 1) BUFF 引擎（最高优先级）
+    ; 会话优先：若会话活跃，跳过 BUFF/Rotation，直接驱动会话并返回
+    try {
+        if RE_SessionActive() {
+            RuleEngine_Tick()
+            return
+        }
+    } catch {
+    }
+
+    ; 1) BUFF 引擎（会话活跃时已提前 return，不会走到这里）
     try {
         if !Rotation_IsBusyWindowActive() {
             if (BuffEngine_RunTick())
@@ -73,20 +79,20 @@ Poller_Tick() {
     } catch {
     }
 
-    ; 2) 规则引擎
+    ; 2) 规则/轮换
     try {
         if Rotation_IsEnabled() {
             if (Rotation_Tick())
                 return
         } else {
-            ; Rotation 未启用，则跑旧的 RuleEngine
-            if (RuleEngine_RunTick())
+            ; 旧式：直接跑规则（使用会话优先的 Tick）
+            if (RuleEngine_Tick())
                 return
         }
     } catch {
     }
 
-    ; 3) 兜底默认技能（当本 Tick 没有任何规则/BUFF触发）
+    ; 3) 默认技能兜底
     try {
         if (Poller_TryDefaultSkill())
             return
