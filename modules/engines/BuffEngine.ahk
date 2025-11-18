@@ -58,15 +58,19 @@ BuffEngine_RunTick() {
                 if !Pixel_ColorMatch(cur, tgt, s.Tol)
                     continue
             }
-
-            ; 在指定“线程”（工作进程）发键
             if WorkerPool_SendSkillIndex(thrId, idx, "Buff:" s.Name) {
                 b.LastTime := A_TickCount   ; 本组计时重置
+                try {
+                    f := Map()
+                    f["buffIdx"] := A_Index   ; 或用 name
+                    f["skillIdx"] := idx
+                    f["threadId"] := thrId
+                    Logger_Info("Buff", "Refresh", f)
+                } catch {
+                }
                 return true
             }
-            ; 若该技能发送失败，换下一个
         }
-        ; 本组没有任何可用技能，本 Tick 放过
     }
     return false
 }
@@ -98,6 +102,10 @@ BuffEngine_NotifySkillUsed(idx) {
     now := A_TickCount
     if !HasProp(App["ProfileData"], "Buffs")
         return
+    try {
+        Logger_Debug("Buff", "Skill used", Map("idx", idx))
+    } catch {
+    }
     for _, b in App["ProfileData"].Buffs {
         if !HasProp(b, "Skills")
             continue

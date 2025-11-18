@@ -94,6 +94,13 @@ Profile_RefreshAll_Strong() {
     } catch as e {
         ok := false
     }
+    try {
+        f := Map()
+        f["target"] := target
+        f["profiles"] := names.Length
+        Logger_Info("Storage", "Profiles refresh", f)
+    } catch {
+    }
     return ok
 }
 
@@ -221,8 +228,15 @@ Profile_SwitchProfile_Strong(name) {
     } catch {
     }
     try {
+        f := Map()
+        f["name"] := name
+        f["skills"] := App["ProfileData"].Skills.Length
+        f["points"] := App["ProfileData"].Points.Length
+        f["rules"]  := App["ProfileData"].Rules.Length
+        f["buffs"]  := App["ProfileData"].Buffs.Length
+        f["threads"]:= App["ProfileData"].Threads.Length
+        Logger_Info("Storage", "Profile switch", f)
     } catch {
     }
-
     return true
 }

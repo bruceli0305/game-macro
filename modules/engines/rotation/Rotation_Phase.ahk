@@ -38,6 +38,13 @@ Rotation_InitFromProfile() {
             Rotation_EnterTrack(Rotation_GetDefaultTrackId())
         }
         gRotInitialized := true
+        try {
+            f := Map()
+            f["enabled"] := (cfg.Enabled ? 1 : 0)
+            f["trackCount"] := (HasProp(cfg,"Tracks") && IsObject(cfg.Tracks)) ? cfg.Tracks.Length : 0
+            Logger_Info("Rotation", "Init", f)
+        } catch {
+        }
     } catch as e {
     } finally {
         gRotInitBusy := false
@@ -49,12 +56,20 @@ Rotation_EnterOpener() {
     gRot["RT"].Phase := "Opener"
     gRot["RT"].TrackId := 0
     gRot["RT"].PhaseState := Rotation_BuildPhaseState_Opener()
+    try {
+        Logger_Info("Rotation", "Enter opener", Map())
+    } catch {
+    }
 }
 Rotation_EnterTrack(trackId) {
     global gRot
     gRot["RT"].Phase := "Track"
     gRot["RT"].TrackId := trackId
     gRot["RT"].PhaseState := Rotation_BuildPhaseState_Track(trackId)
+    try {
+        Logger_Info("Rotation", "Enter track", Map("trackId", trackId))
+    } catch {
+    }
 }
 
 Rotation_BuildPhaseState_Opener() {

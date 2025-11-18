@@ -32,6 +32,7 @@ Poller_Start() {
         return
     }
     try Rotation_InitFromProfile()
+    Logger_Info("Poller", "start", Map("intervalMs", App["ProfileData"].PollIntervalMs))
     gPoller.running := true
     Notify("状态：运行中")
     gPoller.timerBound := Poller_Tick
@@ -45,6 +46,7 @@ Poller_Stop() {
     gPoller.running := false
     try SetTimer(gPoller.timerBound, 0)
     Notify("状态：已停止")
+    Logger_Info("Poller", "stop", Map())
 }
 
 Poller_IsRunning() {
@@ -138,6 +140,14 @@ Poller_TryDefaultSkill() {
     thr := HasProp(ds, "ThreadId") ? ds.ThreadId : 1
     if WorkerPool_SendSkillIndex(thr, idx, "Default") {
         App["ProfileData"].DefaultSkill.LastFire := A_TickCount
+        try {
+            f := Map()
+            f["idx"] := idx
+            f["key"] := s.Key
+            f["threadId"] := ds.ThreadId
+            Logger_Info("Poller", "Default skill fired", f)
+        } catch {
+        }
         return true
     }
     return false

@@ -137,6 +137,10 @@ Rotation_GateFindMatch() {
         ok := Rotation_GateEval(g)
         if (ok) {
             if (Rotation_GetTrackById(toId)) {
+                try {
+                    Logger_Info("Rotation", "Gate hit", Map("from", fromId, "to", toId))
+                } catch {
+                }
                 return toId
             }
         }

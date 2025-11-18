@@ -33,6 +33,13 @@ WorkerPool_CastLock(threadId, durMs) {
 WorkerPool_Rebuild() {
     global App, WorkerPool
     WorkerPool.Mode := "FF_ONLY"
+    try {
+        f := Map()
+        f["mode"] := WorkerPool.Mode
+        f["threads"] := (HasProp(App["ProfileData"], "Threads") ? App["ProfileData"].Threads.Length : 0)
+        Logger_Info("WorkerPool", "Rebuild", f)
+    } catch {
+    }
     WorkerPool_CastReset()
 }
 
@@ -120,6 +127,14 @@ WorkerPool_FireAndForget(key, delay := 0, hold := 0) {
         }
         cmd := '"' ip '" "' host.Path '" --fire ' . qkey . ' ' . delay . ' ' . hold
     }
+    try {
+        f := Map()
+        f["key"] := key
+        f["delay"] := delay
+        f["hold"] := hold
+        Logger_Info("WorkerPool", "Start one-shot", f)
+    } catch {
+    }
     pr := WorkerPool_CreateProcess(cmd)
     if !pr {
         return false
@@ -174,6 +189,18 @@ WorkerPool_SendSkillIndex(threadId, idx, src := "", holdOverride := -1) {
         if (castMs > 0) {
             WorkerPool_CastLock(threadId, castMs)
         }
+        try {
+            f := Map()
+            f["idx"] := idx
+            f["key"] := s.Key
+            f["threadId"] := threadId
+            f["src"] := (src != "" ? src : "?")
+            f["hold"] := finalHold
+            Logger_Info("WorkerPool", "Skill sent", f)
+        } catch {
+        }
+    } else {
+        Logger_Warn("WorkerPool", "Skill send FAIL", Map("idx", idx, "threadId", threadId, "src", (src!=""?src:"?")))
     }
 
     try {

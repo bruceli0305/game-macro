@@ -62,6 +62,15 @@ RuleEngine_Tick() {
             return RuleEngine_Fire(r, prof, rIdx)
         }
         RuleEngine_SessionBegin(prof, rIdx, r)
+        ; 在 RuleEngine_SessionBegin 之后（或返回 true 前）
+        try {
+            f := Map()
+            f["ruleId"] := rIdx
+            f["name"] := r.Name
+            f["threadId"] := (HasProp(r,"ThreadId") ? r.ThreadId : 1)
+            Logger_Info("RuleEngine", "Rule triggered", f)
+        } catch {
+        }
         return RuleEngine_SessionStep()
     }
 
@@ -184,15 +193,23 @@ RuleEngine_Fire(rule, prof, ruleIndex := 0) {
         }
         a := rule.Actions[selAi]
         if (a.DelayMs > 0)
-            Sleep a.DelayMs
+            HighPrecisionDelay(a.DelayMs)
         sname := prof.Skills[selIdx].Name
         ok := (RE_VerifyForCounterOnly
             ? RuleEngine_SendVerified(thr, selIdx, rule.Name)
             : WorkerPool_SendSkillIndex(thr, selIdx, "Rule:" rule.Name))
         if (ok) {
             anySent := true
+            try {
+                f := Map()
+                f["ruleId"] := (HasProp(rule, "Priority") ? rule.Priority : 0)
+                f["name"] := rule.Name
+                f["mode"] := "Counter"
+                Logger_Info("RuleEngine", "Rule fired", f)
+            } catch {
+            }
             if (gap > 0)
-                Sleep gap
+                HighPrecisionDelay(gap)
         }
     }
 

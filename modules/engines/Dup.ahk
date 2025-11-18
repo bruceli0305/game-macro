@@ -84,7 +84,6 @@ Dup_InitAuto(outputIdx := 0, fps := 0) {
         gDX.Ready := false
         return false
     }
-
     Dup_DumpEnv()
 
     ; 估算 FPS（按轮询间隔）
@@ -96,6 +95,13 @@ Dup_InitAuto(outputIdx := 0, fps := 0) {
         } catch {
             fps := 60
         }
+    }
+    try {
+        f := Map()
+        f["outIdx"] := outputIdx
+        f["fps"] := fps
+        Logger_Info("DXGI", "InitAuto begin", f)
+    } catch {
     }
     ; 先探测输出数量（若为0，绝不创建线程）
     cnt := 0
@@ -141,9 +147,22 @@ Dup_InitAuto(outputIdx := 0, fps := 0) {
         ready := 0
         try ready := DX_IsReady() ? 1 : 0
         gDX.Stats.LastReady := ready
+        try {
+            f := Map()
+            f["outIdx"] := chosen
+            f["name"] := gDX.MonName
+            f["l"] := gDX.L
+            f["t"] := gDX.T
+            f["r"] := gDX.R
+            f["b"] := gDX.B
+            f["fps"] := gDX.FPS
+            Logger_Info("DXGI", "Init OK", f)
+        } catch {
+        }
         return true
     } else {
         gDX.Ready := false
+        Logger_Warn("DXGI", "Init FAIL, fallback ROI/GDI", Map())
         return false
     }
 }
@@ -228,8 +247,10 @@ Dup_SelectOutputIdx(idx) {
     try ok := DX_SelectOutput(gDX.OutIdx)
     if (ok = 1) {
         Dup_UpdateMonitorRect()
+        Logger_Info("DXGI", "SelectOutput", Map("outIdx", gDX.OutIdx, "name", gDX.MonName))
         return 1
     } else {
+        Logger_Error("DXGI", "SelectOutput FAIL", Map("outIdx", idx))
         return 0
     }
 }

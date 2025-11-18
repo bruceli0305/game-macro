@@ -74,6 +74,10 @@ OnCopyData(wParam, lParam, msg, hwndFrom) {
         return 0
 
     cmd := parts[1]
+    try {
+        Logger_Info("WorkerHost", "recv cmd", Map("cmd", cmd, "key", key, "delay", delay, "hold", hold))
+    } catch {
+    }
     if (cmd = "SK") {
         key   := (parts.Length >= 2) ? parts[2] : ""
         delay := (parts.Length >= 3) ? Integer(parts[3]) : 0
@@ -81,6 +85,11 @@ OnCopyData(wParam, lParam, msg, hwndFrom) {
 
         WorkerHost_SendKey(key, delay, hold)
         return 1        ; 非 0 表示“已处理”
+        ; 发送完成
+        try {
+            Logger_Info("WorkerHost", "sent", Map("key", key, "delay", delay, "hold", hold))
+        } catch {
+        }
     }
     return 0
 }
@@ -93,7 +102,16 @@ WorkerHost_SendKey(key, delay := 0, hold := 0) {
         return
 
     mouseRe := "i)^(LButton|MButton|RButton|XButton1|XButton2|WheelUp|WheelDown|WheelLeft|WheelRight)$"
-
+    try {
+        f := Map()
+        f["mode"] := "FIRE"
+        f["key"] := key
+        f["delay"] := delay
+        f["hold"] := hold
+        f["pid"] := DllCall("Kernel32\GetCurrentProcessId", "UInt")
+        Logger_Info("WorkerHost", "fire start", f)
+    } catch {
+    }
     ; 按住优先：仅对功能/鼠标键做 down/up；其它复杂发送原样
     if (hold > 0) {
         if RegExMatch(key, "[\{\}\^\!\+#]") {
@@ -134,4 +152,9 @@ WorkerHost_SendKey(key, delay := 0, hold := 0) {
     }
 
     SendEvent key
+
+    try {
+        Logger_Info("WorkerHost", "fire sent", f)
+    } catch {
+    }
 }

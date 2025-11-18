@@ -62,13 +62,12 @@ UI_ShowMain()
 Logger_Info("UI", "Main shown", Map("hwnd", UI.Main.Hwnd))
 ; 退出时清理
 OnExit ExitCleanup
-Logger_Info("Core", "App exit", Map())
-
 ExitCleanup(*) {
     try Poller_Stop()
     try WorkerPool_Dispose()
     try Pixel_ROI_Dispose()
     try DX_Shutdown()
     try Logger_Flush()
+    Logger_Info("Core", "App exit", Map())
     return 0
 }
