@@ -46,11 +46,16 @@ AppConfig_Init()
 Lang_Init(AppConfig_Get("Language","zh-CN"))
 
 opts := Map()
-opts["Level"] := "INFO"
-opts["RotateSizeMB"] := 10
-opts["RotateKeep"] := 5
+opts["Level"] := AppConfig_GetLog("Level", "INFO")
+opts["RotateSizeMB"] := AppConfig_GetLog("RotateSizeMB", 10)
+opts["RotateKeep"] := AppConfig_GetLog("RotateKeep", 5)
 opts["EnableMemory"] := true
 opts["MemoryCap"] := 10000
+opts["EnablePipe"] := true
+opts["PipeName"] := "GW2_LogSink"
+opts["PipeClient"] := false
+opts["PerCategory"] := AppConfig_GetLog("PerCategory", "")
+opts["ThrottlePerSec"] := AppConfig_GetLog("ThrottlePerSec", 5)
 Logger_Init(opts)
 
 env := Map()

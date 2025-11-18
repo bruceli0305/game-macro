@@ -1,14 +1,16 @@
 #Requires AutoHotkey v2
 #Include "sinks\FileSink.ahk"
 #Include "sinks\MemorySink.ahk"
+#Include "sinks\PipeSink.ahk"
 
 global g_LogCfg := Map()
 global g_LogLevelText := Map()
 global g_LogLevelNum  := Map()
+global g_LogThrottle := Map()
 
 Logger___InitTables() {
     global g_LogLevelText, g_LogLevelNum
-    if g_LogLevelText.Count = 0 {
+    if (g_LogLevelText.Count = 0) {
         g_LogLevelText[0]  := "OFF"
         g_LogLevelText[10] := "FATAL"
         g_LogLevelText[20] := "ERROR"
@@ -17,7 +19,7 @@ Logger___InitTables() {
         g_LogLevelText[50] := "DEBUG"
         g_LogLevelText[60] := "TRACE"
     }
-    if g_LogLevelNum.Count = 0 {
+    if (g_LogLevelNum.Count = 0) {
         g_LogLevelNum["OFF"]   := 0
         g_LogLevelNum["FATAL"] := 10
         g_LogLevelNum["ERROR"] := 20
@@ -31,8 +33,10 @@ Logger___InitTables() {
 Logger_Init(opts := 0) {
     Logger___InitTables()
 
-    global g_LogCfg
+    global g_LogCfg, g_LogThrottle
     g_LogCfg.Clear()
+    g_LogThrottle.Clear()
+
     g_LogCfg["Inited"] := false
     g_LogCfg["Level"] := 40
     g_LogCfg["PerCat"] := Map()
@@ -41,11 +45,64 @@ Logger_Init(opts := 0) {
     g_LogCfg["RotateSizeMB"] := 10
     g_LogCfg["RotateKeep"] := 5
     g_LogCfg["Pid"] := DllCall("Kernel32\GetCurrentProcessId", "UInt")
-    ; 在初始化默认值处加入
     g_LogCfg["EnableMemory"] := true
     g_LogCfg["MemoryCap"] := 10000
+    g_LogCfg["EnablePipe"] := false
+    g_LogCfg["PipeName"] := "GW2_LogSink"
+    g_LogCfg["PipeClient"] := false
+    g_LogCfg["IsPipeServer"] := false
+    g_LogCfg["ThrottlePerSec"] := 5
 
     if IsObject(opts) {
+        if HasProp(opts, "Level") {
+            Logger_SetLevel(opts.Level)
+        }
+        if HasProp(opts, "PerCategory") {
+            ; 允许传入 Map 或 "RuleEngine=DEBUG,DXGI=INFO" 字符串
+            if IsObject(opts.PerCategory) {
+                for k, v in opts.PerCategory {
+                    Logger_SetLevelFor(k, v)
+                }
+            } else {
+                pairs := StrSplit("" opts.PerCategory, ",")
+                for _, kv in pairs {
+                    kv2 := StrSplit(Trim(kv), "=")
+                    if (kv2.Length = 2) {
+                        Logger_SetLevelFor(Trim(kv2[1]), Trim(kv2[2]))
+                    }
+                }
+            }
+        }
+        if HasProp(opts, "File") {
+            g_LogCfg["File"] := "" opts.File
+        }
+        if HasProp(opts, "CrashFile") {
+            g_LogCfg["CrashFile"] := "" opts.CrashFile
+        }
+        if HasProp(opts, "RotateSizeMB") {
+            rsz := 10
+            try {
+                rsz := Integer(opts.RotateSizeMB)
+            } catch {
+                rsz := 10
+            }
+            if (rsz < 1) {
+                rsz := 1
+            }
+            g_LogCfg["RotateSizeMB"] := rsz
+        }
+        if HasProp(opts, "RotateKeep") {
+            rkp := 5
+            try {
+                rkp := Integer(opts.RotateKeep)
+            } catch {
+                rkp := 5
+            }
+            if (rkp < 1) {
+                rkp := 1
+            }
+            g_LogCfg["RotateKeep"] := rkp
+        }
         if HasProp(opts, "EnableMemory") {
             try {
                 g_LogCfg["EnableMemory"] := (opts.EnableMemory ? 1 : 0)
@@ -65,51 +122,61 @@ Logger_Init(opts := 0) {
             }
             g_LogCfg["MemoryCap"] := mc
         }
-        if HasProp(opts, "Level") {
-            Logger_SetLevel(opts.Level)
-        }
-        if HasProp(opts, "PerCategory") {
-            for k, v in opts.PerCategory {
-                Logger_SetLevelFor(k, v)
-            }
-        }
-        if HasProp(opts, "File") {
-            g_LogCfg["File"] := "" opts.File
-        }
-        if HasProp(opts, "CrashFile") {
-            g_LogCfg["CrashFile"] := "" opts.CrashFile
-        }
-        if HasProp(opts, "RotateSizeMB") {
-            rot := 0
+        if HasProp(opts, "EnablePipe") {
             try {
-                rot := Integer(opts.RotateSizeMB)
+                g_LogCfg["EnablePipe"] := (opts.EnablePipe ? 1 : 0)
             } catch {
-                rot := 10
+                g_LogCfg["EnablePipe"] := false
             }
-            if (rot < 1) {
-                rot := 1
-            }
-            g_LogCfg["RotateSizeMB"] := rot
         }
-        if HasProp(opts, "RotateKeep") {
-            kp := 0
+        if HasProp(opts, "PipeName") {
+            g_LogCfg["PipeName"] := "" opts.PipeName
+        }
+        if HasProp(opts, "PipeClient") {
             try {
-                kp := Integer(opts.RotateKeep)
+                g_LogCfg["PipeClient"] := (opts.PipeClient ? 1 : 0)
             } catch {
-                kp := 5
+                g_LogCfg["PipeClient"] := false
             }
-            if (kp < 1) {
-                kp := 1
+        }
+        if HasProp(opts, "ThrottlePerSec") {
+            tp := 5
+            try {
+                tp := Integer(opts.ThrottlePerSec)
+            } catch {
+                tp := 5
             }
-            g_LogCfg["RotateKeep"] := kp
+            if (tp < 0) {
+                tp := 0
+            }
+            g_LogCfg["ThrottlePerSec"] := tp
         }
     }
-    ; 初始化内存缓冲
+
     if g_LogCfg["EnableMemory"] {
         MemorySink_Init(g_LogCfg["MemoryCap"])
     }
+
+    if g_LogCfg["EnablePipe"] {
+        if g_LogCfg["PipeClient"] {
+            g_LogCfg["IsPipeServer"] := false
+        } else {
+            g_LogCfg["IsPipeServer"] := true
+            PipeSink_SetHandler(Logger__IngressLine)
+            PipeSink_ServerStart(g_LogCfg["PipeName"])
+        }
+    }
+
     g_LogCfg["Inited"] := true
-    Logger_Info("Core", "Logger initialized", Map("file", g_LogCfg["File"], "rotateMB", g_LogCfg["RotateSizeMB"], "keep", g_LogCfg["RotateKeep"]))
+
+    try {
+        f := Map()
+        f["file"] := g_LogCfg["File"]
+        f["keep"] := g_LogCfg["RotateKeep"]
+        f["rotateMB"] := g_LogCfg["RotateSizeMB"]
+        Logger_Info("Core", "Logger initialized", f)
+    } catch {
+    }
 }
 
 Logger_SetLevel(levelOrText) {
@@ -117,6 +184,15 @@ Logger_SetLevel(levelOrText) {
     n := Logger__ParseLevel(levelOrText)
     if (n >= 0) {
         g_LogCfg["Level"] := n
+    }
+}
+Logger_GetLevel() {
+    global g_LogCfg, g_LogLevelText
+    lv := g_LogCfg["Level"]
+    if g_LogLevelText.Has(lv) {
+        return g_LogLevelText[lv]
+    } else {
+        return "" lv
     }
 }
 
@@ -131,6 +207,42 @@ Logger_SetLevelFor(category, levelOrText) {
     }
     cat := Logger__Cat(category)
     g_LogCfg["PerCat"][cat] := n
+}
+Logger_GetLevelFor(category) {
+    global g_LogCfg, g_LogLevelText
+    cat := Logger__Cat(category)
+    if g_LogCfg["PerCat"].Has(cat) {
+        lv := g_LogCfg["PerCat"][cat]
+        if g_LogLevelText.Has(lv) {
+            return g_LogLevelText[lv]
+        } else {
+            return "" lv
+        }
+    } else {
+        return ""
+    }
+}
+Logger_ResetPerCategory() {
+    global g_LogCfg
+    g_LogCfg["PerCat"] := Map()
+}
+
+Logger_SetThrottlePerSec(n) {
+    global g_LogCfg
+    val := 0
+    try {
+        val := Integer(n)
+    } catch {
+        val := 0
+    }
+    if (val < 0) {
+        val := 0
+    }
+    g_LogCfg["ThrottlePerSec"] := val
+}
+Logger_GetThrottlePerSec() {
+    global g_LogCfg
+    return g_LogCfg["ThrottlePerSec"]
 }
 
 Logger_IsEnabled(level, category := "") {
@@ -179,7 +291,7 @@ Logger_Exception(category, e, fields := 0) {
     }
     if IsObject(e) {
         try {
-            if HasProp(e, "Message") {
+            if (HasProp(e, "Message")) {
                 extra["err"] := "" e.Message
             }
         }
@@ -207,13 +319,21 @@ Logger_Crash(category, e := 0, fields := 0) {
     line := Logger__Format(10, category, "CRASH", extra)
     FileSink_WriteLine(g_LogCfg["File"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
     FileSink_WriteLine(g_LogCfg["CrashFile"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
-    if (g_LogCfg["EnableMemory"]) {
+    if g_LogCfg["EnableMemory"] {
         MemorySink_Add(line)
     }
 }
 
 Logger_Flush() {
-    ; 预留：当前 FileSink 无缓冲，此处保持空实现
+    global g_LogCfg
+    if g_LogCfg.Has("EnablePipe") {
+        if (g_LogCfg["EnablePipe"] && g_LogCfg["IsPipeServer"]) {
+            try {
+                PipeSink_ServerStop()
+            } catch {
+            }
+        }
+    }
 }
 
 Logger__Log(level, category, msg, fields) {
@@ -221,13 +341,103 @@ Logger__Log(level, category, msg, fields) {
     if !Logger_IsEnabled(level, category) {
         return
     }
-    line := Logger__Format(level, category, msg, fields)
-    FileSink_WriteLine(g_LogCfg["File"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
-    if (level <= 20) {
-        FileSink_WriteLine(g_LogCfg["CrashFile"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
+
+    ; 节流摘要（窗口切换前输出）
+    sumLine := Logger__ThrottleCheck(category, msg)
+    if (sumLine != "") {
+        Logger__DirectWriteLine(sumLine)
     }
-    if (g_LogCfg["EnableMemory"]) {
+
+    line := Logger__Format(level, category, msg, fields)
+
+    if (g_LogCfg["EnablePipe"] && g_LogCfg["PipeClient"]) {
+        sentOk := false
+        try {
+            sentOk := PipeSink_ClientSend(g_LogCfg["PipeName"], line)
+        } catch {
+            sentOk := false
+        }
+        if (!sentOk) {
+            FileSink_WriteLine(g_LogCfg["File"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
+            if (level <= 20) {
+                FileSink_WriteLine(g_LogCfg["CrashFile"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
+            }
+        }
+    } else {
+        FileSink_WriteLine(g_LogCfg["File"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
+        if (level <= 20) {
+            FileSink_WriteLine(g_LogCfg["CrashFile"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
+        }
+    }
+
+    if g_LogCfg["EnableMemory"] {
         MemorySink_Add(line)
+    }
+}
+
+Logger__DirectWriteLine(line) {
+    global g_LogCfg
+    if (line = "") {
+        return
+    }
+    if (g_LogCfg["EnablePipe"] && g_LogCfg["PipeClient"]) {
+        sentOk := false
+        try {
+            sentOk := PipeSink_ClientSend(g_LogCfg["PipeName"], line)
+        } catch {
+            sentOk := false
+        }
+        if (!sentOk) {
+            FileSink_WriteLine(g_LogCfg["File"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
+        }
+    } else {
+        FileSink_WriteLine(g_LogCfg["File"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
+    }
+    if g_LogCfg["EnableMemory"] {
+        MemorySink_Add(line)
+    }
+}
+
+Logger__ThrottleCheck(category, msg) {
+    global g_LogCfg, g_LogThrottle
+    t := g_LogCfg["ThrottlePerSec"]
+    if (t <= 0) {
+        return ""
+    }
+    key := Logger__Cat(category) . "|" . Logger__Str(msg)
+    now := A_TickCount
+
+    if !g_LogThrottle.Has(key) {
+        g_LogThrottle[key] := Map("start", now, "count", 1, "supp", 0)
+        return ""
+    }
+
+    st := g_LogThrottle[key]["start"]
+    cnt := g_LogThrottle[key]["count"]
+    sup := g_LogThrottle[key]["supp"]
+
+    if (now - st < 1000) {
+        if (cnt >= t) {
+            sup := sup + 1
+            g_LogThrottle[key]["supp"] := sup
+            return ""
+        } else {
+            cnt := cnt + 1
+            g_LogThrottle[key]["count"] := cnt
+            return ""
+        }
+    } else {
+        sumLine := ""
+        if (sup > 0) {
+            f := Map()
+            f["key"] := key
+            f["suppressed"] := sup
+            sumLine := Logger__Format(30, "Logger", "throttled", f)
+        }
+        g_LogThrottle[key]["start"] := now
+        g_LogThrottle[key]["count"] := 1
+        g_LogThrottle[key]["supp"] := 0
+        return sumLine
     }
 }
 
@@ -340,6 +550,7 @@ Logger__TsMs() {
     return Format("{:04}-{:02}-{:02} {:02}:{:02}:{:02}.{:03}", y, mo, d, h, mi, s, ms)
 }
 
+; 内存缓冲访问（日志页用）
 Logger_MemGetRecent(n := 1000) {
     return MemorySink_GetRecent(n)
 }
@@ -348,4 +559,28 @@ Logger_MemClear() {
 }
 Logger_MemCount() {
     return MemorySink_Count()
+}
+
+; Pipe 服务端接收回调
+Logger__IngressLine(text) {
+    global g_LogCfg
+    line := "" text
+    FileSink_WriteLine(g_LogCfg["File"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
+
+    isErr := false
+    if InStr(line, " [ERROR] ") {
+        isErr := true
+    }
+    if InStr(line, " [FATAL] ") {
+        isErr := true
+    }
+    if InStr(line, " CRASH ") {
+        isErr := true
+    }
+    if (isErr) {
+        FileSink_WriteLine(g_LogCfg["CrashFile"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
+    }
+    if g_LogCfg["EnableMemory"] {
+        MemorySink_Add(line)
+    }
 }

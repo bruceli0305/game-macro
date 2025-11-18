@@ -3,6 +3,7 @@
 #NoTrayIcon
 #Include "..\util\Utils.ahk"
 #Include "..\logging\Logger.ahk"
+
 SendMode "Input"
 
 WorkerHost_OnExit(*) {
@@ -13,7 +14,15 @@ WorkerHost_OnExit(*) {
     ExitApp()
 }
 OnExit(WorkerHost_OnExit)
-Logger_Init(Map("Level","INFO"))
+
+opts := Map()
+opts["Level"] := "INFO"
+opts["EnableMemory"] := false
+opts["EnablePipe"] := true
+opts["PipeName"] := "GW2_LogSink"
+opts["PipeClient"] := true
+Logger_Init(opts)
+
 try {
     pid := DllCall("Kernel32\GetCurrentProcessId", "UInt")
     Logger_Info("WorkerHost", "start", Map("pid", pid))
@@ -84,12 +93,12 @@ OnCopyData(wParam, lParam, msg, hwndFrom) {
         hold  := (parts.Length >= 4) ? Integer(parts[4]) : 0
 
         WorkerHost_SendKey(key, delay, hold)
-        return 1        ; 非 0 表示“已处理”
         ; 发送完成
         try {
             Logger_Info("WorkerHost", "sent", Map("key", key, "delay", delay, "hold", hold))
         } catch {
         }
+        return 1        ; 非 0 表示“已处理”
     }
     return 0
 }
