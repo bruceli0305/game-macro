@@ -36,8 +36,6 @@ Rotation_DetectBlackout(phaseSt) {
             if (win > 0)
                 gRot["RT"].FreezeUntil := Max(gRot["RT"].FreezeUntil, now + win)
         }
-        Rot_Log(Format("BLACKOUT ratio={1:0.00} pts={2} blackoutUntil={3} freezeUntil={4}"
-            , ratio, pts.Length, gRot["RT"].BlackoutUntil, gRot["RT"].FreezeUntil), "WARN")
         return true
     }
     return false

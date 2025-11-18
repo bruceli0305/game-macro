@@ -1,15 +1,6 @@
 ; Storage.ahk - INI 配置读写/管理
 #Requires AutoHotkey v2
 
-; 轻量诊断日志（用于调试读取/写入，不依赖 Rotation）
-Diag_Log(msg) {
-    try {
-        DirCreate(A_ScriptDir "\Logs")
-        ts := FormatTime(, "yyyy-MM-dd HH:mm:ss")
-        FileAppend(ts " [Diag] " msg "`r`n", A_ScriptDir "\Logs\diag.log", "UTF-8")
-    }
-}
-
 Storage_ListProfiles() {
     global App
     list := []

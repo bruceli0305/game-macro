@@ -2,26 +2,6 @@
 #Requires AutoHotkey v2
 ; 页面管理框架：注册、切换、布局（兼容 Build()/Build(page) 与 Layout()/Layout(rc)）
 ; 严格使用块结构 if/try/catch，不使用单行形式
-
-; ====== 日志 ======
-UI_Trace(msg) {
-    ts := ""
-    try {
-        ts := FormatTime(, "yyyy-MM-dd HH:mm:ss")
-    } catch {
-        ts := ""
-    }
-    try {
-        DirCreate(A_ScriptDir "\Logs")
-    } catch {
-    }
-    try {
-        FileAppend(ts " [" A_TickCount "] " msg "`r`n"
-            , A_ScriptDir "\Logs\ui_trace.log", "UTF-8")
-    } catch {
-    }
-}
-
 ; ====== 通用调用器：检测 0/1 参并安全调用 ======
 UI_Call0Or1(fn, arg) {
     ; 返回 true 表示成功调用

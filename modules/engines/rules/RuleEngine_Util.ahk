@@ -33,8 +33,6 @@ RuleEngine_CheckSkillReady(prof, idx) {
     cur := Pixel_FrameGet(s.X, s.Y)
     tgt := Pixel_HexToInt(s.Color)
     ok := Pixel_ColorMatch(cur, tgt, s.Tol)
-    RE_LogV(Format("  ReadyCheck idx={1} name={2} X={3} Y={4} cur={5} tgt={6} tol={7} -> {8}"
-        , idx, s.Name, s.X, s.Y, RE_ColorHex(cur), RE_ColorHex(tgt), s.Tol, ok))
     return ok
 }
 
@@ -56,7 +54,6 @@ RuleEngine_SendVerified(thr, idx, ruleName) {
     s := App["ProfileData"].Skills[idx]
     ok := WorkerPool_SendSkillIndex(thr, idx, "Rule:" ruleName)
     if !ok {
-        RE_Log("  Send initial FAIL for idx=" idx " name=" s.Name, "WARN")
         return false
     }
     if !RE_VerifySend {
@@ -66,10 +63,7 @@ RuleEngine_SendVerified(thr, idx, ruleName) {
     attempt := 0
     loop RE_VerifyRetry + 1 {
         if (attempt > 0) {
-            RE_Log("  Verify attempt#" (attempt + 1) " (retry send)")
             WorkerPool_SendSkillIndex(thr, idx, "Retry:" ruleName)
-        } else {
-            RE_Log("  Verify attempt#" (attempt + 1))
         }
         Sleep RE_VerifyWaitMs
         t0 := A_TickCount
@@ -84,7 +78,6 @@ RuleEngine_SendVerified(thr, idx, ruleName) {
             }
             Sleep 10
         }
-        RE_Log("  Verify result -> " (success ? "OK" : "FAIL"))
         if success {
             return true
         }

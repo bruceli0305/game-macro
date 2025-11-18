@@ -12,12 +12,6 @@ Rotation_Reset() {
     gRotInitialized := false
 }
 
-Rot_Log(msg, level := "INFO") {
-    DirCreate(A_ScriptDir "\Logs")
-    ts := FormatTime(, "yyyy-MM-dd HH:mm:ss")
-    FileAppend(ts " [Rotation] [" level "] " msg "`r`n", A_ScriptDir "\Logs\rotengine.log", "UTF-8")
-}
-
 Rotation_IsEnabled() {
     try {
         return !!(gRot.Has("Cfg") ? gRot["Cfg"].Enabled : 0)

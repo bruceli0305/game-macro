@@ -1,8 +1,5 @@
 ; WorkerPool.ahk - 稳定上线版（FF-ONLY）
 ; 增强：支持 HoldMs（全局默认 DefaultHoldMs + 技能级 HoldMs 覆盖 + 可选一次性覆盖 holdOverride）
-
-; 全局
-global WP_LOG_DIR := A_ScriptDir "\Logs"
 global WorkerPool := { Mode: "FF_ONLY" }
 ; —— 施法锁（按线程）：threadId -> lockUntilTick —— 
 global WP_Cast := { ByThread: Map() }
@@ -30,14 +27,6 @@ WorkerPool_CastLock(threadId, durMs) {
         return
     lockUntil := A_TickCount + durMs
     WP_Cast.ByThread[threadId] := lockUntil
-    WP_Log(Format("CastLock set: thr={1} dur={2} until={3}", threadId, durMs, lockUntil))
-}
-
-; 简单日志
-WP_Log(msg) {
-    DirCreate(WP_LOG_DIR)
-    ts := FormatTime(, "yyyy-MM-dd HH:mm:ss")
-    try FileAppend(ts " [WorkerPool] " msg "`r`n", WP_LOG_DIR "\workerpool.log", "UTF-8")
 }
 
 ;================ 生命周期（FF-ONLY: 不启动任何常驻线程） ================
@@ -45,12 +34,10 @@ WorkerPool_Rebuild() {
     global App, WorkerPool
     WorkerPool.Mode := "FF_ONLY"
     WorkerPool_CastReset()
-    WP_Log("Rebuild (FF-only): skip spawning workers; threads=" (HasProp(App["ProfileData"], "Threads") ? App["ProfileData"].Threads.Length : 0))
 }
 
 WorkerPool_Dispose() {
     WorkerPool_CastReset()
-    WP_Log("Dispose (FF-only): nothing to close")
 }
 
 ;================ 启动外部进程（Kernel32.CreateProcessW） ================
@@ -121,7 +108,6 @@ WorkerPool_FindHost() {
 WorkerPool_FireAndForget(key, delay := 0, hold := 0) {
     host := WorkerPool_FindHost()
     if !host {
-        WP_Log("Start one-shot FAIL: WorkerHost not found in candidates")
         return false
     }
     qkey := '"' . StrReplace(key, '"', '""') . '"'
@@ -130,15 +116,12 @@ WorkerPool_FireAndForget(key, delay := 0, hold := 0) {
     } else {
         ip := A_AhkPath
         if (ip = "" || !FileExist(ip)) {
-            WP_Log("Start one-shot FAIL: A_AhkPath invalid for .ahk host. Please deploy WorkerHost.exe")
             return false
         }
         cmd := '"' ip '" "' host.Path '" --fire ' . qkey . ' ' . delay . ' ' . hold
     }
-    WP_Log("Start one-shot: " cmd)
     pr := WorkerPool_CreateProcess(cmd)
     if !pr {
-        WP_Log("Start one-shot FAIL: CreateProcessW error")
         return false
     }
     try DllCall("Kernel32.dll\CloseHandle", "Ptr", pr.hThread)
@@ -157,8 +140,6 @@ WorkerPool_SendSkillIndex(threadId, idx, src := "", holdOverride := -1) {
 
     lk := WorkerPool_CastIsLocked(threadId)
     if (lk.Locked) {
-        WP_Log(Format("CastLock BLOCK: thr={1} idx={2} key={3} remain={4}ms src={5}"
-            , threadId, idx, s.Key, lk.Remain, (src!="" ? src : "?")))
         return false
     }
 
@@ -183,32 +164,21 @@ WorkerPool_SendSkillIndex(threadId, idx, src := "", holdOverride := -1) {
     } catch {
         finalHold := 0
     }
-
-    WP_Log(Format("Send FF-only: thr={1} idx={2} key={3} delay={4} hold={5} src={6}"
-        , threadId, idx, s.Key, delay, finalHold, (src != "" ? src : "?")))
-
     ok := WorkerPool_FireAndForget(s.Key, delay, finalHold)
 
     if (ok) {
         try Rotation_OnSkillSent(idx)
         newCnt := Counters_Inc(idx)
-        WP_Log("Counter inc: idx=" idx " key=" s.Key " count=" newCnt)
         castMs := 0
         try castMs := Max(0, Integer(HasProp(s, "CastMs") ? s.CastMs : 0))
         if (castMs > 0) {
             WorkerPool_CastLock(threadId, castMs)
         }
-    } else {
-        WP_Log("Send FAIL -> no lock, no counter")
     }
 
     try {
         BuffEngine_NotifySkillUsed(idx)
-    } catch {
-        WP_Log("NotifySkillUsed FAIL: " A_LastError)
     }
-
-    WP_Log("FF-only ret=" ok)
     return ok
 }
 

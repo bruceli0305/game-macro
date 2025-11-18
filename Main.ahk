@@ -20,6 +20,7 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 
 ; ========= Includes =========
 #Include "modules\util\Utils.ahk"
+#Include "modules\logging\Logger.ahk"
 #Include "modules\i18n\Lang.ahk"
 #Include "modules\core\AppConfig.ahk"
 #Include "modules\core\Core.ahk"
@@ -43,6 +44,12 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 ; ========= Bootstrap =========
 AppConfig_Init()
 Lang_Init(AppConfig_Get("Language","zh-CN"))
+Logger_Init(Map("Level","INFO", "RotateSizeMB",10, "RotateKeep",5))
+env := Map()
+env["arch"] := (A_PtrSize = 8) ? "x64" : "x86"
+env["admin"] := (A_IsAdmin ? "Admin" : "User")
+env["os"] := A_OSVersion
+Logger_Info("Core", "App start", env)
 Core_Init()
 ; 如需强制关闭 DXGI，可放开这一行
 ; Dup_Enable(false)
@@ -58,13 +65,16 @@ try {
 }
 
 UI_ShowMain()
-
+Logger_Info("UI", "Main shown", Map("hwnd", UI.Main.Hwnd))
 ; 退出时清理
 OnExit ExitCleanup
+Logger_Info("Core", "App exit", Map())
+
 ExitCleanup(*) {
     try Poller_Stop()
     try WorkerPool_Dispose()
     try Pixel_ROI_Dispose()
-    try DX_Shutdown()         ; 新增：释放 DXGI Dup
+    try DX_Shutdown()
+    try Logger_Flush()
     return 0
 }

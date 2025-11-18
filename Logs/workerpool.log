@@ -1,0 +1,634 @@
+﻿2025-11-10 18:17:31 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-10 18:17:41 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-10 18:23:44 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-10 18:23:50 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-10 18:24:03 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-10 18:30:40 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-10 18:30:53 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-10 18:32:38 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-10 18:32:51 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-10 18:36:06 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-10 18:36:12 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-10 18:39:27 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-10 18:39:56 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-10 18:41:52 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-10 18:43:19 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-10 18:43:24 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-10 18:44:15 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-10 18:46:57 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-10 18:51:20 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-10 18:51:23 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-10 18:52:58 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-10 18:55:37 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-10 18:57:25 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-10 18:57:31 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-10 18:58:55 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-10 18:58:59 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-10 19:00:05 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-10 19:00:09 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-10 19:01:27 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-10 19:01:32 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-10 19:02:17 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-10 19:02:21 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-10 19:03:11 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-11 08:09:51 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 08:11:22 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "a" 1000 500
+2025-11-11 08:15:48 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 08:44:59 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-11 08:58:27 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 08:58:34 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 08:59:07 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 08:59:26 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 08:59:41 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-11 09:06:43 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 09:15:58 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-11 09:20:22 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 09:33:24 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-11 09:33:29 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 09:33:39 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 09:33:41 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-11 09:33:46 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 09:35:05 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-11 09:35:11 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 09:38:00 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 09:38:27 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 09:38:33 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-11 09:38:42 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 09:39:03 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-11 09:48:43 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 09:49:49 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-11 10:47:00 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 10:47:02 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-11 10:50:16 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 10:51:34 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-11 10:56:52 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 10:58:08 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-11 10:58:58 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-11 11:14:15 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 09:49:48 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 09:49:52 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 09:49:59 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 09:51:55 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 09:56:09 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 09:57:22 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 09:59:29 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 10:21:05 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 10:23:17 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 10:37:17 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 10:53:56 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 10:54:28 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 10:56:18 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 10:57:54 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 10:58:05 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 11:03:38 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:03:51 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 11:04:03 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:06:11 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 11:06:19 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:10:04 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 11:10:09 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:10:16 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 11:15:42 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:15:52 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 11:16:18 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:18:43 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 11:19:19 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:21:03 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 11:21:08 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:21:23 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 11:21:27 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:21:45 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 11:22:15 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:22:32 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:22:55 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 11:23:29 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:23:32 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:23:39 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:23:40 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 11:23:45 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:23:49 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 11:31:07 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:31:13 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:31:17 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 11:37:10 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:37:32 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:37:35 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 11:37:41 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:37:44 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:42:14 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 11:42:44 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 11:43:17 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 13:35:32 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 13:56:36 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 14:12:26 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 14:12:59 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-12 14:13:04 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-12 14:13:09 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 08:18:06 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 08:46:08 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 08:59:43 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 09:00:05 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 09:00:06 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 09:30:39 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 09:41:15 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 09:41:58 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 09:54:23 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 10:22:40 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 10:25:03 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 10:32:17 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 10:32:23 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 10:37:47 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 10:37:54 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 10:38:53 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 10:44:22 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 10:44:46 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 11:00:12 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:00:16 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:01:03 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:01:07 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 11:09:10 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:09:38 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:10:23 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 11:15:19 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:19:09 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 11:19:17 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:19:21 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:19:42 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:19:50 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:19:58 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:20:51 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 11:28:29 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:28:41 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:28:53 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:29:04 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:32:55 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 11:44:53 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:45:04 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:48:45 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 11:48:51 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 11:48:58 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 13:37:00 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 13:37:09 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 13:46:25 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 13:46:30 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 13:47:08 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-13 16:57:12 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-13 16:57:29 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 08:42:43 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 08:43:04 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 08:55:00 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 09:01:55 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 09:20:20 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 09:22:48 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 09:27:01 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 09:30:27 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 09:39:33 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 09:39:48 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 10:02:20 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 10:16:06 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 10:38:50 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 11:08:46 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 11:15:51 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 11:16:40 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 11:18:24 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 11:18:48 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 14:05:26 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:07:27 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 14:07:32 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:07:48 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 14:07:52 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:09:17 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 14:09:22 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:09:47 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 14:10:32 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:10:41 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:12:40 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=OpenerStep
+2025-11-14 14:12:40 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-14 14:12:41 [WorkerPool] Counter inc: idx=1 key=3 count=1
+2025-11-14 14:12:41 [WorkerPool] CastLock set: thr=1 dur=200 until=700414012
+2025-11-14 14:12:41 [WorkerPool] FF-only ret=1
+2025-11-14 14:12:46 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 14:13:51 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:15:09 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=Buff:测试
+2025-11-14 14:15:09 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-14 14:15:09 [WorkerPool] Counter inc: idx=1 key=3 count=1
+2025-11-14 14:15:09 [WorkerPool] CastLock set: thr=1 dur=200 until=700561934
+2025-11-14 14:15:09 [WorkerPool] FF-only ret=1
+2025-11-14 14:15:09 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=138ms src=OpenerStep
+2025-11-14 14:15:09 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=106ms src=Rule:新规则-技能1
+2025-11-14 14:15:09 [WorkerPool] CastLock BLOCK: thr=1 idx=2 key=F2 remain=13ms src=Rule:循环-技能2
+2025-11-14 14:15:09 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=Rule:新规则-技能1
+2025-11-14 14:15:09 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-14 14:15:10 [WorkerPool] Counter inc: idx=1 key=3 count=2
+2025-11-14 14:15:10 [WorkerPool] CastLock set: thr=1 dur=200 until=700562293
+2025-11-14 14:15:10 [WorkerPool] FF-only ret=1
+2025-11-14 14:15:10 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=Rule:新规则-技能1
+2025-11-14 14:15:10 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-14 14:15:10 [WorkerPool] Counter inc: idx=1 key=3 count=3
+2025-11-14 14:15:10 [WorkerPool] CastLock set: thr=1 dur=200 until=700562981
+2025-11-14 14:15:10 [WorkerPool] FF-only ret=1
+2025-11-14 14:15:11 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=Rule:新规则-技能1
+2025-11-14 14:15:11 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-14 14:15:11 [WorkerPool] Counter inc: idx=1 key=3 count=4
+2025-11-14 14:15:11 [WorkerPool] CastLock set: thr=1 dur=200 until=700563653
+2025-11-14 14:15:11 [WorkerPool] FF-only ret=1
+2025-11-14 14:15:12 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=Rule:新规则-技能1
+2025-11-14 14:15:12 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-14 14:15:12 [WorkerPool] Counter inc: idx=1 key=3 count=5
+2025-11-14 14:15:12 [WorkerPool] CastLock set: thr=1 dur=200 until=700564340
+2025-11-14 14:15:12 [WorkerPool] FF-only ret=1
+2025-11-14 14:15:21 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 14:25:36 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:25:53 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:32:16 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 14:32:31 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:32:52 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:33:02 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 14:33:07 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:34:35 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 14:34:41 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:35:11 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:42:39 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 14:42:47 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:42:58 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:43:02 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:43:13 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:43:27 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:43:29 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 14:48:31 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:48:38 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:48:42 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:48:50 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:48:52 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:49:02 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 14:49:49 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:57:26 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 14:57:31 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:58:27 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 14:58:31 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 14:59:57 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:00:02 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:00:32 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:00:36 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:02:21 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:02:26 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:02:50 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:02:54 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:03:49 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:03:54 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:04:53 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:04:57 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:05:16 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:05:51 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:07:22 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:07:26 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:07:49 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:07:53 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:10:35 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:10:40 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:11:05 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:11:09 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:11:47 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:11:52 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:13:11 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:13:25 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:14:28 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:14:32 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:16:12 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:16:17 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:17:36 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:17:40 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:18:16 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:18:20 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:18:58 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:19:25 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:20:49 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:20:54 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:24:56 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:25:02 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:26:49 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:26:54 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:28:00 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:28:04 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:28:24 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:28:28 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:31:10 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:31:15 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:31:55 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:39:04 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:39:23 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:42:38 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:47:23 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:47:31 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:48:40 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:48:45 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:51:19 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:51:24 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:52:13 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:52:17 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:52:41 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:52:45 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:53:20 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:53:25 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:54:33 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:54:38 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 15:58:56 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 15:59:02 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:02:37 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:02:41 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:03:06 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:03:10 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:03:33 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:03:37 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:07:58 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:08:02 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:09:08 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:09:12 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:13:46 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:14:23 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:15:22 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:15:27 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:17:34 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:19:16 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:25:26 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:25:36 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:26:28 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:26:33 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:28:15 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:28:19 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:32:18 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:32:22 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:32:35 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:32:39 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:32:54 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:32:58 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:33:37 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:33:41 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:34:02 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:34:06 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:34:43 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:34:47 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:35:04 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:35:08 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:35:39 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:35:44 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:35:55 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:35:59 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:39:50 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:39:54 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:40:15 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:40:19 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:44:25 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:44:29 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:46:28 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-14 16:46:39 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-14 16:47:44 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-17 09:18:09 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-17 09:18:44 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-17 09:18:47 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-17 09:19:01 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-17 09:19:06 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=Buff:测试
+2025-11-17 09:19:06 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-17 09:19:07 [WorkerPool] Counter inc: idx=1 key=3 count=1
+2025-11-17 09:19:07 [WorkerPool] CastLock set: thr=1 dur=200 until=942002512
+2025-11-17 09:19:07 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:07 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=122ms src=OpenerStep
+2025-11-17 09:19:07 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=106ms src=Rule:新规则-技能1
+2025-11-17 09:19:07 [WorkerPool] CastLock BLOCK: thr=1 idx=2 key=F2 remain=12ms src=Rule:循环-技能2
+2025-11-17 09:19:07 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=Rule:新规则-技能1
+2025-11-17 09:19:07 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-17 09:19:08 [WorkerPool] Counter inc: idx=1 key=3 count=2
+2025-11-17 09:19:08 [WorkerPool] CastLock set: thr=1 dur=200 until=942002840
+2025-11-17 09:19:08 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:08 [WorkerPool] CastLock BLOCK: thr=1 idx=2 key=F2 remain=75ms src=Default
+2025-11-17 09:19:08 [WorkerPool] CastLock BLOCK: thr=1 idx=2 key=F2 remain=44ms src=Default
+2025-11-17 09:19:08 [WorkerPool] CastLock BLOCK: thr=1 idx=2 key=F2 remain=12ms src=Default
+2025-11-17 09:19:08 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:08 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:08 [WorkerPool] Counter inc: idx=2 key=F2 count=1
+2025-11-17 09:19:08 [WorkerPool] CastLock set: thr=1 dur=200 until=942003090
+2025-11-17 09:19:08 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:08 [WorkerPool] CastLock BLOCK: thr=1 idx=2 key=F2 remain=44ms src=Default
+2025-11-17 09:19:08 [WorkerPool] CastLock BLOCK: thr=1 idx=2 key=F2 remain=12ms src=Default
+2025-11-17 09:19:08 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:08 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:08 [WorkerPool] Counter inc: idx=2 key=F2 count=2
+2025-11-17 09:19:08 [WorkerPool] CastLock set: thr=1 dur=200 until=942003340
+2025-11-17 09:19:08 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:08 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=75ms src=Rule:新规则-技能1
+2025-11-17 09:19:08 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:08 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:08 [WorkerPool] Counter inc: idx=2 key=F2 count=3
+2025-11-17 09:19:08 [WorkerPool] CastLock set: thr=1 dur=200 until=942003559
+2025-11-17 09:19:08 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:08 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=153ms src=Rule:新规则-技能1
+2025-11-17 09:19:08 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=59ms src=Rule:新规则-技能1
+2025-11-17 09:19:08 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:08 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:08 [WorkerPool] Counter inc: idx=2 key=F2 count=4
+2025-11-17 09:19:08 [WorkerPool] CastLock set: thr=1 dur=200 until=942003793
+2025-11-17 09:19:08 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:09 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=153ms src=Rule:新规则-技能1
+2025-11-17 09:19:09 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=59ms src=Rule:新规则-技能1
+2025-11-17 09:19:09 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:09 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:09 [WorkerPool] Counter inc: idx=2 key=F2 count=5
+2025-11-17 09:19:09 [WorkerPool] CastLock set: thr=1 dur=200 until=942004028
+2025-11-17 09:19:09 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:09 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=153ms src=Rule:新规则-技能1
+2025-11-17 09:19:09 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=75ms src=Rule:新规则-技能1
+2025-11-17 09:19:09 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:09 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:09 [WorkerPool] Counter inc: idx=2 key=F2 count=6
+2025-11-17 09:19:09 [WorkerPool] CastLock set: thr=1 dur=200 until=942004262
+2025-11-17 09:19:09 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:09 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=169ms src=Rule:新规则-技能1
+2025-11-17 09:19:09 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=75ms src=Rule:新规则-技能1
+2025-11-17 09:19:09 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:09 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:09 [WorkerPool] Counter inc: idx=2 key=F2 count=7
+2025-11-17 09:19:09 [WorkerPool] CastLock set: thr=1 dur=200 until=942004481
+2025-11-17 09:19:09 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:09 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=153ms src=Rule:新规则-技能1
+2025-11-17 09:19:09 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=75ms src=Rule:新规则-技能1
+2025-11-17 09:19:09 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:09 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:09 [WorkerPool] Counter inc: idx=2 key=F2 count=8
+2025-11-17 09:19:09 [WorkerPool] CastLock set: thr=1 dur=200 until=942004731
+2025-11-17 09:19:09 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:09 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=153ms src=Rule:新规则-技能1
+2025-11-17 09:19:10 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=60ms src=Rule:新规则-技能1
+2025-11-17 09:19:10 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:10 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:10 [WorkerPool] Counter inc: idx=2 key=F2 count=9
+2025-11-17 09:19:10 [WorkerPool] CastLock set: thr=1 dur=200 until=942004981
+2025-11-17 09:19:10 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:10 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=138ms src=Rule:新规则-技能1
+2025-11-17 09:19:10 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=60ms src=Rule:新规则-技能1
+2025-11-17 09:19:10 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:10 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:10 [WorkerPool] Counter inc: idx=2 key=F2 count=10
+2025-11-17 09:19:10 [WorkerPool] CastLock set: thr=1 dur=200 until=942005231
+2025-11-17 09:19:10 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:10 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=106ms src=Rule:新规则-技能1
+2025-11-17 09:19:10 [WorkerPool] CastLock BLOCK: thr=1 idx=2 key=F2 remain=13ms src=Default
+2025-11-17 09:19:10 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=Rule:新规则-技能1
+2025-11-17 09:19:10 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-17 09:19:10 [WorkerPool] Counter inc: idx=1 key=3 count=3
+2025-11-17 09:19:10 [WorkerPool] CastLock set: thr=1 dur=200 until=942005512
+2025-11-17 09:19:10 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:10 [WorkerPool] CastLock BLOCK: thr=1 idx=2 key=F2 remain=44ms src=Default
+2025-11-17 09:19:10 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:10 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:10 [WorkerPool] Counter inc: idx=2 key=F2 count=11
+2025-11-17 09:19:10 [WorkerPool] CastLock set: thr=1 dur=200 until=942005746
+2025-11-17 09:19:10 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:11 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:11 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:11 [WorkerPool] Counter inc: idx=2 key=F2 count=12
+2025-11-17 09:19:11 [WorkerPool] CastLock set: thr=1 dur=200 until=942006028
+2025-11-17 09:19:11 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:11 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=75ms src=Rule:新规则-技能1
+2025-11-17 09:19:11 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:11 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:11 [WorkerPool] Counter inc: idx=2 key=F2 count=13
+2025-11-17 09:19:11 [WorkerPool] CastLock set: thr=1 dur=200 until=942006293
+2025-11-17 09:19:11 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:11 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=106ms src=Rule:新规则-技能1
+2025-11-17 09:19:11 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=Rule:新规则-技能1
+2025-11-17 09:19:11 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-17 09:19:11 [WorkerPool] Counter inc: idx=1 key=3 count=4
+2025-11-17 09:19:11 [WorkerPool] CastLock set: thr=1 dur=200 until=942006543
+2025-11-17 09:19:11 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:11 [WorkerPool] CastLock BLOCK: thr=1 idx=2 key=F2 remain=43ms src=Default
+2025-11-17 09:19:11 [WorkerPool] CastLock BLOCK: thr=1 idx=2 key=F2 remain=12ms src=Default
+2025-11-17 09:19:11 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:11 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:11 [WorkerPool] Counter inc: idx=2 key=F2 count=14
+2025-11-17 09:19:11 [WorkerPool] CastLock set: thr=1 dur=200 until=942006793
+2025-11-17 09:19:12 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:12 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:12 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:12 [WorkerPool] Counter inc: idx=2 key=F2 count=15
+2025-11-17 09:19:12 [WorkerPool] CastLock set: thr=1 dur=200 until=942007028
+2025-11-17 09:19:12 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:12 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=28ms src=Rule:新规则-技能1
+2025-11-17 09:19:12 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:12 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:12 [WorkerPool] Counter inc: idx=2 key=F2 count=16
+2025-11-17 09:19:12 [WorkerPool] CastLock set: thr=1 dur=200 until=942007325
+2025-11-17 09:19:12 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:12 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=107ms src=Rule:新规则-技能1
+2025-11-17 09:19:12 [WorkerPool] CastLock BLOCK: thr=1 idx=2 key=F2 remain=13ms src=Default
+2025-11-17 09:19:12 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=Rule:新规则-技能1
+2025-11-17 09:19:12 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-17 09:19:12 [WorkerPool] Counter inc: idx=1 key=3 count=5
+2025-11-17 09:19:12 [WorkerPool] CastLock set: thr=1 dur=200 until=942007606
+2025-11-17 09:19:12 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:12 [WorkerPool] CastLock BLOCK: thr=1 idx=2 key=F2 remain=28ms src=Default
+2025-11-17 09:19:12 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:12 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:13 [WorkerPool] Counter inc: idx=2 key=F2 count=17
+2025-11-17 09:19:13 [WorkerPool] CastLock set: thr=1 dur=200 until=942007856
+2025-11-17 09:19:13 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:13 [WorkerPool] CastLock BLOCK: thr=1 idx=2 key=F2 remain=28ms src=Default
+2025-11-17 09:19:13 [WorkerPool] Send FF-only: thr=1 idx=2 key=F2 delay=250 hold=0 src=Default
+2025-11-17 09:19:13 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "F2" 250 0
+2025-11-17 09:19:13 [WorkerPool] Counter inc: idx=2 key=F2 count=18
+2025-11-17 09:19:13 [WorkerPool] CastLock set: thr=1 dur=200 until=942008090
+2025-11-17 09:19:13 [WorkerPool] FF-only ret=1
+2025-11-17 09:19:52 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-17 09:53:47 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-17 09:55:13 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-17 10:53:27 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-17 10:55:00 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-17 10:55:05 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-17 10:55:29 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-17 11:11:01 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-17 11:11:10 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=Buff:测试
+2025-11-17 11:11:10 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-17 11:11:11 [WorkerPool] Counter inc: idx=1 key=3 count=1
+2025-11-17 11:11:11 [WorkerPool] CastLock set: thr=1 dur=200 until=948726325
+2025-11-17 11:11:11 [WorkerPool] FF-only ret=1
+2025-11-17 11:11:11 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=107ms src=OpenerStep
+2025-11-17 11:11:11 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=RuleSession:新规则-技能1
+2025-11-17 11:11:11 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-17 11:11:11 [WorkerPool] Counter inc: idx=1 key=3 count=2
+2025-11-17 11:11:11 [WorkerPool] CastLock set: thr=1 dur=200 until=948726559
+2025-11-17 11:11:11 [WorkerPool] FF-only ret=1
+2025-11-17 11:11:11 [WorkerPool] CastLock BLOCK: thr=1 idx=2 key=F2 remain=75ms src=Default
+2025-11-17 11:11:11 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=RuleSession:新规则
+2025-11-17 11:11:11 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-17 11:11:11 [WorkerPool] Counter inc: idx=1 key=3 count=3
+2025-11-17 11:11:11 [WorkerPool] CastLock set: thr=1 dur=200 until=948726793
+2025-11-17 11:11:11 [WorkerPool] FF-only ret=1
+2025-11-17 11:11:12 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=RuleSession:新规则
+2025-11-17 11:11:12 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-17 11:11:12 [WorkerPool] Counter inc: idx=1 key=3 count=4
+2025-11-17 11:11:12 [WorkerPool] CastLock set: thr=1 dur=200 until=948727590
+2025-11-17 11:11:12 [WorkerPool] FF-only ret=1
+2025-11-17 11:11:13 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=RuleSession:新规则
+2025-11-17 11:11:13 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-17 11:11:13 [WorkerPool] Counter inc: idx=1 key=3 count=5
+2025-11-17 11:11:13 [WorkerPool] CastLock set: thr=1 dur=200 until=948728356
+2025-11-17 11:11:13 [WorkerPool] FF-only ret=1
+2025-11-17 11:11:14 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=RuleSession:新规则
+2025-11-17 11:11:14 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-17 11:11:14 [WorkerPool] Counter inc: idx=1 key=3 count=6
+2025-11-17 11:11:14 [WorkerPool] CastLock set: thr=1 dur=200 until=948729121
+2025-11-17 11:11:14 [WorkerPool] FF-only ret=1
+2025-11-17 11:28:43 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-17 11:36:47 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-17 11:49:20 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-17 13:47:10 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-17 13:47:30 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-17 13:47:35 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-17 14:07:41 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-17 14:07:42 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-17 14:15:38 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-17 14:24:14 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-17 14:24:48 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-17 16:50:57 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-17 16:51:08 [WorkerPool] Dispose (FF-only): nothing to close
+2025-11-18 10:02:22 [WorkerPool] Rebuild (FF-only): skip spawning workers; threads=1
+2025-11-18 10:02:32 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=Buff:测试
+2025-11-18 10:02:32 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-18 10:02:33 [WorkerPool] Counter inc: idx=1 key=3 count=1
+2025-11-18 10:02:33 [WorkerPool] CastLock set: thr=1 dur=200 until=7501496
+2025-11-18 10:02:33 [WorkerPool] FF-only ret=1
+2025-11-18 10:02:33 [WorkerPool] CastLock BLOCK: thr=1 idx=1 key=3 remain=121ms src=OpenerStep
+2025-11-18 10:02:33 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=RuleSession:新规则
+2025-11-18 10:02:33 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-18 10:02:33 [WorkerPool] Counter inc: idx=1 key=3 count=2
+2025-11-18 10:02:33 [WorkerPool] CastLock set: thr=1 dur=200 until=7501746
+2025-11-18 10:02:33 [WorkerPool] FF-only ret=1
+2025-11-18 10:02:34 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=RuleSession:新规则
+2025-11-18 10:02:34 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-18 10:02:34 [WorkerPool] Counter inc: idx=1 key=3 count=3
+2025-11-18 10:02:34 [WorkerPool] CastLock set: thr=1 dur=200 until=7502528
+2025-11-18 10:02:34 [WorkerPool] FF-only ret=1
+2025-11-18 10:02:34 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=RuleSession:新规则
+2025-11-18 10:02:34 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-18 10:02:34 [WorkerPool] Counter inc: idx=1 key=3 count=4
+2025-11-18 10:02:34 [WorkerPool] CastLock set: thr=1 dur=200 until=7503309
+2025-11-18 10:02:34 [WorkerPool] FF-only ret=1
+2025-11-18 10:02:35 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=RuleSession:新规则
+2025-11-18 10:02:35 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-18 10:02:35 [WorkerPool] Counter inc: idx=1 key=3 count=5
+2025-11-18 10:02:35 [WorkerPool] CastLock set: thr=1 dur=200 until=7504075
+2025-11-18 10:02:35 [WorkerPool] FF-only ret=1
+2025-11-18 10:02:36 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=RuleSession:新规则
+2025-11-18 10:02:36 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-18 10:02:36 [WorkerPool] Counter inc: idx=1 key=3 count=6
+2025-11-18 10:02:36 [WorkerPool] CastLock set: thr=1 dur=200 until=7504840
+2025-11-18 10:02:36 [WorkerPool] FF-only ret=1
+2025-11-18 10:02:37 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=RuleSession:新规则
+2025-11-18 10:02:37 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-18 10:02:37 [WorkerPool] Counter inc: idx=1 key=3 count=7
+2025-11-18 10:02:37 [WorkerPool] CastLock set: thr=1 dur=200 until=7505606
+2025-11-18 10:02:37 [WorkerPool] FF-only ret=1
+2025-11-18 10:02:37 [WorkerPool] Send FF-only: thr=1 idx=1 key=3 delay=250 hold=0 src=RuleSession:新规则
+2025-11-18 10:02:37 [WorkerPool] Start one-shot: "D:\project\AI\AHK\game-macro\modules\workers\WorkerHost.exe" --fire "3" 250 0
+2025-11-18 10:02:38 [WorkerPool] Counter inc: idx=1 key=3 count=8
+2025-11-18 10:02:38 [WorkerPool] CastLock set: thr=1 dur=200 until=7506387
+2025-11-18 10:02:38 [WorkerPool] FF-only ret=1

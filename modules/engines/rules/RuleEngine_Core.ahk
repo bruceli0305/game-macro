@@ -87,7 +87,6 @@ RuleEngine_Tick() {
 ; 评估规则（先 Counter 后 Pixel；短路）
 RuleEngine_EvalRule(rule, prof) {
     if (rule.Conditions.Length = 0) {
-        RE_Log("Rule '" rule.Name "' has no conditions -> false")
         return false
     }
     logicAnd := (StrUpper(rule.Logic) = "AND")
@@ -118,8 +117,6 @@ RuleEngine_EvalRule(rule, prof) {
                 case "LT": res := (cnt < val)
                 default:   res := (cnt >= val)
             }
-            RE_LogV(Format("Cond#{1} Counter: skill={2}({3}) cnt={4} cmp={5} val={6} -> {7}"
-                , i, si, RE_SkillNameByIndex(prof, si), cnt, cmp, val, res))
         } else {
             refType := StrUpper(HasProp(c,"RefType") ? c.RefType : "SKILL")
             refIdx  := HasProp(c,"RefIndex") ? c.RefIndex : 1
@@ -131,10 +128,7 @@ RuleEngine_EvalRule(rule, prof) {
                     cur := Pixel_FrameGet(rx, ry)
                     match := Pixel_ColorMatch(cur, tgt, tol)
                     res := (op = "EQ") ? match : !match
-                    RE_LogV(Format("Cond#{1} Pixel(Skill): idx={2} name={3} X={4} Y={5} cur={6} tgt={7} tol={8} op={9} -> match={10} res={11}"
-                        , i, refIdx, s.Name, rx, ry, RE_ColorHex(cur), RE_ColorHex(tgt), tol, op, match, res))
                 } else {
-                    RE_LogV(Format("Cond#{1} Pixel(Skill): invalid ref idx={2} -> false", i, refIdx))
                     res := false
                 }
             } else {
@@ -144,10 +138,7 @@ RuleEngine_EvalRule(rule, prof) {
                     cur := Pixel_FrameGet(rx, ry)
                     match := Pixel_ColorMatch(cur, tgt, tol)
                     res := (op = "EQ") ? match : !match
-                    RE_LogV(Format("Cond#{1} Pixel(Point): idx={2} name={3} X={4} Y={5} cur={6} tgt={7} tol={8} op={9} -> match={10} res={11}"
-                        , i, refIdx, p.Name, rx, ry, RE_ColorHex(cur), RE_ColorHex(tgt), tol, op, match, res))
                 } else {
-                    RE_LogV(Format("Cond#{1} Pixel(Point): invalid ref idx={2} -> false", i, refIdx))
                     res := false
                 }
             }
@@ -157,16 +148,13 @@ RuleEngine_EvalRule(rule, prof) {
         allTrue := allTrue && res
 
         if (!logicAnd && anyHit) {
-            RE_LogV("Rule '" rule.Name "' logic=OR short-circuit -> true")
             return true
         }
         if (logicAnd && !allTrue) {
-            RE_LogV("Rule '" rule.Name "' logic=AND short-circuit -> false")
             return false
         }
     }
     final := logicAnd ? allTrue : anyHit
-    RE_Log("Rule '" rule.Name "' eval done: logic=" (logicAnd ? "AND" : "OR") " -> " final)
     return final
 }
 
@@ -176,10 +164,6 @@ RuleEngine_Fire(rule, prof, ruleIndex := 0) {
     gap := HasProp(rule, "ActionGapMs") ? rule.ActionGapMs : 60
     thr := HasProp(rule, "ThreadId") ? rule.ThreadId : 1
     isCounterMode := RuleEngine_HasCounterCond(rule)
-
-    RE_Log("Fire: rule=" rule.Name " thr=" thr " actions=" rule.Actions.Length " gap=" gap
-        . (isCounterMode ? " (CounterMode: first-ready only)" : ""))
-
     anySent := false
 
     if (isCounterMode) {
