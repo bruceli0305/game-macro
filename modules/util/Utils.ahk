@@ -64,9 +64,9 @@ HighPrecisionDelay(ms) {
     }
 }
 
-; 程序退出时恢复系统定时器精度（可选）
-OnExit(*) {
+HP_OnExit(*) {
     if HP_Timer.Inited
-        DllCall("winmm\timeEndPeriod", "UInt", 1)
+    DllCall("winmm\timeEndPeriod","UInt",1)
 }
+OnExit(HP_OnExit)
 ; =====================================================================

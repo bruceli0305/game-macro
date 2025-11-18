@@ -1,8 +1,10 @@
 #Requires AutoHotkey v2
 #SingleInstance Off
 #NoTrayIcon
+#Include "..\util\Utils.ahk"
 SendMode "Input"
-OnExit (*) => ExitApp()
+WorkerHost_OnExit(*) => ExitApp()
+OnExit(WorkerHost_OnExit)
 
 Host_RootDir() {
     dir := A_ScriptDir
