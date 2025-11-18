@@ -63,7 +63,7 @@ Rotation_OpenerStepTick() {
                 return 0
         }
         if (HasProp(stp,"PreDelayMs") && stp.PreDelayMs > 0)
-            Sleep stp.PreDelayMs
+            HighPrecisionDelay(stp.PreDelayMs)
         ; 使用默认轨道的线程
         defTid := 1
         try defTid := Rotation_GetTrackById(Rotation_GetDefaultTrackId()).ThreadId

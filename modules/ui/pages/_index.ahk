@@ -1,3 +1,5 @@
+; _index.ahk
+;页面聚合器：先引入框架，再引入所有页面
 #Requires AutoHotkey v2
 
 ; pages aggregator: include framework first, then all pages

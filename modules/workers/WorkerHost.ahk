@@ -107,7 +107,7 @@ OnCopyData(wParam, lParam, msg, hwndFrom) {
 ;================ 统一发键（标准多行写法） ================
 WorkerHost_SendKey(key, delay := 0, hold := 0) {
     if (delay > 0)
-        Sleep delay
+        HighPrecisionDelay(delay)
     if (key = "")
         return
 
@@ -122,13 +122,13 @@ WorkerHost_SendKey(key, delay := 0, hold := 0) {
         if RegExMatch(key
             , "i)^(F([1-9]|1[0-9]|2[0-4])|Tab|Enter|Space|Backspace|Delete|Insert|Home|End|PgUp|PgDn|Up|Down|Left|Right|Esc|Escape|AppsKey|PrintScreen|Pause|ScrollLock|CapsLock|NumLock|LWin|RWin|Numpad(Enter|Add|Sub|Mult|Div|\d+))$") {
             SendEvent "{" key " down}"
-            Sleep hold
+            HighPrecisionDelay(hold)
             SendEvent "{" key " up}"
             return
         }
         if RegExMatch(key, mouseRe) && !RegExMatch(key, "i)^Wheel") {
             SendEvent "{" key " down}"
-            Sleep hold
+            HighPrecisionDelay(hold)
             SendEvent "{" key " up}"
             return
         }
