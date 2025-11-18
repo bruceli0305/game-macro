@@ -9,32 +9,23 @@ global g_Profile_Populating := IsSet(g_Profile_Populating) ? g_Profile_Populatin
 
 Profile_RefreshAll_Strong() {
     global App, UI, g_Profile_Populating
-
-    UI_Trace("Profile_RefreshAll_Strong begin")
-
     try {
         if !IsSet(App) {
             App := Map()
-            UI_Trace("App map created")
         }
         if !App.Has("ProfilesDir") {
             App["ProfilesDir"] := A_ScriptDir "\Profiles"
-            UI_Trace("ProfilesDir default=" App["ProfilesDir"])
         }
         if !App.Has("ConfigExt") {
             App["ConfigExt"] := ".ini"
         }
         DirCreate(App["ProfilesDir"])
-    } catch as e {
-        UI_Trace("Ensure App/dir exception: " e.Message)
     }
 
     names := []
     try {
         names := Storage_ListProfiles()
-        UI_Trace("ListProfiles count=" names.Length)
     } catch as e {
-        UI_Trace("ListProfiles exception: " e.Message)
         names := []
     }
     if (names.Length = 0) {
@@ -42,14 +33,11 @@ Profile_RefreshAll_Strong() {
             data := Core_DefaultProfileData()
             Storage_SaveProfile(data)
             names := Storage_ListProfiles()
-            UI_Trace("Created default profile, count=" names.Length)
         } catch as e {
-            UI_Trace("Create default profile failed: " e.Message)
             names := []
         }
     }
     if (names.Length = 0) {
-        UI_Trace("No profiles, abort")
         return false
     }
 
@@ -64,7 +52,6 @@ Profile_RefreshAll_Strong() {
     if (target = "") {
         target := names[1]
     }
-    UI_Trace("Target profile=" target)
 
     dd := 0
     ready := false
@@ -82,7 +69,6 @@ Profile_RefreshAll_Strong() {
     if (ready) {
         try {
             g_Profile_Populating := true
-            UI_Trace("Fill ProfilesDD begin (ready=1)")
             dd.Delete()
             dd.Add(names)
 
@@ -96,32 +82,23 @@ Profile_RefreshAll_Strong() {
                 }
             }
             dd.Value := sel
-            UI_Trace("Fill ProfilesDD done, sel=" sel)
         } catch as e {
-            UI_Trace("Fill ProfilesDD exception: " e.Message)
         } finally {
             g_Profile_Populating := false
         }
-    } else {
-        UI_Trace("ProfilesDD not ready (skip fill)")
     }
 
     ok := false
     try {
         ok := Profile_SwitchProfile_Strong(target)
     } catch as e {
-        UI_Trace("SwitchProfile exception: " e.Message)
         ok := false
     }
-    UI_Trace("Profile_RefreshAll_Strong end ok=" ok)
     return ok
 }
 
 Profile_SwitchProfile_Strong(name) {
     global App, UI, UI_CurrentPage
-
-    UI_Trace("SwitchProfile name=" name)
-
     prof := 0
     try {
         App["CurrentProfile"] := name
@@ -133,9 +110,7 @@ Profile_SwitchProfile_Strong(name) {
         } catch {
             nm := ""
         }
-        UI_Trace("Profile loaded name=" nm)
     } catch as e {
-        UI_Trace("Storage_LoadProfile exception: " e.Message)
         return false
     }
 
@@ -147,7 +122,6 @@ Profile_SwitchProfile_Strong(name) {
     } catch {
         canWriteUI := false
     }
-    UI_Trace("SwitchProfile canWriteUI=" (canWriteUI ? 1 : 0) " currentPage=" UI_CurrentPage)
 
     if (canWriteUI) {
         try {
@@ -215,9 +189,6 @@ Profile_SwitchProfile_Strong(name) {
             }
         } catch {
         }
-        UI_Trace("SwitchProfile wrote values to UI")
-    } else {
-        UI_Trace("SwitchProfile skipped UI write")
     }
 
     try {
@@ -250,10 +221,8 @@ Profile_SwitchProfile_Strong(name) {
     } catch {
     }
     try {
-        Dup_OnProfileChanged()
     } catch {
     }
 
-    UI_Trace("SwitchProfile done")
     return true
 }

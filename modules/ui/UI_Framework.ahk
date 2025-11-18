@@ -1,8 +1,6 @@
 ; ============================== modules\ui\UI_Framework.ahk ==============================
 #Requires AutoHotkey v2
 ; 页面管理框架：注册、切换、布局（兼容 Build()/Build(page) 与 Layout()/Layout(rc)）
-; 严格使用块结构 if/try/catch，不使用单行形式
-; ====== 通用调用器：检测 0/1 参并安全调用 ======
 UI_Call0Or1(fn, arg) {
     ; 返回 true 表示成功调用
     ok := false
@@ -19,8 +17,6 @@ UI_Call0Or1(fn, arg) {
         try {
             fn.Call()
             ok := true
-        } catch as e0 {
-            UI_Trace("UI_Call0Or1: Call() exception: " e0.Message)
         }
         return ok
     }
@@ -28,8 +24,6 @@ UI_Call0Or1(fn, arg) {
         try {
             fn.Call(arg)
             ok := true
-        } catch as e1 {
-            UI_Trace("UI_Call0Or1: Call(arg) exception: " e1.Message)
         }
         return ok
     }
@@ -38,13 +32,8 @@ UI_Call0Or1(fn, arg) {
         fn.Call(arg)
         ok := true
     } catch as e2 {
-        UI_Trace("UI_Call0Or1: Call(arg) failed: " e2.Message)
-        try {
-            fn.Call()
-            ok := true
-        } catch as e3 {
-            UI_Trace("UI_Call0Or1: Call() failed: " e3.Message)
-        }
+        fn.Call()
+        ok := true
     }
     return ok
 }
@@ -64,14 +53,10 @@ UI_RegisterPage(key, title, buildFn, layoutFn := 0, onEnter := 0, onLeave := 0) 
             , OnEnter: onEnter
             , OnLeave: onLeave }
     UI_Pages[key] := page
-    UI_Trace("RegisterPage key=" key " title=" title)
 }
 
 UI_SwitchPage(key) {
     global UI_Pages, UI_CurrentPage
-
-    UI_Trace("SwitchPage from=" UI_CurrentPage " to=" key)
-
     if (UI_CurrentPage = key) {
         if (UI_Pages.Has(key)) {
             _pg := UI_Pages[key]
@@ -82,7 +67,6 @@ UI_SwitchPage(key) {
                 needRebuild := true
             }
             if (!needRebuild) {
-                UI_Trace("SwitchPage short-circuit: already on " key)
                 return
             }
             ; 否则继续往下执行，走正常重建流程
@@ -96,10 +80,7 @@ UI_SwitchPage(key) {
         old := UI_Pages[UI_CurrentPage]
         if (old.OnLeave) {
             try {
-                UI_Trace("Calling OnLeave for " UI_CurrentPage)
                 old.OnLeave()
-            } catch as e {
-                UI_Trace("OnLeave exception for " UI_CurrentPage ": " e.Message)
             }
         }
     }
@@ -108,7 +89,6 @@ UI_SwitchPage(key) {
     UI_HideAllPageControls()
 
     if (!UI_Pages.Has(key)) {
-        UI_Trace("SwitchPage target not found: " key)
         return
     }
 
@@ -118,22 +98,17 @@ UI_SwitchPage(key) {
     if (!pg.Inited) {
         built := false
         try {
-            UI_Trace("Page Build smart-call begin key=" key)
             called := UI_Call0Or1(pg.Build, pg)
             if (called) {
                 built := true
-                UI_Trace("Page Build smart-call success key=" key)
             } else {
-                UI_Trace("Page Build smart-call failed key=" key)
                 built := false
             }
         } catch as eB {
-            UI_Trace("Page Build smart-call exception key=" key " err=" eB.Message)
             built := false
         }
         pg.Inited := built
         if (!built) {
-            UI_Trace("Page init failed, abort switch key=" key)
             return
         }
     }
@@ -146,33 +121,21 @@ UI_SwitchPage(key) {
         } catch {
         }
     }
-    UI_Trace("Show controls: " shown " for page " key)
 
     if (pg.Layout) {
         try {
             rc := UI_GetPageRect()
         } catch as eRC {
-            UI_Trace("GetPageRect exception: " eRC.Message)
             rc := { X: 244, Y: 10, W: 804, H: 760 }
         }
         try {
             ok := UI_Call0Or1(pg.Layout, rc)
-            if (!ok) {
-                UI_Trace("Layout smart-call failed for page " key)
-            } else {
-                UI_Trace("Layout smart-call success for page " key)
-            }
-        } catch as eL {
-            UI_Trace("Layout smart-call exception for page " key " err=" eL.Message)
         }
     }
 
     if (pg.OnEnter) {
         try {
-            UI_Trace("Calling OnEnter for " key)
             pg.OnEnter()
-        } catch as eE {
-            UI_Trace("OnEnter exception for " key " err=" eE.Message)
         }
     }
 }
@@ -235,7 +198,6 @@ UI_GetPageRect() {
         h := 240
     }
     rcOut := { X: x, Y: y, W: w, H: h, NavW: navW, ClientW: cw, ClientH: ch }
-    UI_Trace(Format("GetPageRect x={1} y={2} w={3} h={4} navW={5} clientDIP={6}x{7}", rcOut.X, rcOut.Y, rcOut.W, rcOut.H, navW, cw, ch))
     return rcOut
 }
 
@@ -252,57 +214,37 @@ UI_LayoutCurrentPage() {
     try {
         rc := UI_GetPageRect()
     } catch as e {
-        UI_Trace("GetPageRect exception in LayoutCurrentPage: " e.Message)
         rc := { X: 244, Y: 10, W: 804, H: 760 }
     }
     try {
         ok := UI_Call0Or1(pg.Layout, rc)
-        if (!ok) {
-            UI_Trace("LayoutCurrentPage smart-call failed for " UI_CurrentPage)
-        }
-    } catch as e2 {
-        UI_Trace("LayoutCurrentPage exception for " UI_CurrentPage " err=" e2.Message)
     }
 }
 
 UI_EnablePerMonitorDPI() {
     try {
         DllCall("user32\SetProcessDpiAwarenessContext", "ptr", -4, "ptr")
-        UI_Trace("DPI Awareness: PMv2 via SetProcessDpiAwarenessContext")
     } catch {
         try {
             DllCall("shcore\SetProcessDpiAwareness", "int", 2, "int")
-            UI_Trace("DPI Awareness: PM via shcore")
         } catch {
-            try {
-                DllCall("user32\SetProcessDPIAware")
-                UI_Trace("DPI Awareness: system DPI aware")
-            } catch {
-                UI_Trace("DPI Awareness: failed to set")
-            }
+            DllCall("user32\SetProcessDPIAware")
         }
     }
 }
 
 UI_RebuildMain(*) {
     global UI
-    UI_Trace("UI_RebuildMain begin")
     try {
         if (IsSet(UI) && UI.Has("Main") && UI.Main) {
             UI.Main.Destroy()
         }
-    } catch as e {
-        UI_Trace("UI_RebuildMain destroy exception: " e.Message)
     }
     UI_ShowMain()
-    UI_Trace("UI_RebuildMain done")
 }
 ; 动态本地化当前窗口：不销毁主窗，仅重建页面控件与标题
 UI_RelocalizeInPlace() {
     global UI, UI_Pages, UI_CurrentPage
-
-    UI_Trace("UI_RelocalizeInPlace begin")
-
     ; 先隐藏所有控件，避免重建过程闪烁
     UI_HideAllPageControls()
 
@@ -310,8 +252,6 @@ UI_RelocalizeInPlace() {
     try {
         newTitle := T("app.title", "输出取色宏 - 左侧菜单")
         DllCall("user32\SetWindowTextW", "ptr", UI.Main.Hwnd, "wstr", newTitle)
-    } catch as e1 {
-        UI_Trace("Relocalize: SetWindowText fail: " e1.Message)
     }
 
     ; 2) 销毁全部页面控件，并重置初始化标记
@@ -327,8 +267,6 @@ UI_RelocalizeInPlace() {
                 pg.Inited := false
             }
         }
-    } catch as e2 {
-        UI_Trace("Relocalize: destroy page controls err: " e2.Message)
     }
 
     ; 3) 强制重建当前页：先清空当前页标记，再切回
@@ -339,13 +277,9 @@ UI_RelocalizeInPlace() {
     }
     try {
         UI_SwitchPage(key)
-    } catch as e3 {
-        UI_Trace("Relocalize: UI_SwitchPage err: " e3.Message)
     }
-
     ; 4) 强制重绘
     UI_ForceRedrawAll()
-    UI_Trace("UI_RelocalizeInPlace end")
 }
 
 ; 隐藏所有页面的全部控件（防止跨页残留）
