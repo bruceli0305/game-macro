@@ -44,16 +44,21 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 ; ========= Bootstrap =========
 AppConfig_Init()
 Lang_Init(AppConfig_Get("Language","zh-CN"))
-Logger_Init(Map("Level","INFO", "RotateSizeMB",10, "RotateKeep",5))
+
+opts := Map()
+opts["Level"] := "INFO"
+opts["RotateSizeMB"] := 10
+opts["RotateKeep"] := 5
+opts["EnableMemory"] := true
+opts["MemoryCap"] := 10000
+Logger_Init(opts)
+
 env := Map()
 env["arch"] := (A_PtrSize = 8) ? "x64" : "x86"
 env["admin"] := (A_IsAdmin ? "Admin" : "User")
 env["os"] := A_OSVersion
 Logger_Info("Core", "App start", env)
 Core_Init()
-; 如需强制关闭 DXGI，可放开这一行
-
-; 带保护的 DXGI 初始化
 try {
     Dup_InitAuto()   ; 如果 EnumOutputs=0，将直接返回 false，不创建线程
 }

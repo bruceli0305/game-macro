@@ -45,7 +45,7 @@ UI_ShowMain() {
 
     nodeRot     := UI.Nav.Add("轮换配置",             rootAdv)
     nodeDiag    := UI.Nav.Add("采集诊断（DXGI/ROI）", rootAdv)
-
+    nodeLogs    := UI.Nav.Add("日志查看",             rootAdv)
     ; 新增：轮换配置的三级菜单（第一步：常规、轨道）
     nodeRotGen    := UI.Nav.Add("常规", nodeRot)
     nodeRotTrks   := UI.Nav.Add("轨道", nodeRot)
@@ -75,6 +75,7 @@ UI_ShowMain() {
     UI_NavMap[nodeThreads]      := "threads"
     UI_NavMap[nodeRot]          := "adv_rotation"
     UI_NavMap[nodeDiag]         := "adv_diag"
+    UI_NavMap[nodeLogs]         := "adv_logs"
 
     ; 新增映射
     UI_NavMap[nodeRotGen]       := "adv_rotation_general"
@@ -98,7 +99,7 @@ UI_ShowMain() {
 
     UI_RegisterPage("adv_rotation",   "轮换配置",   Page_Rotation_Build,       Page_Rotation_Layout,      Page_Rotation_OnEnter)
     UI_RegisterPage("adv_diag",       "采集诊断",   Page_Diag_Build,           Page_Diag_Layout)
-
+    UI_RegisterPage("adv_logs",       "日志查看",   Page_Logs_Build,           Page_Logs_Layout,         Page_Logs_OnEnter)
     ; 新注册：轮换配置下的两页
     UI_RegisterPage("adv_rotation_general", "轮换-常规", Page_RotGen_Build,   Page_RotGen_Layout,   Page_RotGen_OnEnter)
     UI_RegisterPage("adv_rotation_tracks",  "轮换-轨道", Page_RotTracks_Build,Page_RotTracks_Layout,Page_RotTracks_OnEnter)

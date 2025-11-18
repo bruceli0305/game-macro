@@ -1,5 +1,6 @@
 #Requires AutoHotkey v2
 #Include "sinks\FileSink.ahk"
+#Include "sinks\MemorySink.ahk"
 
 global g_LogCfg := Map()
 global g_LogLevelText := Map()
@@ -40,8 +41,30 @@ Logger_Init(opts := 0) {
     g_LogCfg["RotateSizeMB"] := 10
     g_LogCfg["RotateKeep"] := 5
     g_LogCfg["Pid"] := DllCall("Kernel32\GetCurrentProcessId", "UInt")
+    ; 在初始化默认值处加入
+    g_LogCfg["EnableMemory"] := true
+    g_LogCfg["MemoryCap"] := 10000
 
     if IsObject(opts) {
+        if HasProp(opts, "EnableMemory") {
+            try {
+                g_LogCfg["EnableMemory"] := (opts.EnableMemory ? 1 : 0)
+            } catch {
+                g_LogCfg["EnableMemory"] := true
+            }
+        }
+        if HasProp(opts, "MemoryCap") {
+            mc := 10000
+            try {
+                mc := Integer(opts.MemoryCap)
+            } catch {
+                mc := 10000
+            }
+            if (mc < 100) {
+                mc := 100
+            }
+            g_LogCfg["MemoryCap"] := mc
+        }
         if HasProp(opts, "Level") {
             Logger_SetLevel(opts.Level)
         }
@@ -81,7 +104,10 @@ Logger_Init(opts := 0) {
             g_LogCfg["RotateKeep"] := kp
         }
     }
-
+    ; 初始化内存缓冲
+    if g_LogCfg["EnableMemory"] {
+        MemorySink_Init(g_LogCfg["MemoryCap"])
+    }
     g_LogCfg["Inited"] := true
     Logger_Info("Core", "Logger initialized", Map("file", g_LogCfg["File"], "rotateMB", g_LogCfg["RotateSizeMB"], "keep", g_LogCfg["RotateKeep"]))
 }
@@ -181,6 +207,9 @@ Logger_Crash(category, e := 0, fields := 0) {
     line := Logger__Format(10, category, "CRASH", extra)
     FileSink_WriteLine(g_LogCfg["File"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
     FileSink_WriteLine(g_LogCfg["CrashFile"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
+    if (g_LogCfg["EnableMemory"]) {
+        MemorySink_Add(line)
+    }
 }
 
 Logger_Flush() {
@@ -196,6 +225,9 @@ Logger__Log(level, category, msg, fields) {
     FileSink_WriteLine(g_LogCfg["File"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
     if (level <= 20) {
         FileSink_WriteLine(g_LogCfg["CrashFile"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
+    }
+    if (g_LogCfg["EnableMemory"]) {
+        MemorySink_Add(line)
     }
 }
 
@@ -306,4 +338,14 @@ Logger__TsMs() {
     s  := NumGet(st, 12, "UShort")
     ms := NumGet(st, 14, "UShort")
     return Format("{:04}-{:02}-{:02} {:02}:{:02}:{:02}.{:03}", y, mo, d, h, mi, s, ms)
+}
+
+Logger_MemGetRecent(n := 1000) {
+    return MemorySink_GetRecent(n)
+}
+Logger_MemClear() {
+    MemorySink_Clear()
+}
+Logger_MemCount() {
+    return MemorySink_Count()
 }
