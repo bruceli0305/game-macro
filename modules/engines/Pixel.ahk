@@ -219,10 +219,15 @@ Pixel_ROI_SetAutoFromProfile(prof, pad := 8, includePoints := false, maxArea := 
         ; 建立 ROI
         Pixel_ROI_SetRect(l, t, w, h)
         Pixel_ROI_Enable(true)
+        try {
+            Logger_Info("ROI", "SetAuto OK", Map("l", l, "t", t, "w", w, "h", h))
+        } catch {
+        }
         return true
     } catch {
         Pixel_ROI_Enable(false)
         Pixel_ROI_Clear()
+        Logger_Warn("ROI", "SetAuto FAIL", Map())
         return false
     }
 }

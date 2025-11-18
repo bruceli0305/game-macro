@@ -1,15 +1,5 @@
 ; modules\ui\rotation\RE_UI_Common.ahk
 #Requires AutoHotkey v2
-
-; 日志
-REUI_Log(msg) {
-    try {
-        DirCreate(A_ScriptDir "\Logs")
-        FileAppend(FormatTime(, "yyyy-MM-dd HH:mm:ss") " [RotationUI] " msg "`r`n"
-            , A_ScriptDir "\Logs\ui_rotation_editor.log", "UTF-8")
-    }
-}
-
 ; 创建带 Owner 的 GUI（若主窗存在）
 REUI_CreateOwnedGui(title := "Rotation 配置") {
     global UI

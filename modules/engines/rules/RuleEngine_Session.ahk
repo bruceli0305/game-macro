@@ -10,6 +10,14 @@ RuleEngine_SessionBegin(prof, rIdx, rule) {
     RE_Session.HadAnySend  := false
     RE_Session.LockWaitUntil := 0
 
+    try {
+        f := Map()
+        f["ruleId"] := rIdx
+        f["threadId"] := RE_Session.ThreadId
+        Logger_Info("RuleEngine", "Session begin", f)
+    } catch {
+    }
+
     firstDelay := 0
     try {
         if (rule.Actions.Length >= 1) {
@@ -65,6 +73,16 @@ RuleEngine_SessionStep() {
                 RE_LastFireTick[rIdx] := rule.LastFire
             }
         }
+        ; 日志：Session timeout
+        try {
+            f := Map()
+            f["ruleId"] := rIdx
+            f["threadId"] := RE_Session.ThreadId
+            f["timeoutAt"] := RE_Session.TimeoutAt
+            f["elapsed"] := now - RE_Session.StartedAt
+            Logger_Warn("RuleEngine", "Session timeout", f)
+        } catch {
+        }
         RE_Session.Active := false
         return false
     }
@@ -113,6 +131,17 @@ RuleEngine_SessionStep() {
                 RE_Session.VerLastTick := now
                 RE_Session.VerActive := false
                 RE_Session.NextAt := now + RE_Session.VerRetryGapMs
+                 ; 日志：Verify retry scheduled
+                try {
+                    f := Map()
+                    f["ruleId"] := rIdx
+                    f["actIdx"] := RE_Session.Index
+                    f["threadId"] := RE_Session.ThreadId
+                    f["retryLeft"] := RE_Session.VerRetryLeft
+                    f["gapMs"] := RE_Session.VerRetryGapMs
+                    Logger_Info("RuleEngine", "Verify retry scheduled", f)
+                } catch {
+                }
                 return false
             } else {
                 abortCd := 0
@@ -122,6 +151,18 @@ RuleEngine_SessionStep() {
                         rule.LastFire := now - rule.CooldownMs + abortCd
                         RE_LastFireTick[rIdx] := rule.LastFire
                     }
+                }
+                ; 日志：Verify timeout abort
+                try {
+                    f := Map()
+                    f["ruleId"] := rIdx
+                    f["actIdx"] := RE_Session.Index
+                    f["threadId"] := RE_Session.ThreadId
+                    f["skillIdx"] := RE_Session.VerSkillIndex
+                    f["elapsed"] := RE_Session.VerElapsed
+                    f["timeoutMs"] := RE_Session.VerTimeoutMs
+                    Logger_Warn("RuleEngine", "Verify timeout abort", f)
+                } catch {
                 }
                 RE_Session.Active := false
                 return false
@@ -137,6 +178,13 @@ RuleEngine_SessionStep() {
                 rule.LastFire := now
                 RE_LastFireTick[rIdx] := now
             }
+        }
+         ; 日志：Session end
+        try {
+            f := Map()
+            f["ruleId"] := rIdx
+            Logger_Info("RuleEngine", "Session end", f)
+        } catch {
         }
         RE_Session.Active := false
         return false
@@ -171,6 +219,17 @@ RuleEngine_SessionStep() {
                 rule.LastFire := now - rule.CooldownMs + abortCd
                 RE_LastFireTick[rIdx] := rule.LastFire
             }
+        }
+         ; 日志：Cast lock abort
+        try {
+            f := Map()
+            f["ruleId"] := rIdx
+            f["actIdx"] := RE_Session.Index
+            f["threadId"] := thr
+            f["budgetMs"] := budget
+            f["locked"] := 1
+            Logger_Warn("RuleEngine", "Cast lock abort", f)
+        } catch {
         }
         RE_Session.Active := false
         return false
@@ -220,11 +279,33 @@ RuleEngine_SessionStep() {
                 RE_LastFireTick[rIdx] := rule.LastFire
             }
         }
+        ; 日志：Send fail abort
+        try {
+            f := Map()
+            f["ruleId"] := rIdx
+            f["actIdx"] := idx
+            f["skillIdx"] := si
+            f["threadId"] := thr
+            Logger_Warn("RuleEngine", "Send fail abort", f)
+        } catch {
+        }
         RE_Session.Active := false
         return false
     }
 
     RE_Session.HadAnySend := true
+
+    ; 日志：Action sent
+    try {
+        f := Map()
+        f["ruleId"] := rIdx
+        f["actIdx"] := idx
+        f["skillIdx"] := si
+        f["threadId"] := thr
+        f["hold"] := holdOverride
+        Logger_Info("RuleEngine", "Action sent", f)
+    } catch {
+    }
 
     needVerify := 0
     try needVerify := (HasProp(act, "Verify") && act.Verify) ? 1 : 0

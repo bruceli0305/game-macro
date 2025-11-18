@@ -5,9 +5,9 @@
 *.exe
 
 # 日志文件
-Logs/*.log
-Logs/*.txt
-
+s/*.
+s/*.txt
+Logs/
 # 导出目录（包含用户生成的配置文件）
 Exports/
 

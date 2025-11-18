@@ -6,21 +6,14 @@
 
 UI_ShowMain() {
     global UI, UI_NavMap
-
-    UI_Trace("UI_ShowMain enter")
-
     UI_EnablePerMonitorDPI()
 
     try {
         if !(IsSet(gLang) && gLang.Has("Code")) {
             Lang_Init("zh-CN")
-            UI_Trace("Lang_Init fallback zh-CN")
-        } else {
-            UI_Trace("Lang existing code=" gLang["Code"])
         }
     } catch {
         Lang_Init("zh-CN")
-        UI_Trace("Lang_Init exception -> zh-CN")
     }
 
     UI.Main := Gui("+Resize +OwnDialogs", T("app.title", "输出取色宏 - 左侧菜单"))
@@ -29,11 +22,9 @@ UI_ShowMain() {
     UI.Main.SetFont("s10", "Segoe UI")
     UI.Main.OnEvent("Size", UI_OnResize_LeftNav)
     UI.Main.OnEvent("Close", UI_OnMainClose)
-    UI_Trace("Main GUI created hwnd=" UI.Main.Hwnd)
 
     UI.Nav := UI.Main.Add("TreeView", "xm ym w220 h620 +Lines +Buttons")
     UI.Nav.OnEvent("Click", UI_OnNavChange)
-    UI_Trace("Nav created")
 
     rootProfile := UI.Nav.Add("概览与配置")
     rootData    := UI.Nav.Add("数据与检测")
@@ -54,7 +45,7 @@ UI_ShowMain() {
 
     nodeRot     := UI.Nav.Add("轮换配置",             rootAdv)
     nodeDiag    := UI.Nav.Add("采集诊断（DXGI/ROI）", rootAdv)
-
+    nodeLogs    := UI.Nav.Add("日志查看",             rootAdv)
     ; 新增：轮换配置的三级菜单（第一步：常规、轨道）
     nodeRotGen    := UI.Nav.Add("常规", nodeRot)
     nodeRotTrks   := UI.Nav.Add("轨道", nodeRot)
@@ -74,10 +65,7 @@ UI_ShowMain() {
         UI.Nav.Modify(rootAdv,     "Expand")
         UI.Nav.Modify(rootTools,   "Expand")
         UI.Nav.Modify(rootSet,     "Expand")
-    } catch {
     }
-    UI_Trace("Nav groups expanded")
-
     UI_NavMap[nodeProfile]      := "profile"
     UI_NavMap[nodeSkills]       := "skills"
     UI_NavMap[nodePoints]       := "points"
@@ -87,6 +75,7 @@ UI_ShowMain() {
     UI_NavMap[nodeThreads]      := "threads"
     UI_NavMap[nodeRot]          := "adv_rotation"
     UI_NavMap[nodeDiag]         := "adv_diag"
+    UI_NavMap[nodeLogs]         := "adv_logs"
 
     ; 新增映射
     UI_NavMap[nodeRotGen]       := "adv_rotation_general"
@@ -98,7 +87,6 @@ UI_ShowMain() {
     UI_NavMap[nodeToolsQuick]   := "tools_quick"
     UI_NavMap[nodeSettingsLang] := "settings_lang"
     UI_NavMap[nodeSettingsAbout]:= "settings_about"
-    UI_Trace("Nav map prepared")
 
     UI_RegisterPage("profile",        "概览与配置", Page_Profile_Build,        Page_Profile_Layout, Page_Profile_OnEnter)
     UI_RegisterPage("skills",         "技能",       Page_Skills_Build,         Page_Skills_Layout)
@@ -111,7 +99,7 @@ UI_ShowMain() {
 
     UI_RegisterPage("adv_rotation",   "轮换配置",   Page_Rotation_Build,       Page_Rotation_Layout,      Page_Rotation_OnEnter)
     UI_RegisterPage("adv_diag",       "采集诊断",   Page_Diag_Build,           Page_Diag_Layout)
-
+    UI_RegisterPage("adv_logs",       "日志查看",   Page_Logs_Build,           Page_Logs_Layout,         Page_Logs_OnEnter)
     ; 新注册：轮换配置下的两页
     UI_RegisterPage("adv_rotation_general", "轮换-常规", Page_RotGen_Build,   Page_RotGen_Layout,   Page_RotGen_OnEnter)
     UI_RegisterPage("adv_rotation_tracks",  "轮换-轨道", Page_RotTracks_Build,Page_RotTracks_Layout,Page_RotTracks_OnEnter)
@@ -124,20 +112,14 @@ UI_ShowMain() {
     UI_RegisterPage("settings_about", "关于",       Page_Settings_About_Build, Page_Settings_About_Layout,Page_Settings_About_OnEnter)
 
     UI.Main.Show("w1060 h780")
-    UI_Trace("Main shown")
 
     try {
         UI.Nav.Modify(nodeProfile, "Select")
-    } catch {
     }
-    UI_Trace("Nav select profile node=" nodeProfile)
-
     UI_OnNavChange()
-    UI_Trace("UI_ShowMain leave")
 }
 
 UI_OnMainClose(*) {
-    UI_Trace("Main close")
     ExitApp()
 }
 
@@ -145,7 +127,6 @@ UI_OnNavChange(*) {
     global UI, UI_NavMap
 
     sel := UI.Nav.GetSelection()
-    UI_Trace("NavChange sel=" sel)
     if (!sel) {
         return
     }
@@ -157,7 +138,6 @@ UI_OnNavChange(*) {
         return
     }
     key := UI_NavMap[sel]
-    UI_Trace("NavChange -> key=" key)
     UI_SwitchPage(key)
 }
 
@@ -173,8 +153,6 @@ UI_OnResize_LeftNav(gui, minmax, w, h) {
     if (w <= 0 || h <= 0) {
         return
     }
-
-    UI_Trace("Resize w=" w " h=" h)
     navW := 220
     UI.Nav.Move(UI.Main.MarginX, UI.Main.MarginY, navW, Max(h - UI.Main.MarginY * 2, 320))
     UI_LayoutCurrentPage()

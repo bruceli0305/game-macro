@@ -16,7 +16,6 @@ Rotation_Tick() {
             if (res = -1) {
                 nextId := Rotation_GetDefaultTrackId()
                 Rotation_EnterTrack(nextId)
-                Rot_Log("Opener(Steps) -> Track#" nextId)
                 return true
             }
             if (res = 1) {
@@ -32,7 +31,6 @@ Rotation_Tick() {
             if (A_TickCount - rt.PhaseState.StartedAt >= opener.MaxDurationMs) {
                 nextId := Rotation_GetDefaultTrackId()
                 Rotation_EnterTrack(nextId)
-                Rot_Log("Opener(Steps) timeout -> Track#" nextId)
                 return true
             }
             return false
@@ -42,7 +40,6 @@ Rotation_Tick() {
             if (done || timeout) {
                 nextId := Rotation_GetDefaultTrackId()
                 Rotation_EnterTrack(nextId)
-                Rot_Log("Opener -> Track#" nextId " by " (done?"allOk":"timeout"))
                 return true
             }
             acted := false
@@ -105,7 +102,6 @@ Rotation_Tick() {
         prevId := rt.TrackId
         nextId := Rotation_GetNextTrackId(prevId)
         Rotation_SwapAndEnter(nextId)
-        Rot_Log("Track#" prevId " -> Track#" nextId " by " (done?"allOk":"timeout"))
         return true
     }
     return false

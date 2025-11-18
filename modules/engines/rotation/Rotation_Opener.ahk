@@ -31,6 +31,10 @@ Rotation_OpenerStepTick() {
         if (now - rt.OpStep.StepStarted >= (HasProp(stp,"DurationMs")?stp.DurationMs:0)) {
             rt.OpStep.Index := i + 1
             rt.OpStep.StepStarted := 0
+            try {
+                Logger_Info("Rotation", "Opener step", Map("kind","Wait","idx", i))
+            } catch {
+            }
             return 0
         }
         return 0
@@ -44,6 +48,10 @@ Rotation_OpenerStepTick() {
             }
             rt.OpStep.Index := i + 1
             rt.OpStep.StepStarted := 0
+            try {
+                Logger_Info("Rotation", "Opener step", Map("kind","Swap","idx", i))
+            } catch {
+            }
             return 1
         }
         return 0
@@ -63,7 +71,7 @@ Rotation_OpenerStepTick() {
                 return 0
         }
         if (HasProp(stp,"PreDelayMs") && stp.PreDelayMs > 0)
-            Sleep stp.PreDelayMs
+            HighPrecisionDelay(stp.PreDelayMs)
         ; 使用默认轨道的线程
         defTid := 1
         try defTid := Rotation_GetTrackById(Rotation_GetDefaultTrackId()).ThreadId
@@ -73,6 +81,10 @@ Rotation_OpenerStepTick() {
         if (ok) {
             if (HasProp(stp,"Verify") && stp.Verify) {
                 ; 若需回执，可在此补充（M1/M2 按最小实现留空）
+            }
+            try {
+                Logger_Info("Rotation", "Opener step", Map("kind","Skill","idx", i, "skillIdx", si))
+            } catch {
             }
             rt.BusyUntil := A_TickCount + cfg.BusyWindowMs
             rt.OpStep.Index := i + 1

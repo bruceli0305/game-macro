@@ -137,10 +137,11 @@ Rotation_GateFindMatch() {
         ok := Rotation_GateEval(g)
         if (ok) {
             if (Rotation_GetTrackById(toId)) {
-                Rot_Log("GATE hit From#" fromId " -> To#" toId)
+                try {
+                    Logger_Info("Rotation", "Gate hit", Map("from", fromId, "to", toId))
+                } catch {
+                }
                 return toId
-            } else {
-                Rot_Log("GATE hit but To#" toId " not found", "WARN")
             }
         }
     }
@@ -173,14 +174,10 @@ Rotation_VerifySwapPixel(vcfg, timeoutMs := 800, retry := 0) {
             cur := PixelGetColor(ref.X, ref.Y, "RGB")
             if Rotation_PixelOpCompare(cur, (HasProp(vcfg,"Color")?vcfg.Color:"0x000000")
                     , (HasProp(vcfg,"Tol")?vcfg.Tol:16), (HasProp(vcfg,"Op")?vcfg.Op:"NEQ")) {
-                Rot_Log("Swap verify OK")
                 return true
             }
             Sleep 20
         }
-        if (A_Index < tries)
-            Rot_Log("Swap verify retry")
     }
-    Rot_Log("Swap verify FAIL", "WARN")
     return false
 }

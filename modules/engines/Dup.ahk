@@ -1,7 +1,6 @@
 #Requires AutoHotkey v2
 ; DXGI Dup AHK 封装 + 安全兜底（无输出/异常时绝不创建线程）+ 日志
 ; dll: modules\lib\dxgi_dup.dll
-; 日志：Logs\dxgi_dup.log
 
 global DX_dll := ""
 global gDX := {
@@ -15,31 +14,6 @@ global gDX := {
     Stats: { FrameNo: 0, Dx: 0, Roi: 0, Gdi: 0, LastPath: "", LastLog: 0, LastReady: -1 }
 }
 
-; ---------- 日志 ----------
-DUP_Log(msg, level := "INFO") {
-    if !gDX.Debug
-        return
-    DirCreate(A_ScriptDir "\Logs")
-    ts := FormatTime(, "yyyy-MM-dd HH:mm:ss")
-    FileAppend(ts " [DXGI] [" level "] " msg "`r`n", A_ScriptDir "\Logs\dxgi_dup.log", "UTF-8")
-}
-Dup_LogLastError(ctx := "") {
-    err := DX_LastError()
-    if (err.Code != 0 || err.Text != "") {
-        part := (ctx != "" ? " (" ctx ")" : "")
-        msg := "LastError" part " code=0x" Format("{:08X}", err.Code) " msg=" err.Text
-        DUP_Log(msg, "ERR")
-    }
-}
-Dup_SetDebug(flag := true) {
-    gDX.Debug := !!flag
-    DUP_Log("Debug=" (gDX.Debug ? "ON" : "OFF"))
-}
-Dup_Enable(flag := true) {
-    gDX.Enabled := !!flag
-    DUP_Log("DXGI Enable=" (gDX.Enabled ? "ON" : "OFF"))
-}
-
 ; ---------- 环境信息 ----------
 Dup_IsRemoteSession() {
     return DllCall("user32\GetSystemMetrics", "int", 0x1000, "int") != 0    ; SM_REMOTESESSION
@@ -49,9 +23,6 @@ Dup_DumpEnv() {
     admin := (A_IsAdmin ? "Admin" : "User")
     remote := (Dup_IsRemoteSession() ? "RemoteSession" : "Local")
     os := A_OSVersion
-    DUP_Log(Format("Env: ahk={1} perm={2} session={3} os={4}", arch, admin, remote, os))
-    if Dup_IsRemoteSession()
-        DUP_Log("Warning: Remote session may block DXGI duplication", "WARN")
 }
 
 ; ---------- DLL 导出 ----------
@@ -110,11 +81,9 @@ DX_LastError() {
 Dup_InitAuto(outputIdx := 0, fps := 0) {
     ; 关掉就不走任何 DLL
     if (!gDX.Enabled) {
-        DUP_Log("DXGI disabled by switch, skip init")
         gDX.Ready := false
         return false
     }
-
     Dup_DumpEnv()
 
     ; 估算 FPS（按轮询间隔）
@@ -127,14 +96,17 @@ Dup_InitAuto(outputIdx := 0, fps := 0) {
             fps := 60
         }
     }
-    DUP_Log("InitAuto: dll=" A_ScriptDir "\modules\lib\dxgi_dup.dll out=" outputIdx " fps=" fps)
-
+    try {
+        f := Map()
+        f["outIdx"] := outputIdx
+        f["fps"] := fps
+        Logger_Info("DXGI", "InitAuto begin", f)
+    } catch {
+    }
     ; 先探测输出数量（若为0，绝不创建线程）
     cnt := 0
     try cnt := DX_EnumOutputs()
-    DUP_Log("EnumOutputs count=" cnt)
     if (cnt <= 0) {
-        DUP_Log("DXGI disabled: DupEnumOutputs=0 -> fall back to ROI/GDI", "WARN")
         gDX.Ready := false
         return false
     }
@@ -152,21 +124,17 @@ Dup_InitAuto(outputIdx := 0, fps := 0) {
     for _, idx in attempts {
         name := ""
         try name := DX_GetOutputName(idx)
-        DUP_Log(Format("Try Init on Output[{1}] Name={2}", idx, (name!=""?name:"<unknown>")))
-
         ok := 0
         try {
             ok := DX_Init(idx, fps)
         } catch {
             ok := 0
-            Dup_LogLastError(Format("Init@{1}-throw", idx))
         }
 
         if (ok = 1) {
             chosen := idx
             break
         } else {
-            Dup_LogLastError(Format("Init@{1}", idx))
             try DX_Shutdown()
         }
     }
@@ -179,15 +147,22 @@ Dup_InitAuto(outputIdx := 0, fps := 0) {
         ready := 0
         try ready := DX_IsReady() ? 1 : 0
         gDX.Stats.LastReady := ready
-        DUP_Log(Format("Init OK on Output[{1}] Ready={2} Name={3} Rect=({4},{5})-({6},{7}) FPS={8}"
-            , chosen, ready, gDX.MonName, gDX.L, gDX.T, gDX.R, gDX.B, gDX.FPS))
-        if (!ready)
-            Dup_LogLastError("PostInit")
+        try {
+            f := Map()
+            f["outIdx"] := chosen
+            f["name"] := gDX.MonName
+            f["l"] := gDX.L
+            f["t"] := gDX.T
+            f["r"] := gDX.R
+            f["b"] := gDX.B
+            f["fps"] := gDX.FPS
+            Logger_Info("DXGI", "Init OK", f)
+        } catch {
+        }
         return true
     } else {
         gDX.Ready := false
-        DUP_Log("Init FAIL after trying all outputs", "ERR")
-        Dup_LogLastError("Final")
+        Logger_Warn("DXGI", "Init FAIL, fallback ROI/GDI", Map())
         return false
     }
 }
@@ -226,8 +201,6 @@ Dup_UpdateMonitorRect() {
         }
         gDX.L := l, gDX.T := t, gDX.R := r, gDX.B := b
     }
-    DUP_Log(Format("MapOutput: OutIdx={1} Name={2} Rect=({3},{4})-({5},{6})"
-        , gDX.OutIdx, gDX.MonName, gDX.L, gDX.T, gDX.R, gDX.B))
 }
 
 Dup_ScreenToOutput(x, y) {
@@ -260,7 +233,6 @@ Dup_OnProfileChanged() {
             if (fps != gDX.FPS) {
                 gDX.FPS := fps
                 DX_SetFPS(fps)
-                DUP_Log("FPS update -> " fps)
             }
         }
     }
@@ -275,10 +247,10 @@ Dup_SelectOutputIdx(idx) {
     try ok := DX_SelectOutput(gDX.OutIdx)
     if (ok = 1) {
         Dup_UpdateMonitorRect()
-        DUP_Log("SelectOutput -> " gDX.OutIdx " (" gDX.MonName ")")
+        Logger_Info("DXGI", "SelectOutput", Map("outIdx", gDX.OutIdx, "name", gDX.MonName))
         return 1
     } else {
-        Dup_LogLastError("SelectOutput")
+        Logger_Error("DXGI", "SelectOutput FAIL", Map("outIdx", idx))
         return 0
     }
 }
@@ -295,10 +267,6 @@ Dup_FrameBegin() {
         try readyNow := DX_IsReady() ? 1 : 0
         if (s.FrameNo = 0) {
             s.LastReady := readyNow
-            DUP_Log(Format("State: Ready={1} Out={2} Name={3} Rect=({4},{5})-({6},{7}) FPS={8}"
-                , readyNow, gDX.OutIdx, gDX.MonName, gDX.L, gDX.T, gDX.R, gDX.B, gDX.FPS))
-            if (!readyNow)
-                Dup_LogLastError("FirstFrame")
         } else {
             path := (s.Dx>0 ? "DXGI" : (s.Roi>0 ? "ROI" : (s.Gdi>0 ? "GDI" : "None")))
             need := false
@@ -308,14 +276,9 @@ Dup_FrameBegin() {
             }
             if (s.LastReady != readyNow) {
                 s.LastReady := readyNow
-                DUP_Log("Ready -> " (readyNow ? "READY" : "NOT_READY"))
-                if (!readyNow)
-                    Dup_LogLastError("FrameBegin")
                 need := true
             }
             if (need || (s.FrameNo - s.LastLog >= 120)) {
-                DUP_Log(Format("Frame#{1} path={2} hits: dx={3} roi={4} gdi={5}"
-                    , s.FrameNo, path, s.Dx, s.Roi, s.Gdi))
                 s.LastLog := s.FrameNo
             }
         }

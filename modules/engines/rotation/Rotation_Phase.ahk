@@ -7,7 +7,6 @@ Rotation_InitFromProfile() {
     gRotInitBusy := true
     try {
         if (gRotInitialized) {
-            Rot_Log("Skip init (already initialized)")
             return
         }
         cfg := Rotation_ReadCfg(App["ProfileData"])
@@ -25,22 +24,12 @@ Rotation_InitFromProfile() {
             }
             if (!cfg.Enabled && hasWatch > 0) {
                 cfg.Enabled := 1
-                Rot_Log("AutoEnable at Init: Watch present, force Enabled=1")
             }
         }
-
-        Rot_Log(Format("Cfg: Enabled={1} T1W={2} T2W={3} OpW={4} TrackCount={5}"
-            , (cfg.Enabled?1:0)
-            , (HasProp(cfg,"Track1") && HasProp(cfg.Track1,"Watch")) ? cfg.Track1.Watch.Length : 0
-            , (HasProp(cfg,"Track2") && HasProp(cfg.Track2,"Watch")) ? cfg.Track2.Watch.Length : 0
-            , (HasProp(cfg,"Opener")  && HasProp(cfg.Opener,"Watch")) ? cfg.Opener.Watch.Length  : 0
-            , (HasProp(cfg,"Tracks")  && IsObject(cfg.Tracks)) ? cfg.Tracks.Length : 0))
-
         gRot["Cfg"] := cfg
         gRot["RT"]  := Rotation_NewRT(cfg)
 
         if (!cfg.Enabled) {
-            Rot_Log("Disabled")
             return
         }
         if (cfg.Opener.Enabled && !gRot["RT"].OpenerDone) {
@@ -48,10 +37,15 @@ Rotation_InitFromProfile() {
         } else {
             Rotation_EnterTrack(Rotation_GetDefaultTrackId())
         }
-        Rot_Log(Format("Init -> Phase={1} Track={2}", gRot["RT"].Phase, gRot["RT"].TrackId))
         gRotInitialized := true
+        try {
+            f := Map()
+            f["enabled"] := (cfg.Enabled ? 1 : 0)
+            f["trackCount"] := (HasProp(cfg,"Tracks") && IsObject(cfg.Tracks)) ? cfg.Tracks.Length : 0
+            Logger_Info("Rotation", "Init", f)
+        } catch {
+        }
     } catch as e {
-        Rot_Log("Init error: " e.Message, "WARN")
     } finally {
         gRotInitBusy := false
     }
@@ -62,14 +56,20 @@ Rotation_EnterOpener() {
     gRot["RT"].Phase := "Opener"
     gRot["RT"].TrackId := 0
     gRot["RT"].PhaseState := Rotation_BuildPhaseState_Opener()
-    Rot_Log("Enter Opener")
+    try {
+        Logger_Info("Rotation", "Enter opener", Map())
+    } catch {
+    }
 }
 Rotation_EnterTrack(trackId) {
     global gRot
     gRot["RT"].Phase := "Track"
     gRot["RT"].TrackId := trackId
     gRot["RT"].PhaseState := Rotation_BuildPhaseState_Track(trackId)
-    Rot_Log("Enter Track#" trackId)
+    try {
+        Logger_Info("Rotation", "Enter track", Map("trackId", trackId))
+    } catch {
+    }
 }
 
 Rotation_BuildPhaseState_Opener() {

@@ -20,6 +20,7 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 
 ; ========= Includes =========
 #Include "modules\util\Utils.ahk"
+#Include "modules\logging\Logger.ahk"
 #Include "modules\i18n\Lang.ahk"
 #Include "modules\core\AppConfig.ahk"
 #Include "modules\core\Core.ahk"
@@ -43,28 +44,40 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 ; ========= Bootstrap =========
 AppConfig_Init()
 Lang_Init(AppConfig_Get("Language","zh-CN"))
-Core_Init()
-; 如需强制关闭 DXGI，可放开这一行
-; Dup_Enable(false)
 
-; 带保护的 DXGI 初始化
+opts := Map()
+opts["Level"] := AppConfig_GetLog("Level", "INFO")
+opts["RotateSizeMB"] := AppConfig_GetLog("RotateSizeMB", 10)
+opts["RotateKeep"] := AppConfig_GetLog("RotateKeep", 5)
+opts["EnableMemory"] := true
+opts["MemoryCap"] := 10000
+opts["EnablePipe"] := true
+opts["PipeName"] := "GW2_LogSink"
+opts["PipeClient"] := false
+opts["PerCategory"] := AppConfig_GetLog("PerCategory", "")
+opts["ThrottlePerSec"] := AppConfig_GetLog("ThrottlePerSec", 5)
+Logger_Init(opts)
+
+env := Map()
+env["arch"] := (A_PtrSize = 8) ? "x64" : "x86"
+env["admin"] := (A_IsAdmin ? "Admin" : "User")
+env["os"] := A_OSVersion
+Logger_Info("Core", "App start", env)
+Core_Init()
 try {
     Dup_InitAuto()   ; 如果 EnumOutputs=0，将直接返回 false，不创建线程
-} catch as e {
-    DirCreate(A_ScriptDir "\Logs")
-    FileAppend(FormatTime() " [CRASH] Dup_InitAuto exception: " e.Message "`r`n"
-        , A_ScriptDir "\Logs\app_crash.log", "UTF-8")
-    try Dup_Enable(false)
 }
 
 UI_ShowMain()
-
+Logger_Info("UI", "Main shown", Map("hwnd", UI.Main.Hwnd))
 ; 退出时清理
 OnExit ExitCleanup
 ExitCleanup(*) {
     try Poller_Stop()
     try WorkerPool_Dispose()
     try Pixel_ROI_Dispose()
-    try DX_Shutdown()         ; 新增：释放 DXGI Dup
+    try DX_Shutdown()
+    try Logger_Flush()
+    Logger_Info("Core", "App exit", Map())
     return 0
 }

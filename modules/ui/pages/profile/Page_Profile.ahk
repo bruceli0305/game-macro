@@ -7,7 +7,6 @@ global g_Profile_Populating := IsSet(g_Profile_Populating) ? g_Profile_Populatin
 
 Page_Profile_Build(page := 0) {
     global UI, UI_Pages, UI_CurrentPage
-    UI_Trace("Page_Profile_Build enter")
 
     rc := 0
     try {
@@ -253,8 +252,6 @@ Page_Profile_Build(page := 0) {
         UI.BtnApply.OnEvent("Click", Profile_OnApplyGeneral)
     } catch {
     }
-
-    UI_Trace("Page_Profile_Build exit (controls ready)")
 }
 
 Page_Profile_Layout(rc := 0) {
@@ -380,11 +377,8 @@ Page_Profile_Layout(rc := 0) {
 }
 
 Page_Profile_OnEnter(*) {
-    UI_Trace("Page_Profile_OnEnter -> Profile_RefreshAll_Strong")
     try {
         Profile_RefreshAll_Strong()
-    } catch as e {
-        UI_Trace("Page_Profile_OnEnter exception: " e.Message)
     }
     try {
         if IsSet(App) && App.Has("ProfileData") {
@@ -396,7 +390,6 @@ Page_Profile_OnEnter(*) {
 
 Profile_OnProfilesChanged(*) {
     global g_Profile_Populating
-    UI_Trace("Profile_OnProfilesChanged populating=" (g_Profile_Populating ? 1 : 0))
     if (g_Profile_Populating) {
         return
     }
@@ -412,24 +405,19 @@ Profile_OnProfilesChanged(*) {
     } catch {
         cur := ""
     }
-    UI_Trace("ProfilesChanged sel=" name " cur=" cur)
     if (name = "" || cur = name) {
         return
     }
     try {
         ok := Profile_SwitchProfile_Strong(name)
-        UI_Trace("ProfilesChanged switched ok=" ok)
         if (ok) {
             try Profile_UI_SetStartHotkeyEcho(App["ProfileData"].StartHotkey)
         }
-    } catch as e {
-        UI_Trace("ProfilesChanged switch exception: " e.Message)
     }
 }
 
 Profile_OnNew(*) {
     global App, UI
-    UI_Trace("Profile_OnNew")
     name := ""
     try {
         ib := InputBox(T("label.profileName","配置名称："), T("dlg.newProfile","新建配置"))
@@ -452,14 +440,12 @@ Profile_OnNew(*) {
         Profile_RefreshAll_Strong()
         Notify(T("msg.created","已创建：") name)
     } catch as e {
-        UI_Trace("Profile_OnNew exception: " e.Message)
         MsgBox T("msg.createFail","创建失败：") e.Message
     }
 }
 
 Profile_OnClone(*) {
     global App
-    UI_Trace("Profile_OnClone")
     src := ""
     try {
         src := App["CurrentProfile"]
@@ -492,14 +478,12 @@ Profile_OnClone(*) {
         Profile_RefreshAll_Strong()
         Notify(T("msg.cloned","已复制为：") newName)
     } catch as e {
-        UI_Trace("Profile_OnClone exception: " e.Message)
         MsgBox T("msg.cloneFail","复制失败：") e.Message
     }
 }
 
 Profile_OnDelete(*) {
     global App
-    UI_Trace("Profile_OnDelete")
     names := []
     try {
         names := Storage_ListProfiles()
@@ -530,14 +514,12 @@ Profile_OnDelete(*) {
         App["CurrentProfile"] := ""
         Profile_RefreshAll_Strong()
     } catch as e {
-        UI_Trace("Profile_OnDelete exception: " e.Message)
         MsgBox T("msg.deleteFail","删除失败：") e.Message
     }
 }
 
 Profile_OnCaptureStartMouse(*) {
     global UI
-    UI_Trace("Profile_OnCaptureStartMouse begin")
     ToolTip T("tip.captureMouse","请按下 鼠标中键/侧键 作为开始/停止热键（Esc取消）")
     key := ""
     Loop {
@@ -577,7 +559,6 @@ Profile_OnCaptureStartMouse(*) {
         } catch {
         }
     }
-    UI_Trace("Profile_OnCaptureStartMouse end key=" key)
 }
 Profile_OnHotkeyChanged(*) {
     global UI, g_Profile_Populating
@@ -590,7 +571,6 @@ Profile_OnHotkeyChanged(*) {
 }
 Profile_OnApplyGeneral(*) {
     global App, UI
-    UI_Trace("Profile_OnApplyGeneral")
     try {
         if !IsSet(App) {
             App := Map()
@@ -660,7 +640,6 @@ Profile_OnApplyGeneral(*) {
 
         Notify(T("msg.saved","配置已保存"))
     } catch as e {
-        UI_Trace("Profile_OnApplyGeneral exception: " e.Message)
         MsgBox T("msg.saveFail","保存失败：") e.Message
     }
 }

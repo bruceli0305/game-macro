@@ -18,7 +18,7 @@ Page_RotGates_Build(page) {
     REUI_Gates_Ensure(&cfg)
 
     UI.RGts_LV := UI.Main.Add("ListView", Format("x{} y{} w{} h{}", rc.X, rc.Y, rc.W, rc.H - 56)
-        , ["优先级","目标轨","逻辑","条件数"])
+        , ["优先级","来源轨","目标轨","逻辑","条件数"])
     page.Controls.Push(UI.RGts_LV)
 
     yBtn := rc.Y + rc.H - 44
