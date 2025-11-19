@@ -20,6 +20,10 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 
 ; ========= Includes =========
 #Include "modules\util\Utils.ahk"
+#Include "modules\util\Obj.ahk"
+#Include "modules\util\IdGen.ahk"
+#Include "modules\storage\model\_index.ahk"
+#Include "modules\storage\profile\_index.ahk"
 #Include "modules\logging\Logger.ahk"
 #Include "modules\i18n\Lang.ahk"
 #Include "modules\core\AppConfig.ahk"
@@ -67,7 +71,11 @@ Core_Init()
 try {
     Dup_InitAuto()   ; 如果 EnumOutputs=0，将直接返回 false，不创建线程
 }
-
+; 初始化 ID 生成器（建议从 AppConfig 读取）
+try {
+    ID_Init(1)
+} catch {
+}
 UI_ShowMain()
 Logger_Info("UI", "Main shown", Map("hwnd", UI.Main.Hwnd))
 ; 退出时清理

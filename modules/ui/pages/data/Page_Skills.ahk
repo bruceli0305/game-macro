@@ -1,8 +1,8 @@
 #Requires AutoHotkey v2
-;Page_Skills.ahk
+; modules\ui\pages\data\Page_Skills.ahk
 ; 数据与检测 → 技能（嵌入页）
-; 不依赖旧 UI_Page_Config_* 函数；全部事件在本页实现
 ; 严格块结构 if/try/catch，不使用单行语句
+; 依赖：OM_Get（modules\util\Obj.ahk 已由 Main.ahk 全局引入）
 
 Page_Skills_Build(page) {
     global UI
@@ -42,12 +42,16 @@ Page_Skills_Build(page) {
 Page_Skills_Layout(rc) {
     try {
         btnH := 28
-        try UI.BtnAddSkill.GetPos(,,, &btnH)
+        try {
+            UI.BtnAddSkill.GetPos(,,, &btnH)
+        } catch {
+        }
 
         gap := 8
         listH := rc.H - btnH - gap
-        if (listH < 120)
+        if (listH < 120) {
             listH := 120
+        }
 
         UI.SkillLV.Move(rc.X, rc.Y, rc.W, listH)
 
@@ -59,7 +63,10 @@ Page_Skills_Layout(rc) {
         UI.BtnSaveSkill.Move(,    yBtn)
 
         loop 7 {
-            try UI.SkillLV.ModifyCol(A_Index, "AutoHdr")
+            try {
+                UI.SkillLV.ModifyCol(A_Index, "AutoHdr")
+            } catch {
+            }
         }
     } catch {
     }
@@ -84,42 +91,14 @@ Skills_RefreshList() {
             return
         }
         for idx, s in App["ProfileData"].Skills {
-            name := ""
-            key  := ""
-            x := 0, y := 0, col := "0x000000", tol := 10
-
-            try { 
-                name := s.Name 
-            } catch { 
-                name := "" 
-            }
-            try { 
-                key  := s.Key  
-            } catch { 
-                key  := "" 
-            }
-            try { 
-                x := s.X 
-            } catch { 
-                x := 0 
-            }
-            try { 
-                y := s.Y 
-            } catch { 
-                y := 0 
-            }
-            try { 
-                col := s.Color 
-            } catch { 
-                col := "0x000000" 
-            }
-            try { 
-                tol := s.Tol 
-            } catch { 
-                tol := 10 
-            }
-
-            UI.SkillLV.Add("", idx, name, key, x, y, col, tol)
+            id   := OM_Get(s, "Id", 0)
+            name := OM_Get(s, "Name", "")
+            key  := OM_Get(s, "Key", "")
+            x    := OM_Get(s, "X", 0)
+            y    := OM_Get(s, "Y", 0)
+            col  := OM_Get(s, "Color", "0x000000")
+            tol  := OM_Get(s, "Tol", 10)
+            UI.SkillLV.Add("", id, name, key, x, y, col, tol)
         }
         loop 7 {
             try {
@@ -136,7 +115,8 @@ Skills_RefreshList() {
     }
 }
 
-Skills_GetSelectedIndex() {
+; 从列表选中行读取稳定 Id（列1）
+Skills_GetSelectedId() {
     global UI
     row := 0
     try {
@@ -148,13 +128,36 @@ Skills_GetSelectedIndex() {
         MsgBox "请先选中一个技能行。"
         return 0
     }
-    idx := 0
+    id := 0
     try {
-        idx := Integer(UI.SkillLV.GetText(row, 1))
+        id := Integer(UI.SkillLV.GetText(row, 1))
     } catch {
-        idx := 0
+        id := 0
     }
-    return idx
+    return id
+}
+
+; 按稳定 Id 查找当前运行时索引
+Skills_IndexById(id) {
+    global App
+    if !(IsSet(App) && App.Has("ProfileData") && HasProp(App["ProfileData"], "Skills")) {
+        return 0
+    }
+
+    i := 1
+    while (i <= App["ProfileData"].Skills.Length) {
+        sid := 0
+        try {
+            sid := OM_Get(App["ProfileData"].Skills[i], "Id", 0)
+        } catch {
+            sid := 0
+        }
+        if (sid = id) {
+            return i
+        }
+        i := i + 1
+    }
+    return 0
 }
 
 ; ---- 新增 ----
@@ -172,11 +175,16 @@ Skills_OnSaved_New(newSkill, idxParam) {
         if !(IsSet(App) && App.Has("ProfileData") && HasProp(App["ProfileData"], "Skills")) {
             return
         }
+        if !HasProp(newSkill, "Id") {
+            try {
+                newSkill.Id := 0
+            } catch {
+            }
+        }
         App["ProfileData"].Skills.Push(newSkill)
         Skills_RefreshList()
     } catch {
     }
-    ; 调整 ROI
     try {
         Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
     } catch {
@@ -185,9 +193,14 @@ Skills_OnSaved_New(newSkill, idxParam) {
 
 ; ---- 编辑 ----
 Skills_OnEditSelected(*) {
-    global App, UI
-    idx := Skills_GetSelectedIndex()
+    global App
+    id := Skills_GetSelectedId()
+    if (id = 0) {
+        return
+    }
+    idx := Skills_IndexById(id)
     if (idx = 0) {
+        MsgBox "索引异常，列表与配置不同步。"
         return
     }
     cur := 0
@@ -210,6 +223,18 @@ Skills_OnSaved_Edit(newSkill, idx2) {
             return
         }
         if (idx2 >= 1 && idx2 <= App["ProfileData"].Skills.Length) {
+            old := 0
+            try {
+                old := App["ProfileData"].Skills[idx2]
+            } catch {
+                old := 0
+            }
+            try {
+                if (old && HasProp(old, "Id")) {
+                    newSkill.Id := old.Id
+                }
+            } catch {
+            }
             App["ProfileData"].Skills[idx2] := newSkill
         }
         Skills_RefreshList()
@@ -224,8 +249,13 @@ Skills_OnSaved_Edit(newSkill, idx2) {
 ; ---- 删除 ----
 Skills_OnDelete(*) {
     global App
-    idx := Skills_GetSelectedIndex()
+    id := Skills_GetSelectedId()
+    if (id = 0) {
+        return
+    }
+    idx := Skills_IndexById(id)
     if (idx = 0) {
+        MsgBox "索引异常，列表与配置不同步。"
         return
     }
     try {
@@ -250,8 +280,13 @@ Skills_OnDelete(*) {
 ; ---- 测试 ----
 Skills_OnTest(*) {
     global App
-    idx := Skills_GetSelectedIndex()
+    id := Skills_GetSelectedId()
+    if (id = 0) {
+        return
+    }
+    idx := Skills_IndexById(id)
     if (idx = 0) {
+        MsgBox "索引异常，列表与配置不同步。"
         return
     }
 
@@ -261,7 +296,7 @@ Skills_OnTest(*) {
     } catch {
         s := 0
     }
-    if !s {
+    if (!s) {
         MsgBox "索引异常，列表与配置不同步。"
         return
     }
@@ -270,54 +305,207 @@ Skills_OnTest(*) {
     dwell := 0
     try {
         if (HasProp(App["ProfileData"], "PickHoverEnabled") && App["ProfileData"].PickHoverEnabled) {
-            offY := HasProp(App["ProfileData"], "PickHoverOffsetY") ? App["ProfileData"].PickHoverOffsetY : 0
-            dwell := HasProp(App["ProfileData"], "PickHoverDwellMs") ? App["ProfileData"].PickHoverDwellMs : 0
+            try {
+                offY := HasProp(App["ProfileData"], "PickHoverOffsetY") ? App["ProfileData"].PickHoverOffsetY : 0
+            } catch {
+                offY := 0
+            }
+            try {
+                dwell := HasProp(App["ProfileData"], "PickHoverDwellMs") ? App["ProfileData"].PickHoverDwellMs : 0
+            } catch {
+                dwell := 0
+            }
         }
     } catch {
         offY := 0
         dwell := 0
     }
 
+    x   := OM_Get(s, "X", 0)
+    y   := OM_Get(s, "Y", 0)
+    col := OM_Get(s, "Color", "0x000000")
+    tol := OM_Get(s, "Tol", 10)
+
     c := 0
     try {
-        c := Pixel_GetColorWithMouseAway(s.X, s.Y, offY, dwell)
+        c := Pixel_GetColorWithMouseAway(x, y, offY, dwell)
     } catch {
         c := 0
     }
 
     tgt := 0
     try {
-        tgt := Pixel_HexToInt(s.Color)
+        tgt := Pixel_HexToInt(col)
     } catch {
         tgt := 0
     }
     match := false
     try {
-        match := Pixel_ColorMatch(c, tgt, s.Tol)
+        match := Pixel_ColorMatch(c, tgt, tol)
     } catch {
         match := false
     }
 
     try {
-        MsgBox "检测点: X=" s.X " Y=" s.Y "`n"
+        MsgBox "检测点: X=" x " Y=" y "`n"
             . "当前颜色: " Pixel_ColorToHex(c) "`n"
-            . "目标颜色: " s.Color "`n"
-            . "容差: " s.Tol "`n"
+            . "目标颜色: " col "`n"
+            . "容差: " tol "`n"
             . "结果: " (match ? "匹配" : "不匹配")
     } catch {
     }
 }
 
-; ---- 保存 ----
+; 保存：仅写 skills.ini（新存储），并重载规范化
 Skills_OnSaveProfile(*) {
     global App
-    try {
-        if !(IsSet(App) && App.Has("ProfileData")) {
-            return
-        }
-        Storage_SaveProfile(App["ProfileData"])
-        Notify("配置已保存")
-    } catch as e {
-        MsgBox "保存失败：" e.Message
+
+    if !(IsSet(App) && App.Has("CurrentProfile") && App.Has("ProfileData")) {
+        MsgBox "未选择配置或配置未加载。"
+        return
     }
+
+    name := ""
+    try {
+        name := App["CurrentProfile"]
+    } catch {
+        name := ""
+    }
+    if (name = "") {
+        MsgBox "未选择配置。"
+        return
+    }
+
+    ; 1) 加载文件夹模型（Id 引用）
+    p := 0
+    try {
+        p := Storage_Profile_LoadFull(name)
+    } catch as e1 {
+        try {
+            Logger_Exception("Skills", e1, Map("where", "LoadFull", "profile", name))
+        } catch {
+        }
+        MsgBox "加载配置失败。"
+        return
+    }
+
+    ; 2) 构建旧技能表（Id -> 对象）
+    oldMap := Map()
+    try {
+        if (p.Has("Skills") && IsObject(p["Skills"])) {
+            i := 1
+            while (i <= p["Skills"].Length) {
+                oid := 0
+                try {
+                    oid := OM_Get(p["Skills"][i], "Id", 0)
+                } catch {
+                    oid := 0
+                }
+                if (oid > 0) {
+                    oldMap[oid] := p["Skills"][i]
+                }
+                i := i + 1
+            }
+        }
+    } catch {
+    }
+
+    ; 3) 合并运行时到文件夹模型（按稳定 Id）
+    newArr := []
+    try {
+        if (HasProp(App["ProfileData"], "Skills") && IsObject(App["ProfileData"].Skills)) {
+            i := 1
+            while (i <= App["ProfileData"].Skills.Length) {
+                rs := App["ProfileData"].Skills[i]
+                rid  := OM_Get(rs, "Id", 0)
+                nm   := OM_Get(rs, "Name", "")
+                key  := OM_Get(rs, "Key", "")
+                x    := OM_Get(rs, "X", 0)
+                y    := OM_Get(rs, "Y", 0)
+                col  := OM_Get(rs, "Color", "0x000000")
+                tol  := OM_Get(rs, "Tol", 10)
+                cast := OM_Get(rs, "CastMs", 0)
+
+                ps := 0
+                if (rid > 0 && oldMap.Has(rid)) {
+                    try {
+                        ps := oldMap[rid]
+                        ps["Name"] := nm
+                        ps["Key"] := key
+                        ps["X"] := x
+                        ps["Y"] := y
+                        ps["Color"] := col
+                        ps["Tol"] := tol
+                        ps["CastMs"] := cast
+                    } catch {
+                        ps := PM_NewSkill(nm)
+                        ps["Id"] := rid
+                        ps["Key"] := key
+                        ps["X"] := x
+                        ps["Y"] := y
+                        ps["Color"] := col
+                        ps["Tol"] := tol
+                        ps["CastMs"] := cast
+                    }
+                } else {
+                    ps := PM_NewSkill(nm)
+                    ps["Id"] := 0
+                    ps["Key"] := key
+                    ps["X"] := x
+                    ps["Y"] := y
+                    ps["Color"] := col
+                    ps["Tol"] := tol
+                    ps["CastMs"] := cast
+                }
+
+                newArr.Push(ps)
+                i := i + 1
+            }
+        }
+    } catch {
+    }
+
+    p["Skills"] := newArr
+
+    ; 4) 保存到 skills.ini（原子），并触摸 meta
+    ok := false
+    try {
+        SaveModule_Skills(p)
+        ok := true
+    } catch as e2 {
+        ok := false
+        try {
+            Logger_Exception("Skills", e2, Map("where","SaveModule_Skills", "profile", name))
+        } catch {
+        }
+    }
+    if (!ok) {
+        MsgBox "保存失败。"
+        return
+    }
+
+    ; 5) 重新加载 → 规范化到运行时 → 刷新列表与 ROI
+    try {
+        p2 := Storage_Profile_LoadFull(name)
+        rt := PM_ToRuntime(p2)
+        App["ProfileData"] := rt
+    } catch as e3 {
+        try {
+            Logger_Exception("Skills", e3, Map("where","ReloadNormalize", "profile", name))
+        } catch {
+        }
+        MsgBox "保存成功，但重新加载失败，请切换配置后重试。"
+        return
+    }
+
+    try {
+        Skills_RefreshList()
+    } catch {
+    }
+    try {
+        Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
+    } catch {
+    }
+
+    Notify("配置已保存")
 }

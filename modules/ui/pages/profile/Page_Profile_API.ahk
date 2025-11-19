@@ -3,9 +3,6 @@
 ; Profile 公共 API（与页面解耦）
 ; 提供：Profile_RefreshAll_Strong() / Profile_SwitchProfile_Strong(name)
 ; 严格块结构，不使用单行 if/try/catch
-#Include "../../../storage/model/_index.ahk"
-#Include "../../../storage/profile/_index.ahk"
-
 global g_Profile_Populating := IsSet(g_Profile_Populating) ? g_Profile_Populating : false
 
 Profile_RefreshAll_Strong() {

@@ -43,13 +43,12 @@ PM_NextId(profile, moduleName) {
 }
 
 ; 若对象无 Id，则分配；若已有 Id，确保 NextId 大于它
-PM_AssignIdIfMissing(profile, moduleName, &obj) {
+PM_AssignIdIfMissing(profile, moduleName, obj) {
     if !IsObject(obj) {
         return
     }
     if HasProp(obj, "Id") {
         if (obj.Id > 0) {
-            ; 推进 NextId
             PM_InitNextId(profile)
             cur := 0
             try {
