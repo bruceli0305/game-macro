@@ -5,8 +5,6 @@
 ; 严格块结构，不使用单行 if/try/catch
 #Include "../../../storage/model/_index.ahk"
 #Include "../../../storage/profile/_index.ahk"
-#Include "../../../storage/profile/Normalize_Runtime.ahk"
-#Include "../../../storage/profile/List.ahk"
 
 global g_Profile_Populating := IsSet(g_Profile_Populating) ? g_Profile_Populating : false
 
