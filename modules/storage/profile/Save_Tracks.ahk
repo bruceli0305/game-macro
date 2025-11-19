@@ -98,7 +98,7 @@ SaveModule_Tracks(profile) {
     return true
 }
 
-FS_Load_Tracks(profileName, &profile) {
+FS_Load_Tracks(profileName, profile) {
     file := FS_ModulePath(profileName, "rotation_tracks")
     if !FileExist(file) {
         return

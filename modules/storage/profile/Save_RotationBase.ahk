@@ -63,43 +63,115 @@ SaveModule_RotationBase(profile) {
     return true
 }
 
-FS_Load_RotationBase(profileName, &profile) {
+FS_Load_RotationBase(profileName, profile) {
     file := FS_ModulePath(profileName, "rotation_base")
     if !FileExist(file) {
         return
     }
 
     rot := profile["Rotation"]
-    try rot["Enabled"] := Integer(IniRead(file, "Rotation", "Enabled", rot["Enabled"]))
-    try rot["DefaultTrackId"] := Integer(IniRead(file, "Rotation", "DefaultTrackId", rot["DefaultTrackId"]))
-    try rot["SwapKey"] := IniRead(file, "Rotation", "SwapKey", rot["SwapKey"])
-    try rot["BusyWindowMs"] := Integer(IniRead(file, "Rotation", "BusyWindowMs", rot["BusyWindowMs"]))
-    try rot["ColorTolBlack"] := Integer(IniRead(file, "Rotation", "ColorTolBlack", rot["ColorTolBlack"]))
-    try rot["RespectCastLock"] := Integer(IniRead(file, "Rotation", "RespectCastLock", rot["RespectCastLock"]))
-    try rot["GatesEnabled"] := Integer(IniRead(file, "Rotation", "GatesEnabled", rot["GatesEnabled"]))
-    try rot["GateCooldownMs"] := Integer(IniRead(file, "Rotation", "GateCooldownMs", rot["GateCooldownMs"]))
+    try {
+        rot["Enabled"] := Integer(IniRead(file, "Rotation", "Enabled", rot["Enabled"]))
+    } catch {
+    }
+    try {
+        rot["DefaultTrackId"] := Integer(IniRead(file, "Rotation", "DefaultTrackId", rot["DefaultTrackId"]))
+    } catch {
+    }
+    try {
+        rot["SwapKey"] := IniRead(file, "Rotation", "SwapKey", rot["SwapKey"])
+    } catch {
+    }
+    try {
+        rot["BusyWindowMs"] := Integer(IniRead(file, "Rotation", "BusyWindowMs", rot["BusyWindowMs"]))
+    } catch {
+    }
+    try {
+        rot["ColorTolBlack"] := Integer(IniRead(file, "Rotation", "ColorTolBlack", rot["ColorTolBlack"]))
+    } catch {
+    }
+    try {
+        rot["RespectCastLock"] := Integer(IniRead(file, "Rotation", "RespectCastLock", rot["RespectCastLock"]))
+    } catch {
+    }
+    try {
+        rot["GatesEnabled"] := Integer(IniRead(file, "Rotation", "GatesEnabled", rot["GatesEnabled"]))
+    } catch {
+    }
+    try {
+        rot["GateCooldownMs"] := Integer(IniRead(file, "Rotation", "GateCooldownMs", rot["GateCooldownMs"]))
+    } catch {
+    }
 
     sv := rot["SwapVerify"]
-    try sv["RefType"] := IniRead(file, "Rotation.SwapVerify", "RefType", sv["RefType"])
-    try sv["RefId"] := Integer(IniRead(file, "Rotation.SwapVerify", "RefId", sv["RefId"]))
-    try sv["Op"] := IniRead(file, "Rotation.SwapVerify", "Op", sv["Op"])
-    try sv["Color"] := IniRead(file, "Rotation.SwapVerify", "Color", sv["Color"])
-    try sv["Tol"] := Integer(IniRead(file, "Rotation.SwapVerify", "Tol", sv["Tol"]))
+    try {
+        sv["RefType"] := IniRead(file, "Rotation.SwapVerify", "RefType", sv["RefType"])
+    } catch {
+    }
+    try {
+        sv["RefId"] := Integer(IniRead(file, "Rotation.SwapVerify", "RefId", sv["RefId"]))
+    } catch {
+    }
+    try {
+        sv["Op"] := IniRead(file, "Rotation.SwapVerify", "Op", sv["Op"])
+    } catch {
+    }
+    try {
+        sv["Color"] := IniRead(file, "Rotation.SwapVerify", "Color", sv["Color"])
+    } catch {
+    }
+    try {
+        sv["Tol"] := Integer(IniRead(file, "Rotation.SwapVerify", "Tol", sv["Tol"]))
+    } catch {
+    }
     rot["SwapVerify"] := sv
 
-    try rot["VerifySwap"] := Integer(IniRead(file, "Rotation", "VerifySwap", rot["VerifySwap"]))
-    try rot["SwapTimeoutMs"] := Integer(IniRead(file, "Rotation", "SwapTimeoutMs", rot["SwapTimeoutMs"]))
-    try rot["SwapRetry"] := Integer(IniRead(file, "Rotation", "SwapRetry", rot["SwapRetry"]))
+    try {
+        rot["VerifySwap"] := Integer(IniRead(file, "Rotation", "VerifySwap", rot["VerifySwap"]))
+    } catch {
+    }
+    try {
+        rot["SwapTimeoutMs"] := Integer(IniRead(file, "Rotation", "SwapTimeoutMs", rot["SwapTimeoutMs"]))
+    } catch {
+    }
+    try {
+        rot["SwapRetry"] := Integer(IniRead(file, "Rotation", "SwapRetry", rot["SwapRetry"]))
+    } catch {
+    }
 
     bg := rot["BlackGuard"]
-    try bg["Enabled"] := Integer(IniRead(file, "Rotation.BlackGuard", "Enabled", bg["Enabled"]))
-    try bg["SampleCount"] := Integer(IniRead(file, "Rotation.BlackGuard", "SampleCount", bg["SampleCount"]))
-    try bg["BlackRatioThresh"] := (IniRead(file, "Rotation.BlackGuard", "BlackRatioThresh", bg["BlackRatioThresh"]) + 0)
-    try bg["WindowMs"] := Integer(IniRead(file, "Rotation.BlackGuard", "WindowMs", bg["WindowMs"]))
-    try bg["CooldownMs"] := Integer(IniRead(file, "Rotation.BlackGuard", "CooldownMs", bg["CooldownMs"]))
-    try bg["MinAfterSendMs"] := Integer(IniRead(file, "Rotation.BlackGuard", "MinAfterSendMs", bg["MinAfterSendMs"]))
-    try bg["MaxAfterSendMs"] := Integer(IniRead(file, "Rotation.BlackGuard", "MaxAfterSendMs", bg["MaxAfterSendMs"]))
-    try bg["UniqueRequired"] := Integer(IniRead(file, "Rotation.BlackGuard", "UniqueRequired", bg["UniqueRequired"]))
+    try {
+        bg["Enabled"] := Integer(IniRead(file, "Rotation.BlackGuard", "Enabled", bg["Enabled"]))
+    } catch {
+    }
+    try {
+        bg["SampleCount"] := Integer(IniRead(file, "Rotation.BlackGuard", "SampleCount", bg["SampleCount"]))
+    } catch {
+    }
+    try {
+        bg["BlackRatioThresh"] := (IniRead(file, "Rotation.BlackGuard", "BlackRatioThresh", bg["BlackRatioThresh"]) + 0)
+    } catch {
+    }
+    try {
+        bg["WindowMs"] := Integer(IniRead(file, "Rotation.BlackGuard", "WindowMs", bg["WindowMs"]))
+    } catch {
+    }
+    try {
+        bg["CooldownMs"] := Integer(IniRead(file, "Rotation.BlackGuard", "CooldownMs", bg["CooldownMs"]))
+    } catch {
+    }
+    try {
+        bg["MinAfterSendMs"] := Integer(IniRead(file, "Rotation.BlackGuard", "MinAfterSendMs", bg["MinAfterSendMs"]))
+    } catch {
+    }
+    try {
+        bg["MaxAfterSendMs"] := Integer(IniRead(file, "Rotation.BlackGuard", "MaxAfterSendMs", bg["MaxAfterSendMs"]))
+    } catch {
+    }
+    try {
+        bg["UniqueRequired"] := Integer(IniRead(file, "Rotation.BlackGuard", "UniqueRequired", bg["UniqueRequired"]))
+    } catch {
+    }
     rot["BlackGuard"] := bg
 
     profile["Rotation"] := rot

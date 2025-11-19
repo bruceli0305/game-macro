@@ -116,7 +116,7 @@ SaveModule_Gates(profile) {
     return true
 }
 
-FS_Load_Gates(profileName, &profile) {
+FS_Load_Gates(profileName, profile) {
     file := FS_ModulePath(profileName, "rotation_gates")
     if !FileExist(file) {
         return

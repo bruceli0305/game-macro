@@ -61,28 +61,67 @@ SaveModule_General(profile) {
     return true
 }
 
-FS_Load_General(profileName,  &profile) {
+FS_Load_General(profileName, profile) {
     file := FS_ModulePath(profileName, "general")
     if !FileExist(file) {
         return
     }
     g := profile["General"]
 
-    try g["StartHotkey"] := IniRead(file, "General", "StartHotkey", g["StartHotkey"])
-    try g["PollIntervalMs"] := Integer(IniRead(file, "General", "PollIntervalMs", g["PollIntervalMs"]))
-    try g["SendCooldownMs"] := Integer(IniRead(file, "General", "SendCooldownMs", g["SendCooldownMs"]))
-    try g["PickHoverEnabled"] := Integer(IniRead(file, "General", "PickHoverEnabled", g["PickHoverEnabled"]))
-    try g["PickHoverOffsetY"] := Integer(IniRead(file, "General", "PickHoverOffsetY", g["PickHoverOffsetY"]))
-    try g["PickHoverDwellMs"] := Integer(IniRead(file, "General", "PickHoverDwellMs", g["PickHoverDwellMs"]))
-    try g["PickConfirmKey"] := IniRead(file, "General", "PickConfirmKey", g["PickConfirmKey"])
+    try {
+        g["StartHotkey"] := IniRead(file, "General", "StartHotkey", g["StartHotkey"])
+    } catch {
+    }
+    try {
+        g["PollIntervalMs"] := Integer(IniRead(file, "General", "PollIntervalMs", g["PollIntervalMs"]))
+    } catch {
+    }
+    try {
+        g["SendCooldownMs"] := Integer(IniRead(file, "General", "SendCooldownMs", g["SendCooldownMs"]))
+    } catch {
+    }
+    try {
+        g["PickHoverEnabled"] := Integer(IniRead(file, "General", "PickHoverEnabled", g["PickHoverEnabled"]))
+    } catch {
+    }
+    try {
+        g["PickHoverOffsetY"] := Integer(IniRead(file, "General", "PickHoverOffsetY", g["PickHoverOffsetY"]))
+    } catch {
+    }
+    try {
+        g["PickHoverDwellMs"] := Integer(IniRead(file, "General", "PickHoverDwellMs", g["PickHoverDwellMs"]))
+    } catch {
+    }
+    try {
+        g["PickConfirmKey"] := IniRead(file, "General", "PickConfirmKey", g["PickConfirmKey"])
+    } catch {
+    }
 
     ds := g["DefaultSkill"]
-    try ds["Enabled"] := Integer(IniRead(file, "Default", "Enabled", ds["Enabled"]))
-    try ds["SkillId"] := Integer(IniRead(file, "Default", "SkillId", ds["SkillId"]))
-    try ds["CheckReady"] := Integer(IniRead(file, "Default", "CheckReady", ds["CheckReady"]))
-    try ds["ThreadId"] := Integer(IniRead(file, "Default", "ThreadId", ds["ThreadId"]))
-    try ds["CooldownMs"] := Integer(IniRead(file, "Default", "CooldownMs", ds["CooldownMs"]))
-    try ds["PreDelayMs"] := Integer(IniRead(file, "Default", "PreDelayMs", ds["PreDelayMs"]))
+    try {
+        ds["Enabled"] := Integer(IniRead(file, "Default", "Enabled", ds["Enabled"]))
+    } catch {
+    }
+    try {
+        ds["SkillId"] := Integer(IniRead(file, "Default", "SkillId", ds["SkillId"]))
+    } catch {
+    }
+    try {
+        ds["CheckReady"] := Integer(IniRead(file, "Default", "CheckReady", ds["CheckReady"]))
+    } catch {
+    }
+    try {
+        ds["ThreadId"] := Integer(IniRead(file, "Default", "ThreadId", ds["ThreadId"]))
+    } catch {
+    }
+    try {
+        ds["CooldownMs"] := Integer(IniRead(file, "Default", "CooldownMs", ds["CooldownMs"]))
+    } catch {
+    }
+    try {
+        ds["PreDelayMs"] := Integer(IniRead(file, "Default", "PreDelayMs", ds["PreDelayMs"]))
+    } catch {
+    }
 
     cnt := Integer(IniRead(file, "Threads", "Count", 0))
     ths := []

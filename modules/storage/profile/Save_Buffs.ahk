@@ -84,7 +84,7 @@ SaveModule_Buffs(profile) {
     return true
 }
 
-FS_Load_Buffs(profileName, &profile) {
+FS_Load_Buffs(profileName, profile) {
     file := FS_ModulePath(profileName, "buffs")
     if !FileExist(file) {
         return

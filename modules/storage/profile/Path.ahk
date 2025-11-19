@@ -1,13 +1,20 @@
 #Requires AutoHotkey v2
 ;modules\storage\profile\Path.ahk Profile 根目录（确保存在）
+
 FS_ProfileFolder(profileName) {
     global App
-    base := App["ProfilesDir"] "\" profileName
+    base := ""
     try {
-        DirCreate(base)
+        base := App["ProfilesDir"]
+    } catch {
+        base := A_ScriptDir "\Profiles"
+    }
+    dir := base "\" profileName
+    try {
+        DirCreate(dir)
     } catch {
     }
-    return base
+    return dir
 }
 
 ; 模块 ini 文件路径

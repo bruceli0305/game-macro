@@ -82,7 +82,7 @@ SaveModule_Opener(profile) {
     return true
 }
 
-FS_Load_Opener(profileName, &profile) {
+FS_Load_Opener(profileName, profile) {
     file := FS_ModulePath(profileName, "rotation_opener")
     if !FileExist(file) {
         return
@@ -95,9 +95,18 @@ FS_Load_Opener(profileName, &profile) {
         op := Map()
     }
 
-    try op["Enabled"] := Integer(IniRead(file, "Opener", "Enabled", op.Has("Enabled") ? op["Enabled"] : 0))
-    try op["MaxDurationMs"] := Integer(IniRead(file, "Opener", "MaxDurationMs", op.Has("MaxDurationMs") ? op["MaxDurationMs"] : 4000))
-    try op["ThreadId"] := Integer(IniRead(file, "Opener", "ThreadId", op.Has("ThreadId") ? op["ThreadId"] : 1))
+    try {
+        op["Enabled"] := Integer(IniRead(file, "Opener", "Enabled", op.Has("Enabled") ? op["Enabled"] : 0))
+    } catch {
+    }
+    try {
+        op["MaxDurationMs"] := Integer(IniRead(file, "Opener", "MaxDurationMs", op.Has("MaxDurationMs") ? op["MaxDurationMs"] : 4000))
+    } catch {
+    }
+    try {
+        op["ThreadId"] := Integer(IniRead(file, "Opener", "ThreadId", op.Has("ThreadId") ? op["ThreadId"] : 1))
+    } catch {
+    }
 
     wc := Integer(IniRead(file, "Opener", "WatchCount", 0))
     wArr := []

@@ -74,7 +74,7 @@ Profile_RefreshAll_Strong() {
         g_Profile_Populating := false
     }
 
-    ; 5) 加载规范化（保持你之前的逻辑）
+    ; 5) 加载规范化（新存储）
     ok := false
     try {
         p := Storage_Profile_LoadFull(target)
@@ -82,11 +82,15 @@ Profile_RefreshAll_Strong() {
         App["CurrentProfile"] := target
         App["ProfileData"] := rt
         ok := true
-    } catch {
+    } catch as e {
         ok := false
+        try {
+            Logger_Exception("Storage", e, Map("where","Profile_RefreshAll_Strong.Load", "target", target))
+        } catch {
+        }
     }
 
-    ; 6) 运行时后续（绑定热键/重建引擎/ROI），同你既有代码
+    ; 6) 运行时后续（绑定热键/重建引擎/ROI）
     try Hotkeys_BindStartHotkey(App["ProfileData"].StartHotkey)
     catch
     try WorkerPool_Rebuild()
@@ -112,8 +116,9 @@ Profile_SwitchProfile_Strong(name) {
         App["CurrentProfile"] := name
         App["ProfileData"] := rt
         ok := true
-    } catch {
+    } catch as e {
         ok := false
+        try Logger_Exception("Storage", e, Map("where","Profile_SwitchProfile_Strong.Load", "name", name))
     }
     if (!ok) {
         return false
@@ -158,34 +163,22 @@ Profile_SwitchProfile_Strong(name) {
     }
 
     ; 运行时重建
-    try {
-        Hotkeys_BindStartHotkey(App["ProfileData"].StartHotkey)
-    } catch {
-    }
-    try {
-        WorkerPool_Rebuild()
-    } catch {
-    }
-    try {
-        Counters_Init()
-    } catch {
-    }
-    try {
-        Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
-    } catch {
-    }
-    try {
-        Rotation_Reset()
-        Rotation_InitFromProfile()
-    } catch {
-    }
-    try {
-        Dup_OnProfileChanged()
-    } catch {
-    }
+    try Hotkeys_BindStartHotkey(App["ProfileData"].StartHotkey)
+    catch
+    try WorkerPool_Rebuild()
+    catch
+    try Counters_Init()
+    catch
+    try Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
+    catch
+    try Rotation_Reset(), Rotation_InitFromProfile()
+    catch
+    try Dup_OnProfileChanged()
+    catch
 
     return true
 }
+
 ; 填充配置下拉（仅 UI；不做加载/重建）
 Profile_UI_PopulateProfilesDD(target := "") {
     global UI, App, g_Profile_Populating
@@ -234,14 +227,10 @@ Profile_UI_PopulateProfilesDD(target := "") {
     }
 
     g_Profile_Populating := true
-    try {
-        UI.ProfilesDD.Delete()
-    } catch {
-    }
-    try {
-        UI.ProfilesDD.Add(names)
-    } catch {
-    }
+    try UI.ProfilesDD.Delete()
+    catch
+    try UI.ProfilesDD.Add(names)
+    catch
 
     sel := 1
     i := 1
@@ -252,10 +241,8 @@ Profile_UI_PopulateProfilesDD(target := "") {
         }
         i := i + 1
     }
-    try {
-        UI.ProfilesDD.Value := sel
-    } catch {
-    }
+    try UI.ProfilesDD.Value := sel
+    catch
     g_Profile_Populating := false
     return true
 }
