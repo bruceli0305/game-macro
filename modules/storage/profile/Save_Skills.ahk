@@ -67,7 +67,7 @@ SaveModule_Skills(profile) {
     return true
 }
 
-FS_Load_Skills(profileName,  &profile) {
+FS_Load_Skills(profileName, profile) {
     file := FS_ModulePath(profileName, "skills")
     if !FileExist(file) {
         return

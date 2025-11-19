@@ -61,7 +61,7 @@ SaveModule_Points(profile) {
     return true
 }
 
-FS_Load_Points(profileName, &profile) {
+FS_Load_Points(profileName, profile) {
     file := FS_ModulePath(profileName, "points")
     if !FileExist(file) {
         return

@@ -2,7 +2,7 @@
 #Requires AutoHotkey v2
 ; Profile 公共 API（与页面解耦）
 ; 提供：Profile_RefreshAll_Strong() / Profile_SwitchProfile_Strong(name)
-; 严格块结构 if/try/catch，不使用单行形式
+; 严格块结构，不使用单行 if/try/catch
 #Include "../../../storage/model/_index.ahk"
 #Include "../../../storage/profile/_index.ahk"
 #Include "../../../storage/profile/Normalize_Runtime.ahk"
@@ -17,7 +17,10 @@ Profile_RefreshAll_Strong() {
     names := []
     try {
         names := FS_ListProfilesValid()
-        Logger_Info("Storage", "ListProfilesValid", Map("dir", App["ProfilesDir"], "count", names.Length))
+        try {
+            Logger_Info("Storage", "ListProfilesValid", Map("dir", App["ProfilesDir"], "count", names.Length))
+        } catch {
+        }
     } catch {
         names := []
     }
@@ -30,7 +33,10 @@ Profile_RefreshAll_Strong() {
         }
         try {
             names := FS_ListProfilesValid()
-            Logger_Info("Storage", "ListProfilesValid", Map("dir", App["ProfilesDir"], "count", names.Length))
+            try {
+                Logger_Info("Storage", "ListProfilesValid", Map("dir", App["ProfilesDir"], "count", names.Length))
+            } catch {
+            }
         } catch {
             names := []
         }
@@ -54,20 +60,36 @@ Profile_RefreshAll_Strong() {
     }
 
     ; 4) 回填下拉（控件存在才填）
-    if (IsSet(UI) && UI.Has("ProfilesDD") && UI.ProfilesDD) {
+    canFill := false
+    if (IsSet(UI)) {
+        try {
+            if (HasProp(UI, "ProfilesDD") && UI.ProfilesDD) {
+                canFill := true
+            }
+        } catch {
+            canFill := false
+        }
+    }
+    if (canFill) {
         g_Profile_Populating := true
         try {
             UI.ProfilesDD.Delete()
+        } catch {
+        }
+        try {
             UI.ProfilesDD.Add(names)
-            sel := 1
-            i := 1
-            while (i <= names.Length) {
-                if (names[i] = target) {
-                    sel := i
-                    break
-                }
-                i := i + 1
+        } catch {
+        }
+        sel := 1
+        i := 1
+        while (i <= names.Length) {
+            if (names[i] = target) {
+                sel := i
+                break
             }
+            i := i + 1
+        }
+        try {
             UI.ProfilesDD.Value := sel
         } catch {
         }
@@ -89,18 +111,36 @@ Profile_RefreshAll_Strong() {
         } catch {
         }
     }
+    ; 新增：首次进入也回填 General 区域，不必等用户切换
+    if (ok) {
+        try {
+            Profile_UI_ApplyGeneralFromApp()
+        } catch {
+        }
+    }
 
     ; 6) 运行时后续（绑定热键/重建引擎/ROI）
-    try Hotkeys_BindStartHotkey(App["ProfileData"].StartHotkey)
-    catch
-    try WorkerPool_Rebuild()
-    catch
-    try Counters_Init()
-    catch
-    try Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
-    catch
-    try Rotation_Reset(), Rotation_InitFromProfile()
-    catch
+    try {
+        Hotkeys_BindStartHotkey(App["ProfileData"].StartHotkey)
+    } catch {
+    }
+    try {
+        WorkerPool_Rebuild()
+    } catch {
+    }
+    try {
+        Counters_Init()
+    } catch {
+    }
+    try {
+        Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
+    } catch {
+    }
+    try {
+        Rotation_Reset()
+        Rotation_InitFromProfile()
+    } catch {
+    }
 
     return ok
 }
@@ -118,7 +158,10 @@ Profile_SwitchProfile_Strong(name) {
         ok := true
     } catch as e {
         ok := false
-        try Logger_Exception("Storage", e, Map("where","Profile_SwitchProfile_Strong.Load", "name", name))
+        try {
+            Logger_Exception("Storage", e, Map("where","Profile_SwitchProfile_Strong.Load", "name", name))
+        } catch {
+        }
     }
     if (!ok) {
         return false
@@ -134,15 +177,37 @@ Profile_SwitchProfile_Strong(name) {
         canWriteUI := false
     }
     if (canWriteUI) {
-        try UI.HkStart.Value := App["ProfileData"].StartHotkey
-        try UI.PollEdit.Value := App["ProfileData"].PollIntervalMs
-        try UI.CdEdit.Value := App["ProfileData"].SendCooldownMs
-        try UI.ChkPick.Value := (App["ProfileData"].PickHoverEnabled ? 1 : 0)
-        try UI.OffYEdit.Value := App["ProfileData"].PickHoverOffsetY
-        try UI.DwellEdit.Value := App["ProfileData"].PickHoverDwellMs
+        try {
+            UI.HkStart.Value := App["ProfileData"].StartHotkey
+        } catch {
+        }
+        try {
+            UI.PollEdit.Value := App["ProfileData"].PollIntervalMs
+        } catch {
+        }
+        try {
+            UI.CdEdit.Value := App["ProfileData"].SendCooldownMs
+        } catch {
+        }
+        try {
+            UI.ChkPick.Value := (App["ProfileData"].PickHoverEnabled ? 1 : 0)
+        } catch {
+        }
+        try {
+            UI.OffYEdit.Value := App["ProfileData"].PickHoverOffsetY
+        } catch {
+        }
+        try {
+            UI.DwellEdit.Value := App["ProfileData"].PickHoverDwellMs
+        } catch {
+        }
         try {
             pk := "LButton"
-            try pk := App["ProfileData"].PickConfirmKey
+            try {
+                pk := App["ProfileData"].PickConfirmKey
+            } catch {
+                pk := "LButton"
+            }
             opts := ["LButton","MButton","RButton","XButton1","XButton2","F10","F11","F12"]
             pos := 1
             i := 1
@@ -163,18 +228,31 @@ Profile_SwitchProfile_Strong(name) {
     }
 
     ; 运行时重建
-    try Hotkeys_BindStartHotkey(App["ProfileData"].StartHotkey)
-    catch
-    try WorkerPool_Rebuild()
-    catch
-    try Counters_Init()
-    catch
-    try Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
-    catch
-    try Rotation_Reset(), Rotation_InitFromProfile()
-    catch
-    try Dup_OnProfileChanged()
-    catch
+    try {
+        Hotkeys_BindStartHotkey(App["ProfileData"].StartHotkey)
+    } catch {
+    }
+    try {
+        WorkerPool_Rebuild()
+    } catch {
+    }
+    try {
+        Counters_Init()
+    } catch {
+    }
+    try {
+        Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
+    } catch {
+    }
+    try {
+        Rotation_Reset()
+        Rotation_InitFromProfile()
+    } catch {
+    }
+    try {
+        Dup_OnProfileChanged()
+    } catch {
+    }
 
     return true
 }
@@ -221,16 +299,30 @@ Profile_UI_PopulateProfilesDD(target := "") {
         }
     }
 
-    ; 控件存在时填充
-    if !(IsSet(UI) && UI.Has("ProfilesDD") && UI.ProfilesDD) {
+    ; 控件存在时填充（使用 HasProp 检测属性）
+    canFill := false
+    if (IsSet(UI)) {
+        try {
+            if (HasProp(UI, "ProfilesDD") && UI.ProfilesDD) {
+                canFill := true
+            }
+        } catch {
+            canFill := false
+        }
+    }
+    if (!canFill) {
         return false
     }
 
     g_Profile_Populating := true
-    try UI.ProfilesDD.Delete()
-    catch
-    try UI.ProfilesDD.Add(names)
-    catch
+    try {
+        UI.ProfilesDD.Delete()
+    } catch {
+    }
+    try {
+        UI.ProfilesDD.Add(names)
+    } catch {
+    }
 
     sel := 1
     i := 1
@@ -241,8 +333,79 @@ Profile_UI_PopulateProfilesDD(target := "") {
         }
         i := i + 1
     }
-    try UI.ProfilesDD.Value := sel
-    catch
+    try {
+        UI.ProfilesDD.Value := sel
+    } catch {
+    }
     g_Profile_Populating := false
     return true
+}
+; 将 App.ProfileData 写回“概览与配置”页控件（仅在当前页为 profile 时生效）
+Profile_UI_ApplyGeneralFromApp() {
+    global UI, App, UI_CurrentPage, g_Profile_Populating
+
+    canWriteUI := false
+    try {
+        if (IsSet(UI_CurrentPage) && UI_CurrentPage = "profile") {
+            canWriteUI := true
+        }
+    } catch {
+        canWriteUI := false
+    }
+    if (!canWriteUI) {
+        return
+    }
+
+    g_Profile_Populating := true
+    ; 热键（用回显逻辑，自动处理鼠标热键）
+    try {
+        Profile_UI_SetStartHotkeyEcho(App["ProfileData"].StartHotkey)
+    } catch {
+    }
+
+    ; 数值类
+    try {
+        UI.PollEdit.Value := App["ProfileData"].PollIntervalMs
+    } catch {
+    }
+    try {
+        UI.CdEdit.Value := App["ProfileData"].SendCooldownMs
+    } catch {
+    }
+    try {
+        UI.ChkPick.Value := (App["ProfileData"].PickHoverEnabled ? 1 : 0)
+    } catch {
+    }
+    try {
+        UI.OffYEdit.Value := App["ProfileData"].PickHoverOffsetY
+    } catch {
+    }
+    try {
+        UI.DwellEdit.Value := App["ProfileData"].PickHoverDwellMs
+    } catch {
+    }
+
+    ; 拾色热键下拉
+    try {
+        pk := "LButton"
+        try {
+            pk := App["ProfileData"].PickConfirmKey
+        } catch {
+            pk := "LButton"
+        }
+        opts := ["LButton","MButton","RButton","XButton1","XButton2","F10","F11","F12"]
+        pos := 1
+        i := 1
+        while (i <= opts.Length) {
+            if (opts[i] = pk) {
+                pos := i
+                break
+            }
+            i := i + 1
+        }
+        UI.DdPickKey.Value := pos
+    } catch {
+    }
+
+    g_Profile_Populating := false
 }

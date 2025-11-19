@@ -74,10 +74,9 @@ SaveModule_Rules(profile) {
             kind := ""
             try {
                 kind := c["Kind"]
-            } catch{
+            } catch {
                 kind := ""
-            } 
-            
+            }
 
             if (StrUpper(kind) = "COUNTER") {
                 IniWrite("Counter", tmp, cSec, "Kind")
@@ -126,7 +125,7 @@ SaveModule_Rules(profile) {
     return true
 }
 
-FS_Load_Rules(profileName, &profile) {
+FS_Load_Rules(profileName, profile) {
     file := FS_ModulePath(profileName, "rules")
     if !FileExist(file) {
         return
