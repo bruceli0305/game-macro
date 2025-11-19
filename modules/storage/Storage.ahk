@@ -408,11 +408,25 @@ Storage_LoadProfile(name) {
     return data
 }
 
+; ================= Storage_SaveProfile（全量重写 + 补齐 Gates） =================
 Storage_SaveProfile(data) {
     global App
-    file := App["ProfilesDir"] "\" data.Name App["ConfigExt"]
 
-    ; ===== General =====
+    ; 1) 目标与临时文件
+    target := App["ProfilesDir"] "\" data.Name App["ConfigExt"]
+    tmp := target ".tmp"
+
+    ; 2) 清理历史 tmp
+    try {
+        if FileExist(tmp) {
+            FileDelete(tmp)
+        }
+    } catch {
+    }
+
+    file := tmp
+
+    ; ================= General =================
     IniWrite(data.StartHotkey, file, "General", "StartHotkey")
     IniWrite(data.PollIntervalMs, file, "General", "PollIntervalMs")
     IniWrite(data.SendCooldownMs, file, "General", "SendCooldownMs")
@@ -426,12 +440,13 @@ Storage_SaveProfile(data) {
     IniWrite(data.Buffs.Length, file, "General", "BuffCount")
     IniWrite(data.Threads.Length, file, "General", "ThreadCount")
 
+    ; 线程
     for i, t in data.Threads {
         sec := "Thread" i
         IniWrite(t.Name, file, sec, "Name")
     }
 
-    ; ===== Default =====
+    ; ================= Default =================
     ds := HasProp(data, "DefaultSkill") ? data.DefaultSkill : 0
     if ds {
         IniWrite(HasProp(ds, "Enabled") ? ds.Enabled : 0, file, "Default", "Enabled")
@@ -442,7 +457,7 @@ Storage_SaveProfile(data) {
         IniWrite(HasProp(ds, "PreDelayMs") ? ds.PreDelayMs : 0, file, "Default", "PreDelayMs")
     }
 
-    ; ===== Skills =====
+    ; ================= Skills =================
     for idx, s in data.Skills {
         sec := "Skill" idx
         IniWrite(s.Name, file, sec, "Name")
@@ -454,7 +469,7 @@ Storage_SaveProfile(data) {
         IniWrite(HasProp(s, "CastMs") ? s.CastMs : 0, file, sec, "CastMs")
     }
 
-    ; ===== Points =====
+    ; ================= Points =================
     for idx, p in data.Points {
         sec := "Point" idx
         IniWrite(p.Name, file, sec, "Name")
@@ -464,7 +479,7 @@ Storage_SaveProfile(data) {
         IniWrite(p.Tol, file, sec, "Tol")
     }
 
-    ; ===== Rules =====
+    ; ================= Rules =================
     for rIdx, r in data.Rules {
         rSec := "Rule" rIdx
         IniWrite(r.Name, file, rSec, "Name")
@@ -478,6 +493,7 @@ Storage_SaveProfile(data) {
         IniWrite(HasProp(r, "ThreadId") ? r.ThreadId : 1, file, rSec, "ThreadId")
         IniWrite(HasProp(r, "SessionTimeoutMs") ? r.SessionTimeoutMs : 0, file, rSec, "SessionTimeoutMs")
         IniWrite(HasProp(r, "AbortCooldownMs") ? r.AbortCooldownMs : 0, file, rSec, "AbortCooldownMs")
+
         for cIdx, c in r.Conditions {
             cSec := "Rule" rIdx "_Cond" cIdx
             kind := HasProp(c, "Kind") ? c.Kind : "Pixel"
@@ -488,18 +504,19 @@ Storage_SaveProfile(data) {
                 IniWrite(HasProp(c, "Value") ? c.Value : 1, file, cSec, "Value")
                 IniWrite(HasProp(c, "ResetOnTrigger") ? c.ResetOnTrigger : 0, file, cSec, "ResetOnTrigger")
             } else {
-                IniWrite(c.RefType, file, cSec, "RefType")
-                IniWrite(c.RefIndex, file, cSec, "RefIndex")
-                IniWrite(c.Op, file, cSec, "Op")
-                IniWrite(c.UseRefXY, file, cSec, "UseRefXY")
-                IniWrite(c.X, file, cSec, "X")
-                IniWrite(c.Y, file, cSec, "Y")
+                IniWrite(HasProp(c, "RefType") ? c.RefType : "Skill", file, cSec, "RefType")
+                IniWrite(HasProp(c, "RefIndex") ? c.RefIndex : 1, file, cSec, "RefIndex")
+                IniWrite(HasProp(c, "Op") ? c.Op : "EQ", file, cSec, "Op")
+                IniWrite(HasProp(c, "UseRefXY") ? c.UseRefXY : 1, file, cSec, "UseRefXY")
+                IniWrite(HasProp(c, "X") ? c.X : 0, file, cSec, "X")
+                IniWrite(HasProp(c, "Y") ? c.Y : 0, file, cSec, "Y")
             }
         }
+
         for aIdx, a in r.Actions {
             aSec := "Rule" rIdx "_Act" aIdx
             IniWrite(a.SkillIndex, file, aSec, "SkillIndex")
-            IniWrite(a.DelayMs, file, aSec, "DelayMs")
+            IniWrite(HasProp(a, "DelayMs") ? a.DelayMs : 0, file, aSec, "DelayMs")
             IniWrite(HasProp(a, "HoldMs") ? a.HoldMs : -1, file, aSec, "HoldMs")
             IniWrite(HasProp(a, "RequireReady") ? a.RequireReady : 0, file, aSec, "RequireReady")
             IniWrite(HasProp(a, "Verify") ? a.Verify : 0, file, aSec, "Verify")
@@ -509,7 +526,7 @@ Storage_SaveProfile(data) {
         }
     }
 
-    ; ===== Buffs =====
+    ; ================= Buffs =================
     for bi, b in data.Buffs {
         sec := "Buff" bi
         IniWrite(b.Name, file, sec, "Name")
@@ -525,13 +542,171 @@ Storage_SaveProfile(data) {
         }
     }
 
-    ; Tracks：仅数组，不再写 Track1/Track2
+    ; ================= Rotation 基础与 Opener =================
     rot := HasProp(data, "Rotation") ? data.Rotation : {}
-    IniWrite(HasProp(rot,"Tracks") ? rot.Tracks.Length : 0, file, "Rotation", "TrackCount")
-    if (HasProp(rot,"Tracks") && IsObject(rot.Tracks)) {
-        loop rot.Tracks.Length {
-            i := A_Index
-            Storage_SaveNamedTrack(file, "Track" i, rot.Tracks[i])
+    Storage_SaveRotationBase(file, rot)
+
+    ; ================= Tracks（只写数组） =================
+    IniWrite(HasProp(rot, "Tracks") ? rot.Tracks.Length : 0, file, "Rotation", "TrackCount")
+    if (HasProp(rot, "Tracks") && IsObject(rot.Tracks)) {
+        i := 1
+        while (i <= rot.Tracks.Length) {
+            try {
+                Storage_SaveNamedTrack(file, "Track" i, rot.Tracks[i])
+            } catch {
+            }
+            i := i + 1
+        }
+    }
+
+    ; ================= Gates（新版 From/To + Conds[]） =================
+    try {
+        Storage_SaveGates(file, rot)
+    } catch {
+    }
+
+    ; 4) 备份并原子替换
+    try {
+        if FileExist(target) {
+            FileCopy(target, target ".bak", true)
+        }
+    } catch {
+    }
+    try {
+        if FileExist(tmp) {
+            FileMove(tmp, target, true)
+        }
+    } catch as e {
+        Logger_Exception("Storage", e, Map("op","ReplaceProfileIni","tmp", tmp, "target", target))
+    }
+}
+
+; ============== Rotation 基础与 Opener 保存 ==============
+Storage_SaveRotationBase(file, rot) {
+    ; Rotation 基础
+    IniWrite(HasProp(rot, "Enabled") ? rot.Enabled : 0, file, "Rotation", "Enabled")
+    IniWrite(HasProp(rot, "DefaultTrackId") ? rot.DefaultTrackId : 1, file, "Rotation", "DefaultTrackId")
+    IniWrite(HasProp(rot, "SwapKey") ? rot.SwapKey : "", file, "Rotation", "SwapKey")
+    IniWrite(HasProp(rot, "BusyWindowMs") ? rot.BusyWindowMs : 200, file, "Rotation", "BusyWindowMs")
+    IniWrite(HasProp(rot, "ColorTolBlack") ? rot.ColorTolBlack : 16, file, "Rotation", "ColorTolBlack")
+    IniWrite(HasProp(rot, "RespectCastLock") ? rot.RespectCastLock : 1, file, "Rotation", "RespectCastLock")
+    IniWrite(HasProp(rot, "GatesEnabled") ? rot.GatesEnabled : 0, file, "Rotation", "GatesEnabled")
+    IniWrite(HasProp(rot, "GateCooldownMs") ? rot.GateCooldownMs : 0, file, "Rotation", "GateCooldownMs")
+
+    ; Swap 验证（M2）
+    IniWrite(HasProp(rot, "VerifySwap") ? rot.VerifySwap : 0, file, "Rotation", "VerifySwap")
+    IniWrite(HasProp(rot, "SwapTimeoutMs") ? rot.SwapTimeoutMs : 800, file, "Rotation", "SwapTimeoutMs")
+    IniWrite(HasProp(rot, "SwapRetry") ? rot.SwapRetry : 0, file, "Rotation", "SwapRetry")
+    svRefType := "Skill"
+    svRefIndex := 0
+    svOp := "NEQ"
+    svColor := "0x000000"
+    svTol := 16
+    if HasProp(rot, "SwapVerify") {
+        try {
+            if HasProp(rot.SwapVerify, "RefType") {
+                svRefType := rot.SwapVerify.RefType
+            }
+        } catch {
+        }
+        try {
+            if HasProp(rot.SwapVerify, "RefIndex") {
+                svRefIndex := rot.SwapVerify.RefIndex
+            }
+        } catch {
+        }
+        try {
+            if HasProp(rot.SwapVerify, "Op") {
+                svOp := rot.SwapVerify.Op
+            }
+        } catch {
+        }
+        try {
+            if HasProp(rot.SwapVerify, "Color") {
+                svColor := rot.SwapVerify.Color
+            }
+        } catch {
+        }
+        try {
+            if HasProp(rot.SwapVerify, "Tol") {
+                svTol := rot.SwapVerify.Tol
+            }
+        } catch {
+        }
+    }
+    IniWrite(svRefType, file, "Rotation.SwapVerify", "RefType")
+    IniWrite(svRefIndex, file, "Rotation.SwapVerify", "RefIndex")
+    IniWrite(svOp, file, "Rotation.SwapVerify", "Op")
+    IniWrite(svColor, file, "Rotation.SwapVerify", "Color")
+    IniWrite(svTol, file, "Rotation.SwapVerify", "Tol")
+
+    ; BlackGuard（黑窗防抖）
+    secBG := "Rotation.BlackGuard"
+    IniWrite(HasProp(rot, "BlackGuard") && HasProp(rot.BlackGuard, "Enabled") ? rot.BlackGuard.Enabled : 1, file, secBG, "Enabled")
+    IniWrite(HasProp(rot, "BlackGuard") && HasProp(rot.BlackGuard, "SampleCount") ? rot.BlackGuard.SampleCount : 5, file, secBG, "SampleCount")
+    IniWrite(HasProp(rot, "BlackGuard") && HasProp(rot.BlackGuard, "BlackRatioThresh") ? rot.BlackGuard.BlackRatioThresh : 0.7, file, secBG, "BlackRatioThresh")
+    IniWrite(HasProp(rot, "BlackGuard") && HasProp(rot.BlackGuard, "WindowMs") ? rot.BlackGuard.WindowMs : 120, file, secBG, "WindowMs")
+    IniWrite(HasProp(rot, "BlackGuard") && HasProp(rot.BlackGuard, "CooldownMs") ? rot.BlackGuard.CooldownMs : 600, file, secBG, "CooldownMs")
+    IniWrite(HasProp(rot, "BlackGuard") && HasProp(rot.BlackGuard, "MinAfterSendMs") ? rot.BlackGuard.MinAfterSendMs : 60, file, secBG, "MinAfterSendMs")
+    IniWrite(HasProp(rot, "BlackGuard") && HasProp(rot.BlackGuard, "MaxAfterSendMs") ? rot.BlackGuard.MaxAfterSendMs : 800, file, secBG, "MaxAfterSendMs")
+    IniWrite(HasProp(rot, "BlackGuard") && HasProp(rot.BlackGuard, "UniqueRequired") ? rot.BlackGuard.UniqueRequired : 1, file, secBG, "UniqueRequired")
+
+    ; Opener
+    Storage_SaveOpener(file, rot)
+}
+
+Storage_SaveOpener(file, rot) {
+    sec := "Rotation.Opener"
+    op := HasProp(rot, "Opener") ? rot.Opener : {}
+
+    ; 基础项
+    IniWrite(HasProp(op, "Enabled") ? op.Enabled : 0, file, sec, "Enabled")
+    IniWrite(HasProp(op, "MaxDurationMs") ? op.MaxDurationMs : 4000, file, sec, "MaxDurationMs")
+
+    ; Watch
+    watchCount := 0
+    if (HasProp(op, "Watch") && IsObject(op.Watch)) {
+        watchCount := op.Watch.Length
+    }
+    IniWrite(watchCount, file, sec, "WatchCount")
+    if (watchCount > 0) {
+        i := 1
+        while (i <= op.Watch.Length) {
+            try {
+                w := op.Watch[i]
+                wsec := "Rotation.Opener.Watch" i
+                IniWrite(HasProp(w, "SkillIndex") ? w.SkillIndex : 0, file, wsec, "SkillIndex")
+                IniWrite(HasProp(w, "RequireCount") ? w.RequireCount : 1, file, wsec, "RequireCount")
+                IniWrite(HasProp(w, "VerifyBlack") ? w.VerifyBlack : 0, file, wsec, "VerifyBlack")
+            } catch {
+            }
+            i := i + 1
+        }
+    }
+
+    ; Steps
+    stepsCount := 0
+    if (HasProp(op, "Steps") && IsObject(op.Steps)) {
+        stepsCount := op.Steps.Length
+    }
+    IniWrite(stepsCount, file, sec, "StepsCount")
+    if (stepsCount > 0) {
+        i := 1
+        while (i <= op.Steps.Length) {
+            try {
+                st := op.Steps[i]
+                ssec := "Rotation.Opener.Step" i
+                IniWrite(HasProp(st, "Kind") ? st.Kind : "", file, ssec, "Kind")
+                IniWrite(HasProp(st, "SkillIndex") ? st.SkillIndex : 0, file, ssec, "SkillIndex")
+                IniWrite(HasProp(st, "RequireReady") ? st.RequireReady : 0, file, ssec, "RequireReady")
+                IniWrite(HasProp(st, "PreDelayMs") ? st.PreDelayMs : 0, file, ssec, "PreDelayMs")
+                IniWrite(HasProp(st, "HoldMs") ? st.HoldMs : 0, file, ssec, "HoldMs")
+                IniWrite(HasProp(st, "Verify") ? st.Verify : 0, file, ssec, "Verify")
+                IniWrite(HasProp(st, "TimeoutMs") ? st.TimeoutMs : 1200, file, ssec, "TimeoutMs")
+                IniWrite(HasProp(st, "DurationMs") ? st.DurationMs : 0, file, ssec, "DurationMs")
+            } catch {
+            }
+            i := i + 1
         }
     }
 }
