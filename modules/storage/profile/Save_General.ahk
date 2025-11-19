@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;modules\storage\profile\Save_General.ahk 保存 General 模块
 SaveModule_General(profile) {
     if !IsObject(profile) {
         return false

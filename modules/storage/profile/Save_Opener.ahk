@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;modules\storage\profile\Save_Opener.ahk 保存 Opener 模块
 SaveModule_Opener(profile) {
     if !IsObject(profile) {
         return false

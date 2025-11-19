@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;modules\storage\model\Model_Profile.ahk 数据模型 Profile
 ; 新建空 Profile（带默认值 & NextId 初值 & IdMap 空表）
 PM_NewProfile(name := "Default") {
     p := Map()

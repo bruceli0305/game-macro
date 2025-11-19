@@ -1,6 +1,5 @@
 #Requires AutoHotkey v2
-
-; 加载 Buffs + Rotation Base/Tracks/Gates/Opener
+;modules\storage\profile\Load_B.ahk 加载 Buffs + Rotation Base/Tracks/Gates/Opener
 FS_Load_B(profileName, &profile) {
     FS_Load_Buffs(profileName, profile)
     FS_Load_RotationBase(profileName, profile)

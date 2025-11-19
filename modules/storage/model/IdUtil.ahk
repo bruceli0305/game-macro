@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;modules\storage\model\IdUtil.ahk 数据模型 Id 工具
 ; 确保 NextId 存在
 PM_InitNextId(profile) {
     if !IsObject(profile) {

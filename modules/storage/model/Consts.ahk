@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+;modules\storage\model\Consts.ahk 数据模型常量
 
 ; Schema 版本（从模块化开始计）
 global PM_SCHEMA_VERSION := 2

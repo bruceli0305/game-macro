@@ -1,6 +1,5 @@
 #Requires AutoHotkey v2
-
-; 原子替换：先删除 tmp，再写入 tmp，最后覆盖 target（调用处负责 IniWrite 到 tmp）
+;modules\storage\profile\Atomic.ahk 原子替换：先删除 tmp，再写入 tmp，最后覆盖 target（调用处负责 IniWrite 到 tmp）
 FS_AtomicBegin(path) {
     tmp := path ".tmp"
     try {

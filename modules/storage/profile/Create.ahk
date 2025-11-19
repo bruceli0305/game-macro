@@ -1,6 +1,5 @@
 #Requires AutoHotkey v2
-
-; 创建 Profile 文件夹并写入最小模块（meta/general/skills/points/rules）
+;modules\storage\profile\Create.ahk 创建 Profile 文件夹并写入最小模块（meta/general/skills/points/rules）
 Storage_Profile_Create(profileName) {
     p := PM_NewProfile(profileName)
 

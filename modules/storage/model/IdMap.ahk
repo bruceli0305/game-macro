@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;modules\storage\model\IdMap.ahk 数据模型 Id 映射表
 ; 构建 Id ↔ Index 映射表（运行时用）
 PM_BuildIdMaps(profile) {
     maps := Map()

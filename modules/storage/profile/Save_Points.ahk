@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;modules\storage\profile\Save_Points.ahk 保存 Points 模块
 SaveModule_Points(profile) {
     if !IsObject(profile) {
         return false

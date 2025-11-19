@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;modules\storage\profile\Save_Skills.ahk 保存 Skills 模块
 SaveModule_Skills(profile) {
     if !IsObject(profile) {
         return false

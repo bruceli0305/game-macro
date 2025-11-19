@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;modules\storage\profile\Save_Gates.ahk 保存 Gates 模块
 SaveModule_Gates(profile) {
     if !IsObject(profile) {
         return false

@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;modules\storage\profile\Save_RotationBase.ahk 保存 RotationBase 模块
 SaveModule_RotationBase(profile) {
     if !IsObject(profile) {
         return false

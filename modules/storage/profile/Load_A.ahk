@@ -1,6 +1,5 @@
 #Requires AutoHotkey v2
-
-; 仅加载：meta/general/skills/points/rules（阶段A）
+;modules\storage\profile\Load_A.ahk 仅加载：meta/general/skills/points/rules（阶段A）
 Storage_Profile_Load(profileName) {
     p := PM_NewProfile(profileName)
 

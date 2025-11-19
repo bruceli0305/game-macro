@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;modules\storage\profile\Save_Rules.ahk 保存 Rules 模块
 SaveModule_Rules(profile) {
     if !IsObject(profile) {
         return false

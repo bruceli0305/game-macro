@@ -1,6 +1,5 @@
 #Requires AutoHotkey v2
-
-; Profile 根目录（确保存在）
+;modules\storage\profile\Path.ahk Profile 根目录（确保存在）
 FS_ProfileFolder(profileName) {
     global App
     base := App["ProfilesDir"] "\" profileName

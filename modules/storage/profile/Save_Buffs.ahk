@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;modules\storage\profile\Save_Buffs.ahk 保存 Buffs 模块
 SaveModule_Buffs(profile) {
     if !IsObject(profile) {
         return false

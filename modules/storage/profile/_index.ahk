@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-; Profile FS 聚合器（阶段A）
+;modules\storage\profile\_index.ahk Profile FS 聚合器（阶段A）
 
 #Include "Path.ahk"
 #Include "Atomic.ahk"
