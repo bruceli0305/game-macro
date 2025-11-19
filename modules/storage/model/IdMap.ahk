@@ -1,6 +1,4 @@
-#Requires AutoHotkey v2
-;modules\storage\model\IdMap.ahk 数据模型 Id 映射表
-; 构建 Id ↔ Index 映射表（运行时用）
+; modules\storage\model\IdMap.ahk（关键片段）
 PM_BuildIdMaps(profile) {
     maps := Map()
     maps["SkillsById"]  := Map()
@@ -17,7 +15,7 @@ PM_BuildIdMaps(profile) {
         while (i <= profile["Skills"].Length) {
             id := 0
             try {
-                id := profile["Skills"][i].Id
+                id := OM_Get(profile["Skills"][i], "Id", 0)
             } catch {
                 id := 0
             }
@@ -34,7 +32,7 @@ PM_BuildIdMaps(profile) {
         while (i <= profile["Points"].Length) {
             id := 0
             try {
-                id := profile["Points"][i].Id
+                id := OM_Get(profile["Points"][i], "Id", 0)
             } catch {
                 id := 0
             }
@@ -51,7 +49,7 @@ PM_BuildIdMaps(profile) {
         while (i <= profile["Rules"].Length) {
             id := 0
             try {
-                id := profile["Rules"][i].Id
+                id := OM_Get(profile["Rules"][i], "Id", 0)
             } catch {
                 id := 0
             }
@@ -69,7 +67,7 @@ PM_BuildIdMaps(profile) {
         while (i <= arr.Length) {
             id := 0
             try {
-                id := arr[i].Id
+                id := OM_Get(arr[i], "Id", 0)
             } catch {
                 id := 0
             }
@@ -87,7 +85,7 @@ PM_BuildIdMaps(profile) {
         while (i <= arr.Length) {
             id := 0
             try {
-                id := arr[i].Id
+                id := OM_Get(arr[i], "Id", 0)
             } catch {
                 id := 0
             }
@@ -104,7 +102,7 @@ PM_BuildIdMaps(profile) {
         while (i <= profile["Buffs"].Length) {
             id := 0
             try {
-                id := profile["Buffs"][i].Id
+                id := OM_Get(profile["Buffs"][i], "Id", 0)
             } catch {
                 id := 0
             }
@@ -122,7 +120,7 @@ PM_BuildIdMaps(profile) {
         while (i <= arr.Length) {
             id := 0
             try {
-                id := arr[i].Id
+                id := OM_Get(arr[i], "Id", 0)
             } catch {
                 id := 0
             }

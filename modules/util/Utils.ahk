@@ -81,4 +81,3 @@ HP_OnExit(*) {
         DllCall("winmm\timeEndPeriod", "UInt", 1)
 }
 OnExit(HP_OnExit)
-; =====================================================================

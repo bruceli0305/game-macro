@@ -1,5 +1,7 @@
 #Requires AutoHotkey v2
-;modules\storage\profile\Save_General.ahk 保存 General 模块
+; modules\storage\profile\Save_General.ahk 保存 General 模块
+; 依赖：OM_Get（modules\util\Obj.ahk）
+
 SaveModule_General(profile) {
     if !IsObject(profile) {
         return false
@@ -14,45 +16,123 @@ SaveModule_General(profile) {
     tmp := FS_AtomicBegin(file)
 
     ; General
-    g := profile["General"]
+    g := Map()
+    try {
+        g := profile["General"]
+    } catch {
+        g := Map()
+    }
 
-    IniWrite(g.Has("StartHotkey") ? g["StartHotkey"] : "F9", tmp, "General", "StartHotkey")
-    IniWrite(g.Has("PollIntervalMs") ? g["PollIntervalMs"] : 25, tmp, "General", "PollIntervalMs")
-    IniWrite(g.Has("SendCooldownMs") ? g["SendCooldownMs"] : 250, tmp, "General", "SendCooldownMs")
-    IniWrite(g.Has("PickHoverEnabled") ? g["PickHoverEnabled"] : 1, tmp, "General", "PickHoverEnabled")
-    IniWrite(g.Has("PickHoverOffsetY") ? g["PickHoverOffsetY"] : -60, tmp, "General", "PickHoverOffsetY")
-    IniWrite(g.Has("PickHoverDwellMs") ? g["PickHoverDwellMs"] : 120, tmp, "General", "PickHoverDwellMs")
-    IniWrite(g.Has("PickConfirmKey") ? g["PickConfirmKey"] : "LButton", tmp, "General", "PickConfirmKey")
+    ; 顶层 General
+    try {
+        IniWrite(OM_Get(g, "StartHotkey", "F9"),          tmp, "General", "StartHotkey")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(g, "PollIntervalMs", 25),         tmp, "General", "PollIntervalMs")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(g, "SendCooldownMs", 250),        tmp, "General", "SendCooldownMs")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(g, "PickHoverEnabled", 1),        tmp, "General", "PickHoverEnabled")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(g, "PickHoverOffsetY", -60),      tmp, "General", "PickHoverOffsetY")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(g, "PickHoverDwellMs", 120),      tmp, "General", "PickHoverDwellMs")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(g, "PickConfirmKey", "LButton"),  tmp, "General", "PickConfirmKey")
+    } catch {
+    }
 
     ; DefaultSkill（使用 SkillId）
-    ds := g["DefaultSkill"]
-    IniWrite(ds.Has("Enabled") ? ds["Enabled"] : 0, tmp, "Default", "Enabled")
-    IniWrite(ds.Has("SkillId") ? ds["SkillId"] : 0, tmp, "Default", "SkillId")
-    IniWrite(ds.Has("CheckReady") ? ds["CheckReady"] : 1, tmp, "Default", "CheckReady")
-    IniWrite(ds.Has("ThreadId") ? ds["ThreadId"] : 1, tmp, "Default", "ThreadId")
-    IniWrite(ds.Has("CooldownMs") ? ds["CooldownMs"] : 600, tmp, "Default", "CooldownMs")
-    IniWrite(ds.Has("PreDelayMs") ? ds["PreDelayMs"] : 0, tmp, "Default", "PreDelayMs")
+    ds := Map()
+    try {
+        ds := g["DefaultSkill"]
+    } catch {
+        ds := Map()
+    }
+    try {
+        IniWrite(OM_Get(ds, "Enabled", 0),        tmp, "Default", "Enabled")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(ds, "SkillId", 0),        tmp, "Default", "SkillId")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(ds, "CheckReady", 1),     tmp, "Default", "CheckReady")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(ds, "ThreadId", 1),       tmp, "Default", "ThreadId")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(ds, "CooldownMs", 600),   tmp, "Default", "CooldownMs")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(ds, "PreDelayMs", 0),     tmp, "Default", "PreDelayMs")
+    } catch {
+    }
 
-    ; Threads
-    ths := g["Threads"]
-    IniWrite(ths.Length, tmp, "Threads", "Count")
+    ; Threads（Count + Id.i + Thread.<id>.Name）
+    ths := []
+    try {
+        ths := g["Threads"]
+    } catch {
+        ths := []
+    }
+    cnt := 0
+    try {
+        cnt := ths.Length
+    } catch {
+        cnt := 0
+    }
+    try {
+        IniWrite(cnt, tmp, "Threads", "Count")
+    } catch {
+    }
 
     i := 1
-    while (i <= ths.Length) {
-        tid := 0
+    while (i <= cnt) {
+        t := 0
+        try {
+            t := ths[i]
+        } catch {
+            t := 0
+        }
+        tid := i
         tname := "线程" i
-        try {
-            tid := ths[i].Id
-        } catch {
-            tid := i
+        if (IsObject(t)) {
+            try {
+                tid := OM_Get(t, "Id", i)
+            } catch {
+                tid := i
+            }
+            try {
+                tname := OM_Get(t, "Name", "线程" tid)
+            } catch {
+                tname := "线程" tid
+            }
         }
         try {
-            tname := ths[i].Name
+            IniWrite(tid,   tmp, "Threads", "Id." i)
         } catch {
-            tname := "线程" i
         }
-        IniWrite(tid, tmp, "Threads", "Id." i)
-        IniWrite(tname, tmp, "Thread." tid, "Name")
+        try {
+            IniWrite(tname, tmp, "Thread." tid, "Name")
+        } catch {
+        }
         i := i + 1
     }
 
@@ -66,74 +146,116 @@ FS_Load_General(profileName, profile) {
     if !FileExist(file) {
         return
     }
-    g := profile["General"]
 
+    g := Map()
     try {
-        g["StartHotkey"] := IniRead(file, "General", "StartHotkey", g["StartHotkey"])
+        g := profile["General"]
     } catch {
-    }
-    try {
-        g["PollIntervalMs"] := Integer(IniRead(file, "General", "PollIntervalMs", g["PollIntervalMs"]))
-    } catch {
-    }
-    try {
-        g["SendCooldownMs"] := Integer(IniRead(file, "General", "SendCooldownMs", g["SendCooldownMs"]))
-    } catch {
-    }
-    try {
-        g["PickHoverEnabled"] := Integer(IniRead(file, "General", "PickHoverEnabled", g["PickHoverEnabled"]))
-    } catch {
-    }
-    try {
-        g["PickHoverOffsetY"] := Integer(IniRead(file, "General", "PickHoverOffsetY", g["PickHoverOffsetY"]))
-    } catch {
-    }
-    try {
-        g["PickHoverDwellMs"] := Integer(IniRead(file, "General", "PickHoverDwellMs", g["PickHoverDwellMs"]))
-    } catch {
-    }
-    try {
-        g["PickConfirmKey"] := IniRead(file, "General", "PickConfirmKey", g["PickConfirmKey"])
-    } catch {
+        g := Map()
     }
 
-    ds := g["DefaultSkill"]
+    ; General 顶层
     try {
-        ds["Enabled"] := Integer(IniRead(file, "Default", "Enabled", ds["Enabled"]))
+        g["StartHotkey"] := IniRead(file, "General", "StartHotkey", OM_Get(g, "StartHotkey", "F9"))
     } catch {
     }
     try {
-        ds["SkillId"] := Integer(IniRead(file, "Default", "SkillId", ds["SkillId"]))
+        g["PollIntervalMs"] := Integer(IniRead(file, "General", "PollIntervalMs", OM_Get(g, "PollIntervalMs", 25)))
     } catch {
     }
     try {
-        ds["CheckReady"] := Integer(IniRead(file, "Default", "CheckReady", ds["CheckReady"]))
+        g["SendCooldownMs"] := Integer(IniRead(file, "General", "SendCooldownMs", OM_Get(g, "SendCooldownMs", 250)))
     } catch {
     }
     try {
-        ds["ThreadId"] := Integer(IniRead(file, "Default", "ThreadId", ds["ThreadId"]))
+        g["PickHoverEnabled"] := Integer(IniRead(file, "General", "PickHoverEnabled", OM_Get(g, "PickHoverEnabled", 1)))
     } catch {
     }
     try {
-        ds["CooldownMs"] := Integer(IniRead(file, "Default", "CooldownMs", ds["CooldownMs"]))
+        g["PickHoverOffsetY"] := Integer(IniRead(file, "General", "PickHoverOffsetY", OM_Get(g, "PickHoverOffsetY", -60)))
     } catch {
     }
     try {
-        ds["PreDelayMs"] := Integer(IniRead(file, "Default", "PreDelayMs", ds["PreDelayMs"]))
+        g["PickHoverDwellMs"] := Integer(IniRead(file, "General", "PickHoverDwellMs", OM_Get(g, "PickHoverDwellMs", 120)))
+    } catch {
+    }
+    try {
+        g["PickConfirmKey"] := IniRead(file, "General", "PickConfirmKey", OM_Get(g, "PickConfirmKey", "LButton"))
     } catch {
     }
 
-    cnt := Integer(IniRead(file, "Threads", "Count", 0))
+    ; DefaultSkill（SkillId）
+    ds := Map()
+    try {
+        ds := g["DefaultSkill"]
+    } catch {
+        ds := Map()
+    }
+    try {
+        ds["Enabled"] := Integer(IniRead(file, "Default", "Enabled", OM_Get(ds, "Enabled", 0)))
+    } catch {
+    }
+    try {
+        ds["SkillId"] := Integer(IniRead(file, "Default", "SkillId", OM_Get(ds, "SkillId", 0)))
+    } catch {
+    }
+    try {
+        ds["CheckReady"] := Integer(IniRead(file, "Default", "CheckReady", OM_Get(ds, "CheckReady", 1)))
+    } catch {
+    }
+    try {
+        ds["ThreadId"] := Integer(IniRead(file, "Default", "ThreadId", OM_Get(ds, "ThreadId", 1)))
+    } catch {
+    }
+    try {
+        ds["CooldownMs"] := Integer(IniRead(file, "Default", "CooldownMs", OM_Get(ds, "CooldownMs", 600)))
+    } catch {
+    }
+    try {
+        ds["PreDelayMs"] := Integer(IniRead(file, "Default", "PreDelayMs", OM_Get(ds, "PreDelayMs", 0)))
+    } catch {
+    }
+    try {
+        g["DefaultSkill"] := ds
+    } catch {
+    }
+
+    ; Threads
+    cnt := 0
+    try {
+        cnt := Integer(IniRead(file, "Threads", "Count", 0))
+    } catch {
+        cnt := 0
+    }
     ths := []
     i := 1
     while (i <= cnt) {
-        tid := Integer(IniRead(file, "Threads", "Id." i, i))
-        tname := IniRead(file, "Thread." tid, "Name", "线程" tid)
-        ths.Push(Map("Id", tid, "Name", tname))
+        tid := 0
+        tname := ""
+        try {
+            tid := Integer(IniRead(file, "Threads", "Id." i, i))
+        } catch {
+            tid := i
+        }
+        try {
+            tname := IniRead(file, "Thread." tid, "Name", "线程" tid)
+        } catch {
+            tname := "线程" tid
+        }
+        try {
+            ths.Push(Map("Id", tid, "Name", tname))
+        } catch {
+        }
         i := i + 1
     }
     if (ths.Length > 0) {
-        g["Threads"] := ths
+        try {
+            g["Threads"] := ths
+        } catch {
+        }
     }
-    profile["General"] := g
+    try {
+        profile["General"] := g
+    } catch {
+    }
 }

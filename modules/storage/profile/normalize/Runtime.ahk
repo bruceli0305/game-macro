@@ -97,12 +97,13 @@ PM_ToRuntime(profile) {
         i := 1
         while (i <= profile["Points"].Length) {
             p := profile["Points"][i]
+            id  := OM_Get(p, "Id", 0)
             nm  := OM_Get(p, "Name", "")
             x   := OM_Get(p, "X", 0)
             y   := OM_Get(p, "Y", 0)
             col := OM_Get(p, "Color", "0x000000")
             tol := OM_Get(p, "Tol", 10)
-            data.Points.Push({ Name: nm, X: x, Y: y, Color: col, Tol: tol })
+            data.Points.Push({ Id: id, Name: nm, X: x, Y: y, Color: col, Tol: tol })
             i := i + 1
         }
     }
@@ -180,28 +181,75 @@ PM_ToRuntime(profile) {
         i := 1
         while (i <= profile["Buffs"].Length) {
             b := profile["Buffs"][i]
-            nm := OM_Get(b, "Name", "Buff")
-            en := OM_Get(b, "Enabled", 1)
-            dur:= OM_Get(b, "DurationMs", 0)
-            ref:= OM_Get(b, "RefreshBeforeMs", 0)
-            chk:= OM_Get(b, "CheckReady", 1)
-            th := OM_Get(b, "ThreadId", 1)
+            id := 0
+            nm := "Buff"
+            en := 1
+            dur := 0
+            ref := 0
+            chk := 1
+            th  := 1
+
+            try {
+                id := OM_Get(b, "Id", 0)
+            } catch {
+                id := 0
+            }
+            try {
+                nm := OM_Get(b, "Name", "Buff")
+            } catch {
+                nm := "Buff"
+            }
+            try {
+                en := OM_Get(b, "Enabled", 1)
+            } catch {
+                en := 1
+            }
+            try {
+                dur := OM_Get(b, "DurationMs", 0)
+            } catch {
+                dur := 0
+            }
+            try {
+                ref := OM_Get(b, "RefreshBeforeMs", 0)
+            } catch {
+                ref := 0
+            }
+            try {
+                chk := OM_Get(b, "CheckReady", 1)
+            } catch {
+                chk := 1
+            }
+            try {
+                th := OM_Get(b, "ThreadId", 1)
+            } catch {
+                th := 1
+            }
 
             skills := []
-            if (b.Has("Skills") && IsObject(b["Skills"])) {
-                j := 1
-                while (j <= b["Skills"].Length) {
-                    sid := 0
-                    try {
-                        sid := b["Skills"][j]
-                    } catch {
+            try {
+                if (b.Has("Skills") && IsObject(b["Skills"])) {
+                    j := 1
+                    while (j <= b["Skills"].Length) {
                         sid := 0
+                        try {
+                            sid := b["Skills"][j]
+                        } catch {
+                            sid := 0
+                        }
+                        idx := 0
+                        try {
+                            idx := (sid > 0) ? PM_SkillIndexById(profile, sid) : 0
+                        } catch {
+                            idx := 0
+                        }
+                        skills.Push(idx)
+                        j := j + 1
                     }
-                    skills.Push((sid>0 ? PM_SkillIndexById(profile, sid) : 0))
-                    j := j + 1
                 }
+            } catch {
             }
-            data.Buffs.Push({ Name: nm, Enabled: en, DurationMs: dur, RefreshBeforeMs: ref, CheckReady: chk
+
+            data.Buffs.Push({ Id: id, Name: nm, Enabled: en, DurationMs: dur, RefreshBeforeMs: ref, CheckReady: chk
                             , ThreadId: th, Skills: skills, LastTime: 0, NextIdx: 1 })
             i := i + 1
         }

@@ -1,8 +1,8 @@
 #Requires AutoHotkey v2
-;Page_Points.ahk
+; modules\ui\pages\data\Page_Points.ahk
 ; 数据与检测 → 取色点位（嵌入页）
-; 不依赖旧 UI_Page_Config_* 函数；全部事件在本页实现
-; 严格块结构 if/try/catch，不使用单行语句
+; 严格块结构，不使用单行语句
+; 依赖：OM_Get（modules\util\Obj.ahk 已由 Main.ahk 全局引入）
 
 Page_Points_Build(page) {
     global UI
@@ -27,7 +27,7 @@ Page_Points_Build(page) {
     page.Controls.Push(UI.BtnTestPoint)
     page.Controls.Push(UI.BtnSavePoint)
 
-    ; 事件绑定（全部为本页回调）
+    ; 事件绑定
     UI.PointLV.OnEvent("DoubleClick", Points_OnEditSelected)
     UI.BtnAddPoint.OnEvent("Click", Points_OnAdd)
     UI.BtnEditPoint.OnEvent("Click", Points_OnEditSelected)
@@ -35,20 +35,22 @@ Page_Points_Build(page) {
     UI.BtnTestPoint.OnEvent("Click", Points_OnTest)
     UI.BtnSavePoint.OnEvent("Click", Points_OnSaveProfile)
 
-    ; 首次填充
     Points_RefreshList()
 }
 
 Page_Points_Layout(rc) {
     try {
-        ; 读取按钮高度（DIP）
         btnH := 28
-        try UI.BtnAddPoint.GetPos(,,, &btnH)
+        try {
+            UI.BtnAddPoint.GetPos(,,, &btnH)
+        } catch {
+        }
 
         gap := 8
         listH := rc.H - btnH - gap
-        if (listH < 120)
+        if (listH < 120) {
             listH := 120
+        }
 
         UI.PointLV.Move(rc.X, rc.Y, rc.W, listH)
 
@@ -60,7 +62,10 @@ Page_Points_Layout(rc) {
         UI.BtnSavePoint.Move(,     yBtn)
 
         loop 6 {
-            try UI.PointLV.ModifyCol(A_Index, "AutoHdr")
+            try {
+                UI.PointLV.ModifyCol(A_Index, "AutoHdr")
+            } catch {
+            }
         }
     } catch {
     }
@@ -85,36 +90,14 @@ Points_RefreshList() {
             return
         }
         for idx, p in App["ProfileData"].Points {
-            name := ""
-            x := 0, y := 0, col := "0x000000", tol := 10
+            id  := OM_Get(p, "Id", 0)
+            name:= OM_Get(p, "Name", "")
+            x   := OM_Get(p, "X", 0)
+            y   := OM_Get(p, "Y", 0)
+            col := OM_Get(p, "Color", "0x000000")
+            tol := OM_Get(p, "Tol", 10)
 
-            try { 
-                name := p.Name 
-            } catch { 
-                name := "" 
-            }
-            try { 
-                x := p.X 
-            } catch { 
-                x := 0 
-            }
-            try { 
-                y := p.Y 
-            } catch { 
-                y := 0 
-            }
-            try { 
-                col := p.Color 
-            } catch { 
-                col := "0x000000" 
-            }
-            try { 
-                tol := p.Tol 
-            } catch { 
-                tol := 10 
-            }
-
-            UI.PointLV.Add("", idx, name, x, y, col, tol)
+            UI.PointLV.Add("", id, name, x, y, col, tol)
         }
         loop 6 {
             try {
@@ -131,7 +114,8 @@ Points_RefreshList() {
     }
 }
 
-Points_GetSelectedIndex() {
+; 从列表选中行读取稳定 Id（列 1）
+Points_GetSelectedId() {
     global UI
     row := 0
     try {
@@ -143,13 +127,36 @@ Points_GetSelectedIndex() {
         MsgBox "请先选中一个点位。"
         return 0
     }
-    idx := 0
+    id := 0
     try {
-        idx := Integer(UI.PointLV.GetText(row, 1))
+        id := Integer(UI.PointLV.GetText(row, 1))
     } catch {
-        idx := 0
+        id := 0
     }
-    return idx
+    return id
+}
+
+; 按稳定 Id 查找当前运行时索引
+Points_IndexById(id) {
+    global App
+    if !(IsSet(App) && App.Has("ProfileData") && HasProp(App["ProfileData"], "Points")) {
+        return 0
+    }
+
+    i := 1
+    while (i <= App["ProfileData"].Points.Length) {
+        pid := 0
+        try {
+            pid := OM_Get(App["ProfileData"].Points[i], "Id", 0)
+        } catch {
+            pid := 0
+        }
+        if (pid = id) {
+            return i
+        }
+        i := i + 1
+    }
+    return 0
 }
 
 ; ---- 新增 ----
@@ -167,6 +174,12 @@ Points_OnSaved_New(newPoint, idxParam) {
         if !(IsSet(App) && App.Has("ProfileData") && HasProp(App["ProfileData"], "Points")) {
             return
         }
+        if !HasProp(newPoint, "Id") {
+            try {
+                newPoint.Id := 0
+            } catch {
+            }
+        }
         App["ProfileData"].Points.Push(newPoint)
         Points_RefreshList()
     } catch {
@@ -176,10 +189,16 @@ Points_OnSaved_New(newPoint, idxParam) {
 ; ---- 编辑 ----
 Points_OnEditSelected(*) {
     global App
-    idx := Points_GetSelectedIndex()
-    if (idx = 0) {
+    id := Points_GetSelectedId()
+    if (id = 0) {
         return
     }
+    idx := Points_IndexById(id)
+    if (idx = 0) {
+        MsgBox "索引异常，列表与配置不同步。"
+        return
+    }
+
     cur := 0
     try {
         cur := App["ProfileData"].Points[idx]
@@ -200,6 +219,18 @@ Points_OnSaved_Edit(newPoint, idx2) {
             return
         }
         if (idx2 >= 1 && idx2 <= App["ProfileData"].Points.Length) {
+            old := 0
+            try {
+                old := App["ProfileData"].Points[idx2]
+            } catch {
+                old := 0
+            }
+            try {
+                if (old && HasProp(old, "Id")) {
+                    newPoint.Id := old.Id
+                }
+            } catch {
+            }
             App["ProfileData"].Points[idx2] := newPoint
         }
         Points_RefreshList()
@@ -210,8 +241,13 @@ Points_OnSaved_Edit(newPoint, idx2) {
 ; ---- 删除 ----
 Points_OnDelete(*) {
     global App
-    idx := Points_GetSelectedIndex()
+    id := Points_GetSelectedId()
+    if (id = 0) {
+        return
+    }
+    idx := Points_IndexById(id)
     if (idx = 0) {
+        MsgBox "索引异常，列表与配置不同步。"
         return
     }
     try {
@@ -232,8 +268,13 @@ Points_OnDelete(*) {
 ; ---- 测试 ----
 Points_OnTest(*) {
     global App
-    idx := Points_GetSelectedIndex()
+    id := Points_GetSelectedId()
+    if (id = 0) {
+        return
+    }
+    idx := Points_IndexById(id)
     if (idx = 0) {
+        MsgBox "索引异常，列表与配置不同步。"
         return
     }
 
@@ -243,7 +284,7 @@ Points_OnTest(*) {
     } catch {
         p := 0
     }
-    if !p {
+    if (!p) {
         MsgBox "索引异常，列表与配置不同步。"
         return
     }
@@ -252,54 +293,159 @@ Points_OnTest(*) {
     dwell := 0
     try {
         if (HasProp(App["ProfileData"], "PickHoverEnabled") && App["ProfileData"].PickHoverEnabled) {
-            offY := HasProp(App["ProfileData"], "PickHoverOffsetY") ? App["ProfileData"].PickHoverOffsetY : 0
-            dwell := HasProp(App["ProfileData"], "PickHoverDwellMs") ? App["ProfileData"].PickHoverDwellMs : 0
+            try {
+                offY := HasProp(App["ProfileData"], "PickHoverOffsetY") ? App["ProfileData"].PickHoverOffsetY : 0
+            } catch {
+                offY := 0
+            }
+            try {
+                dwell := HasProp(App["ProfileData"], "PickHoverDwellMs") ? App["ProfileData"].PickHoverDwellMs : 0
+            } catch {
+                dwell := 0
+            }
         }
     } catch {
         offY := 0
         dwell := 0
     }
 
+    x   := OM_Get(p, "X", 0)
+    y   := OM_Get(p, "Y", 0)
+    col := OM_Get(p, "Color", "0x000000")
+    tol := OM_Get(p, "Tol", 10)
+
     c := 0
     try {
-        c := Pixel_GetColorWithMouseAway(p.X, p.Y, offY, dwell)
+        c := Pixel_GetColorWithMouseAway(x, y, offY, dwell)
     } catch {
         c := 0
     }
 
     tgt := 0
     try {
-        tgt := Pixel_HexToInt(p.Color)
+        tgt := Pixel_HexToInt(col)
     } catch {
         tgt := 0
     }
     match := false
     try {
-        match := Pixel_ColorMatch(c, tgt, p.Tol)
+        match := Pixel_ColorMatch(c, tgt, tol)
     } catch {
         match := false
     }
 
     try {
-        MsgBox "检测点: X=" p.X " Y=" p.Y "`n"
+        MsgBox "检测点: X=" x " Y=" y "`n"
             . "当前颜色: " Pixel_ColorToHex(c) "`n"
-            . "目标颜色: " p.Color "`n"
-            . "容差: " p.Tol "`n"
+            . "目标颜色: " col "`n"
+            . "容差: " tol "`n"
             . "结果: " (match ? "匹配" : "不匹配")
     } catch {
     }
 }
 
-; ---- 保存 ----
+; ---- 保存（新存储） ----
 Points_OnSaveProfile(*) {
     global App
-    try {
-        if !(IsSet(App) && App.Has("ProfileData")) {
-            return
-        }
-        Storage_SaveProfile(App["ProfileData"])
-        Notify("配置已保存")
-    } catch as e {
-        MsgBox "保存失败：" e.Message
+
+    if !(IsSet(App) && App.Has("CurrentProfile") && App.Has("ProfileData")) {
+        MsgBox "未选择配置或配置未加载。"
+        return
     }
+
+    name := ""
+    try {
+        name := App["CurrentProfile"]
+    } catch {
+        name := ""
+    }
+    if (name = "") {
+        MsgBox "未选择配置。"
+        return
+    }
+
+    ; 1) 加载文件夹模型
+    p := 0
+    try {
+        p := Storage_Profile_LoadFull(name)
+    } catch as e1 {
+        try {
+            Logger_Exception("Points", e1, Map("where", "LoadFull", "profile", name))
+        } catch {
+        }
+        MsgBox "加载配置失败。"
+        return
+    }
+
+    ; 2) 合并运行时到文件夹模型（按 Id）
+    newArr := []
+    try {
+        if (HasProp(App["ProfileData"], "Points") && IsObject(App["ProfileData"].Points)) {
+            i := 1
+            while (i <= App["ProfileData"].Points.Length) {
+                rp := App["ProfileData"].Points[i]
+                pid := OM_Get(rp, "Id", 0)
+                nm  := OM_Get(rp, "Name", "")
+                x   := OM_Get(rp, "X", 0)
+                y   := OM_Get(rp, "Y", 0)
+                col := OM_Get(rp, "Color", "0x000000")
+                tol := OM_Get(rp, "Tol", 10)
+
+                pp := PM_NewPoint(nm)
+                try {
+                    pp["Id"] := pid
+                } catch {
+                }
+                pp["Name"]  := nm
+                pp["X"]     := x
+                pp["Y"]     := y
+                pp["Color"] := col
+                pp["Tol"]   := tol
+
+                newArr.Push(pp)
+                i := i + 1
+            }
+        }
+    } catch {
+    }
+
+    p["Points"] := newArr
+
+    ; 3) 保存（分配新 Id 给 pid=0 的项）
+    ok := false
+    try {
+        SaveModule_Points(p)
+        ok := true
+    } catch as e2 {
+        ok := false
+        try {
+            Logger_Exception("Points", e2, Map("where","SaveModule_Points", "profile", name))
+        } catch {
+        }
+    }
+    if (!ok) {
+        MsgBox "保存失败。"
+        return
+    }
+
+    ; 4) 重载 → 规范化 → 刷新
+    try {
+        p2 := Storage_Profile_LoadFull(name)
+        rt := PM_ToRuntime(p2)
+        App["ProfileData"] := rt
+    } catch as e3 {
+        try {
+            Logger_Exception("Points", e3, Map("where","ReloadNormalize", "profile", name))
+        } catch {
+        }
+        MsgBox "保存成功，但重新加载失败，请切换配置后重试。"
+        return
+    }
+
+    try {
+        Points_RefreshList()
+    } catch {
+    }
+
+    Notify("配置已保存")
 }

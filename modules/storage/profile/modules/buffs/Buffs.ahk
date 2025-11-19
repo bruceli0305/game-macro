@@ -1,5 +1,9 @@
 #Requires AutoHotkey v2
-;modules\storage\profile\Save_Buffs.ahk 保存 Buffs 模块
+; modules\storage\profile\modules\buffs\Buffs.ahk
+; BUFF 模块（新格式）：[Buffs] Count/Order + [Buff.<Id>] 节内自带 Id
+; 依赖：OM_Get（modules\util\Obj.ahk）、ID_Next（modules\util\IdGen.ahk）
+; 依赖：FS_ModulePath / FS_AtomicBegin / FS_AtomicCommit / FS_Meta_Touch
+
 SaveModule_Buffs(profile) {
     if !IsObject(profile) {
         return false
@@ -21,40 +25,102 @@ SaveModule_Buffs(profile) {
         arr := []
     }
 
-    count := arr.Length
+    count := 0
+    try {
+        count := arr.Length
+    } catch {
+        count := 0
+    }
     IniWrite(count, tmp, "Buffs", "Count")
 
-    nextId := 1
-    try {
-        nextId := profile["Meta"]["NextId"]["Buff"]
-    } catch {
-        nextId := 1
-    }
-    IniWrite(nextId, tmp, "Buffs", "NextId")
-
+    ; 确保每项都有稳定 Id，并构建 Order
+    order := ""
     i := 1
     while (i <= count) {
-        b := arr[i]
+        b := 0
+        try {
+            b := arr[i]
+        } catch {
+            b := 0
+        }
+        if (!IsObject(b)) {
+            i := i + 1
+            continue
+        }
+
         bid := 0
         try {
-            bid := b.Id
+            bid := OM_Get(b, "Id", 0)
         } catch {
             bid := 0
         }
         if (bid <= 0) {
-            PM_AssignIdIfMissing(profile, PM_MOD_BUFF, b)
-            bid := b.Id
+            newId := 0
+            try {
+                newId := ID_Next()
+            } catch {
+                newId := 0
+            }
+            if (newId > 0) {
+                wrote := false
+                try {
+                    b["Id"] := newId
+                    wrote := true
+                } catch {
+                    wrote := false
+                }
+                if (!wrote) {
+                    try {
+                        b.Id := newId
+                    } catch {
+                    }
+                }
+                bid := newId
+            }
         }
 
-        IniWrite(bid, tmp, "Buffs", "Id." i)
+        if (order = "") {
+            order := "" bid
+        } else {
+            order := order "," bid
+        }
+        i := i + 1
+    }
+    IniWrite(order, tmp, "Buffs", "Order")
 
-        bSec := "Buff." bid
-        IniWrite(b.Has("Name") ? b["Name"] : "Buff", tmp, bSec, "Name")
-        IniWrite(b.Has("Enabled") ? b["Enabled"] : 1, tmp, bSec, "Enabled")
-        IniWrite(b.Has("DurationMs") ? b["DurationMs"] : 0, tmp, bSec, "DurationMs")
-        IniWrite(b.Has("RefreshBeforeMs") ? b["RefreshBeforeMs"] : 0, tmp, bSec, "RefreshBeforeMs")
-        IniWrite(b.Has("CheckReady") ? b["CheckReady"] : 1, tmp, bSec, "CheckReady")
-        IniWrite(b.Has("ThreadId") ? b["ThreadId"] : 1, tmp, bSec, "ThreadId")
+    ; 写每条 BUFF 明细
+    i := 1
+    while (i <= count) {
+        b := 0
+        try {
+            b := arr[i]
+        } catch {
+            b := 0
+        }
+        if (!IsObject(b)) {
+            i := i + 1
+            continue
+        }
+
+        bid := 0
+        try {
+            bid := OM_Get(b, "Id", 0)
+        } catch {
+            bid := 0
+        }
+        if (bid <= 0) {
+            i := i + 1
+            continue
+        }
+
+        sec := "Buff." bid
+        IniWrite(bid, tmp, sec, "Id")
+        IniWrite(OM_Get(b, "Name", "Buff"),             tmp, sec, "Name")
+        IniWrite(OM_Get(b, "Enabled", 1),               tmp, sec, "Enabled")
+        IniWrite(OM_Get(b, "DurationMs", 0),            tmp, sec, "DurationMs")
+        IniWrite(OM_Get(b, "RefreshBeforeMs", 0),       tmp, sec, "RefreshBeforeMs")
+        IniWrite(OM_Get(b, "CheckReady", 1),            tmp, sec, "CheckReady")
+        IniWrite(OM_Get(b, "ThreadId", 1),              tmp, sec, "ThreadId")
 
         skills := []
         try {
@@ -62,17 +128,23 @@ SaveModule_Buffs(profile) {
         } catch {
             skills := []
         }
-        IniWrite(skills.Length, tmp, bSec, "SkillsCount")
+        sc := 0
+        try {
+            sc := skills.Length
+        } catch {
+            sc := 0
+        }
+        IniWrite(sc, tmp, sec, "SkillsCount")
 
         j := 1
-        while (j <= skills.Length) {
-            skId := 0
+        while (j <= sc) {
+            sid := 0
             try {
-                skId := skills[j]
+                sid := skills[j]
             } catch {
-                skId := 0
+                sid := 0
             }
-            IniWrite(skId, tmp, "Buff." bid ".Skill." j, "SkillId")
+            IniWrite(sid, tmp, "Buff." bid ".Skill." j, "SkillId")
             j := j + 1
         }
 
@@ -89,34 +161,86 @@ FS_Load_Buffs(profileName, profile) {
     if !FileExist(file) {
         return
     }
-    count := Integer(IniRead(file, "Buffs", "Count", 0))
-    nextId := Integer(IniRead(file, "Buffs", "NextId", 1))
 
     arr := []
+    order := ""
+    try {
+        order := IniRead(file, "Buffs", "Order", "")
+    } catch {
+        order := ""
+    }
+    if (order = "") {
+        profile["Buffs"] := []
+        return
+    }
+
+    ids := StrSplit(order, ",")
     i := 1
-    while (i <= count) {
-        bid := Integer(IniRead(file, "Buffs", "Id." i, 0))
+    while (i <= ids.Length) {
+        idStr := ""
+        try {
+            idStr := Trim(ids[i])
+        } catch {
+            idStr := ""
+        }
+        bid := 0
+        try {
+            bid := Integer(idStr)
+        } catch {
+            bid := 0
+        }
         if (bid <= 0) {
             i := i + 1
             continue
         }
-        bSec := "Buff." bid
 
+        sec := "Buff." bid
         b := PM_NewBuff()
-        b["Id"] := bid
-        b["Name"] := IniRead(file, bSec, "Name", "Buff")
-        b["Enabled"] := Integer(IniRead(file, bSec, "Enabled", 1))
-        b["DurationMs"] := Integer(IniRead(file, bSec, "DurationMs", 0))
-        b["RefreshBeforeMs"] := Integer(IniRead(file, bSec, "RefreshBeforeMs", 0))
-        b["CheckReady"] := Integer(IniRead(file, bSec, "CheckReady", 1))
-        b["ThreadId"] := Integer(IniRead(file, bSec, "ThreadId", 1))
+        try {
+            b["Id"] := bid
+        } catch {
+        }
+        try {
+            b["Name"] := IniRead(file, sec, "Name", "Buff")
+        } catch {
+        }
+        try {
+            b["Enabled"] := Integer(IniRead(file, sec, "Enabled", 1))
+        } catch {
+        }
+        try {
+            b["DurationMs"] := Integer(IniRead(file, sec, "DurationMs", 0))
+        } catch {
+        }
+        try {
+            b["RefreshBeforeMs"] := Integer(IniRead(file, sec, "RefreshBeforeMs", 0))
+        } catch {
+        }
+        try {
+            b["CheckReady"] := Integer(IniRead(file, sec, "CheckReady", 1))
+        } catch {
+        }
+        try {
+            b["ThreadId"] := Integer(IniRead(file, sec, "ThreadId", 1))
+        } catch {
+        }
 
-        sc := Integer(IniRead(file, bSec, "SkillsCount", 0))
+        sc := 0
+        try {
+            sc := Integer(IniRead(file, sec, "SkillsCount", 0))
+        } catch {
+            sc := 0
+        }
         skills := []
         j := 1
         while (j <= sc) {
-            skId := Integer(IniRead(file, "Buff." bid ".Skill." j, "SkillId", 0))
-            skills.Push(skId)
+            sid := 0
+            try {
+                sid := Integer(IniRead(file, "Buff." bid ".Skill." j, "SkillId", 0))
+            } catch {
+                sid := 0
+            }
+            skills.Push(sid)
             j := j + 1
         }
         b["Skills"] := skills
@@ -126,10 +250,4 @@ FS_Load_Buffs(profileName, profile) {
     }
 
     profile["Buffs"] := arr
-    try {
-        if (nextId > profile["Meta"]["NextId"]["Buff"]) {
-            profile["Meta"]["NextId"]["Buff"] := nextId
-        }
-    } catch {
-    }
 }
