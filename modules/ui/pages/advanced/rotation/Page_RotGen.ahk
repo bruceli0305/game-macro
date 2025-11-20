@@ -17,7 +17,7 @@ Page_RotGen_Build(page) {
     if !HasProp(prof,"Rotation")
         prof.Rotation := {}
     cfg := prof.Rotation
-    REUI_EnsureRotationDefaults(&cfg)
+    ; REUI_EnsureRotationDefaults(&cfg)
 
     x := rc.X
     y := rc.Y
@@ -158,55 +158,129 @@ Page_RotGen_Refresh() {
     if !IsSet(App) || !App.Has("ProfileData") {
         return
     }
+
     prof := App["ProfileData"]
     if !HasProp(prof, "Rotation") {
         prof.Rotation := {}
     }
-    cfg := prof.Rotation
-    REUI_EnsureRotationDefaults(&cfg)
-    prof.Rotation := cfg
+    cfg := prof.Rotation  ; 只读，不要在刷新里改 cfg 或 prof.Rotation
 
-    ; 默认轨道下拉
+    ; 默认轨道下拉（使用稳定 TrackId 列表）
     ids := REUI_ListTrackIds(cfg)
     try {
-        DllCall("user32\SendMessageW", "ptr", UI.RG_ddDefTrack.Hwnd, "uint", 0x014B, "ptr", 0, "ptr", 0)
-        if (ids.Length) {
+        DllCall("user32\SendMessageW", "ptr", UI.RG_ddDefTrack.Hwnd, "uint", 0x014B, "ptr", 0, "ptr", 0)  ; CB_RESETCONTENT
+    } catch {
+    }
+    try {
+        if (IsObject(ids) && ids.Length > 0) {
             UI.RG_ddDefTrack.Add(ids)
             pos := 1
-            for i, v in ids {
-                if (Integer(v) = Integer(cfg.DefaultTrackId)) {
+            wantId := OM_Get(cfg, "DefaultTrackId", 1)
+            i := 1
+            while (i <= ids.Length) {
+                idVal := 0
+                try {
+                    idVal := Integer(ids[i])
+                } catch {
+                    idVal := 0
+                }
+                if (idVal = wantId) {
                     pos := i
                     break
                 }
+                i := i + 1
             }
             UI.RG_ddDefTrack.Value := pos
         }
     } catch {
     }
 
-    UI.RG_cbEnable.Value := cfg.Enabled ? 1 : 0
-    UI.RG_edBusy.Value := HasProp(cfg,"BusyWindowMs") ? cfg.BusyWindowMs : 200
-    UI.RG_edTol.Value := HasProp(cfg,"ColorTolBlack") ? cfg.ColorTolBlack : 16
+    ; 勾选/数值（全部只读 cfg，不写 cfg）
+    val := 0
+    try {
+        val := OM_Get(cfg, "Enabled", 0)
+        UI.RG_cbEnable.Value := (val ? 1 : 0)
+    } catch {
+    }
 
-    UI.RG_cbCast.Value := HasProp(cfg,"RespectCastLock") ? (cfg.RespectCastLock?1:0) : 0
+    try {
+        UI.RG_edBusy.Value := OM_Get(cfg, "BusyWindowMs", 200)
+    } catch {
+    }
+    try {
+        UI.RG_edTol.Value := OM_Get(cfg, "ColorTolBlack", 16)
+    } catch {
+    }
 
-    UI.RG_hkSwap.Value := HasProp(cfg,"SwapKey") ? cfg.SwapKey : ""
-    UI.RG_cbVerifySwap.Value := HasProp(cfg,"VerifySwap") ? (cfg.VerifySwap?1:0) : 0
-    UI.RG_edSwapTO.Value := HasProp(cfg,"SwapTimeoutMs") ? cfg.SwapTimeoutMs : 800
-    UI.RG_edSwapRetry.Value := HasProp(cfg,"SwapRetry") ? cfg.SwapRetry : 0
+    try {
+        UI.RG_cbCast.Value := (OM_Get(cfg, "RespectCastLock", 1) ? 1 : 0)
+    } catch {
+    }
 
-    UI.RG_cbGates.Value := HasProp(cfg,"GatesEnabled") ? (cfg.GatesEnabled?1:0) : 0
-    UI.RG_edGateCd.Value := HasProp(cfg,"GateCooldownMs") ? cfg.GateCooldownMs : 0
+    try {
+        UI.RG_hkSwap.Value := OM_Get(cfg, "SwapKey", "")
+    } catch {
+    }
+    try {
+        UI.RG_cbVerifySwap.Value := (OM_Get(cfg, "VerifySwap", 0) ? 1 : 0)
+    } catch {
+    }
+    try {
+        UI.RG_edSwapTO.Value := OM_Get(cfg, "SwapTimeoutMs", 800)
+    } catch {
+    }
+    try {
+        UI.RG_edSwapRetry.Value := OM_Get(cfg, "SwapRetry", 0)
+    } catch {
+    }
 
-    bg := HasProp(cfg,"BlackGuard") ? cfg.BlackGuard : {}
-    UI.RG_cbBG.Value := HasProp(bg,"Enabled") ? (bg.Enabled?1:0) : 0
-    UI.RG_edBG_Samp.Value := HasProp(bg,"SampleCount") ? bg.SampleCount : 5
-    UI.RG_edBG_Ratio.Value := HasProp(bg,"BlackRatioThresh") ? Round(bg.BlackRatioThresh,2) : 0.7
-    UI.RG_edBG_Win.Value := HasProp(bg,"WindowMs") ? bg.WindowMs : 120
-    UI.RG_edBG_Cool.Value := HasProp(bg,"CooldownMs") ? bg.CooldownMs : 600
-    UI.RG_edBG_Min.Value := HasProp(bg,"MinAfterSendMs") ? bg.MinAfterSendMs : 60
-    UI.RG_edBG_Max.Value := HasProp(bg,"MaxAfterSendMs") ? bg.MaxAfterSendMs : 800
-    UI.RG_cbBG_Uniq.Value := HasProp(bg,"UniqueRequired") ? (bg.UniqueRequired?1:0) : 0
+    try {
+        UI.RG_cbGates.Value := (OM_Get(cfg, "GatesEnabled", 0) ? 1 : 0)
+    } catch {
+    }
+    try {
+        UI.RG_edGateCd.Value := OM_Get(cfg, "GateCooldownMs", 0)
+    } catch {
+    }
+
+    bg := Map()
+    try {
+        bg := OM_Get(cfg, "BlackGuard", Map())
+    } catch {
+        bg := Map()
+    }
+    try {
+        UI.RG_cbBG.Value := (OM_Get(bg, "Enabled", 1) ? 1 : 0)
+    } catch {
+    }
+    try {
+        UI.RG_edBG_Samp.Value := OM_Get(bg, "SampleCount", 5)
+    } catch {
+    }
+    try {
+        UI.RG_edBG_Ratio.Value := OM_Get(bg, "BlackRatioThresh", 0.7)
+    } catch {
+    }
+    try {
+        UI.RG_edBG_Win.Value := OM_Get(bg, "WindowMs", 120)
+    } catch {
+    }
+    try {
+        UI.RG_edBG_Cool.Value := OM_Get(bg, "CooldownMs", 600)
+    } catch {
+    }
+    try {
+        UI.RG_edBG_Min.Value := OM_Get(bg, "MinAfterSendMs", 60)
+    } catch {
+    }
+    try {
+        UI.RG_edBG_Max.Value := OM_Get(bg, "MaxAfterSendMs", 800)
+    } catch {
+    }
+    try {
+        UI.RG_cbBG_Uniq.Value := (OM_Get(bg, "UniqueRequired", 1) ? 1 : 0)
+    } catch {
+    }
 }
 
 Page_RotGen_OnSave(*) {

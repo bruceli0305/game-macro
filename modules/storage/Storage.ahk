@@ -1,4 +1,4 @@
-; Storage.ahk - INI 配置读写/管理
+; Storage.ahk - 旧版本（废弃）INI 配置读写/管理
 #Requires AutoHotkey v2
 
 Storage_ListProfiles() {

@@ -47,10 +47,10 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 #Include "modules\ui\UI_Shell.ahk"
 ; ========= Bootstrap =========
 AppConfig_Init()
-Lang_Init(AppConfig_Get("Language","zh-CN"))
+Lang_Init(AppConfig_Get("Language", "zh-CN"))
 
 opts := Map()
-opts["Level"] := AppConfig_GetLog("Level", "INFO")
+opts["Level"] := AppConfig_GetLog("Level", "DEBUG")
 opts["RotateSizeMB"] := AppConfig_GetLog("RotateSizeMB", 10)
 opts["RotateKeep"] := AppConfig_GetLog("RotateKeep", 5)
 opts["EnableMemory"] := true
@@ -61,31 +61,46 @@ opts["PipeClient"] := false
 opts["PerCategory"] := AppConfig_GetLog("PerCategory", "")
 opts["ThrottlePerSec"] := AppConfig_GetLog("ThrottlePerSec", 5)
 Logger_Init(opts)
-
-env := Map()
-env["arch"] := (A_PtrSize = 8) ? "x64" : "x86"
-env["admin"] := (A_IsAdmin ? "Admin" : "User")
-env["os"] := A_OSVersion
-Logger_Info("Core", "App start", env)
-Core_Init()
 try {
-    Dup_InitAuto()   ; 如果 EnumOutputs=0，将直接返回 false，不创建线程
-}
-; 初始化 ID 生成器（建议从 AppConfig 读取）
-try {
-    ID_Init(1)
+    Logger_SetLevelFor("Tracks", "DEBUG")
 } catch {
 }
-UI_ShowMain()
-Logger_Info("UI", "Main shown", Map("hwnd", UI.Main.Hwnd))
-; 退出时清理
-OnExit ExitCleanup
-ExitCleanup(*) {
-    try Poller_Stop()
-    try WorkerPool_Dispose()
-    try Pixel_ROI_Dispose()
-    try DX_Shutdown()
-    try Logger_Flush()
-    Logger_Info("Core", "App exit", Map())
-    return 0
+try {
+    Logger_SetLevelFor("Storage", "DEBUG")
+} catch {
 }
+try {
+    Logger_SetLevelFor("Runtime", "DEBUG")
+} catch {
+}
+try {
+    Logger_SetThrottlePerSec(0)
+} catch {
+}
+env := Map()
+env["arch"] := (A_PtrSize = 8) ? "x64" : "x86"
+    env["admin"] := (A_IsAdmin ? "Admin" : "User")
+    env["os"] := A_OSVersion
+    Logger_Info("Core", "App start", env)
+    Core_Init()
+    try {
+        Dup_InitAuto()   ; 如果 EnumOutputs=0，将直接返回 false，不创建线程
+    }
+    ; 初始化 ID 生成器（建议从 AppConfig 读取）
+    try {
+        ID_Init(1)
+    } catch {
+    }
+    UI_ShowMain()
+    Logger_Info("UI", "Main shown", Map("hwnd", UI.Main.Hwnd))
+    ; 退出时清理
+    OnExit ExitCleanup
+    ExitCleanup(*) {
+        try Poller_Stop()
+        try WorkerPool_Dispose()
+        try Pixel_ROI_Dispose()
+        try DX_Shutdown()
+        try Logger_Flush()
+        Logger_Info("Core", "App exit", Map())
+        return 0
+    }

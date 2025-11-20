@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;modules\logging\sinks\FileSink.ahk
 FileSink_WriteLine(path, text, rotateMB := 10, keep := 5) {
     dir := ""
     try {

@@ -113,9 +113,22 @@ PM_DefaultRotation() {
     r["Opener"] := op
 
     ; Tracks/Gates（稳定 Id）
-    r["Tracks"] := []     ; [{Id, ThreadId, MaxDurationMs, MinStayMs, NextTrackId, Watch[], RuleRefs[]}]
+    r["Tracks"] := []     ; [{Id, Name, ThreadId, MaxDurationMs, MinStayMs, NextTrackId, Watch[], RuleRefs[]}]
     r["Gates"] := []      ; [{Id, Priority, FromTrackId, ToTrackId, Logic, Conds[]}]
     return r
+}
+; 工厂：构建一个空 Track（新增 Name）
+PM_NewTrack() {
+    t := Map()
+    t["Id"] := 0
+    t["Name"] := ""            ; 新增：显示名（UI/存储层使用）
+    t["ThreadId"] := 1
+    t["MaxDurationMs"] := 8000
+    t["MinStayMs"] := 0
+    t["NextTrackId"] := 0
+    t["Watch"] := []      ; [{SkillId, RequireCount, VerifyBlack}]
+    t["RuleRefs"] := []   ; RuleId[]
+    return t
 }
 
 ; 工厂（可选）：构建一个空 Skill/Point/Rule/Buff/Track/Gate
@@ -174,18 +187,6 @@ PM_NewBuff(name := "") {
     b["LastTime"] := 0
     b["NextIdx"] := 1
     return b
-}
-
-PM_NewTrack() {
-    t := Map()
-    t["Id"] := 0
-    t["ThreadId"] := 1
-    t["MaxDurationMs"] := 8000
-    t["MinStayMs"] := 0
-    t["NextTrackId"] := 0
-    t["Watch"] := []      ; [{SkillId, RequireCount, VerifyBlack}]
-    t["RuleRefs"] := []   ; RuleId[]
-    return t
 }
 
 PM_NewGate() {

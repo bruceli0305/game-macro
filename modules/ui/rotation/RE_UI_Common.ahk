@@ -1,6 +1,6 @@
-; modules\ui\rotation\RE_UI_Common.ahk
 #Requires AutoHotkey v2
-; 创建带 Owner 的 GUI（若主窗存在）
+; modules\ui\rotation\RE_UI_Common.ahk
+
 REUI_CreateOwnedGui(title := "Rotation 配置") {
     global UI
     try {
@@ -12,7 +12,6 @@ REUI_CreateOwnedGui(title := "Rotation 配置") {
     return Gui(, title)
 }
 
-; 统一兜底 Rotation 配置（在 UI 侧保证键齐备）
 REUI_EnsureRotationDefaults(&cfg) {
     if !IsObject(cfg) {
         cfg := {}
@@ -58,7 +57,12 @@ REUI_EnsureRotationDefaults(&cfg) {
     }
     if !HasProp(cfg, "Tracks") && HasProp(cfg, "Track1") {
         t1 := cfg.Track1
-        t2 := (HasProp(cfg,"Track2") ? cfg.Track2 : 0)
+        t2 := 0
+        try {
+            t2 := (HasProp(cfg,"Track2") ? cfg.Track2 : 0)
+        } catch {
+            t2 := 0
+        }
         cfg.Tracks := []
         if t1 {
             cfg.Tracks.Push(t1)
@@ -69,23 +73,34 @@ REUI_EnsureRotationDefaults(&cfg) {
     }
 }
 
-; 轨道ID列表（若无 Tracks 则回退 [1,2]）
+; 轨道ID列表：过滤 Id<=0；若无则回退 [1,2]
 REUI_ListTrackIds(cfg) {
     ids := []
     try {
-        if HasProp(cfg, "Tracks") && IsObject(cfg.Tracks) && cfg.Tracks.Length>0 {
+        if HasProp(cfg, "Tracks") && IsObject(cfg.Tracks) && cfg.Tracks.Length > 0 {
             for _, t in cfg.Tracks {
-                ids.Push(t.Id)
+                idv := 0
+                try {
+                    idv := HasProp(t, "Id") ? Integer(t.Id) : 0
+                } catch {
+                    idv := 0
+                }
+                if (idv > 0) {
+                    ids.Push(idv)
+                }
             }
-            return ids
+            if (ids.Length > 0) {
+                return ids
+            }
         }
+    } catch {
     }
+
     ids.Push(1)
     ids.Push(2)
     return ids
 }
 
-; 线程名
 REUI_ThreadNameById(id) {
     try {
         for _, th in App["ProfileData"].Threads {
@@ -93,11 +108,14 @@ REUI_ThreadNameById(id) {
                 return th.Name
             }
         }
+    } catch {
     }
-    return (id=1) ? "默认线程" : "线程#" id
+    if (id = 1) {
+        return "默认线程"
+    }
+    return "线程#" id
 }
 
-; 工具
 REUI_IndexClamp(v, vmax) {
     v := Integer(v)
     vmax := Integer(vmax)
@@ -112,7 +130,7 @@ REUI_IndexClamp(v, vmax) {
     }
     return v
 }
-; 数组工具：返回索引（未找到返回 0）
+
 REUI_ArrayIndexOf(arr, value) {
     if (!IsObject(arr)) {
         return 0
@@ -131,7 +149,6 @@ REUI_ArrayIndexOf(arr, value) {
     return 0
 }
 
-; 数组工具：是否包含
 REUI_ArrayContains(arr, value) {
     return REUI_ArrayIndexOf(arr, value) != 0
 }

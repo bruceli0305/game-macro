@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+;modules\logging\Logger.ahk
 #Include "sinks\FileSink.ahk"
 #Include "sinks\MemorySink.ahk"
 #Include "sinks\PipeSink.ahk"

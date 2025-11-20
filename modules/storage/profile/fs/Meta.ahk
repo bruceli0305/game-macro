@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-;modules\storage\profile\Meta.ahk 读取 meta.ini（若不存在返回默认 meta）
+;modules\storage\profile\fs\Meta.ahk 读取 meta.ini（若不存在返回默认 meta）
 FS_Meta_Read(profileName) {
     file := FS_ModulePath(profileName, "meta")
     meta := Map()

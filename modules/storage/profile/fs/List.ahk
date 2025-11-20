@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-;modules\storage\profile\List.ahk 列出 Profiles 目录下“有效配置”（含 meta.ini 的子目录）
+;modules\storage\profile\fs\List.ahk 列出 Profiles 目录下“有效配置”（含 meta.ini 的子目录）
 FS_ListProfilesValid() {
     global App
     list := []

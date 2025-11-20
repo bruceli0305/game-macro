@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+;modules\logging\sinks\PipeSink.ahk
 
 global g_Pipe := Map()
 
