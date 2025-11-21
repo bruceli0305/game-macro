@@ -1,544 +1,11 @@
 #Requires AutoHotkey v2
 #Include "RE_UI_Common.ahk"
 
-; 构建“轨道”页（列表 + 轨道编辑器 + 监视编辑器 + 规则选择器）
-REUI_Page_Tracks_Build(ctx) {
-    global App
-    dlg := ctx.dlg
-    tab := ctx.tab
-    cfg := ctx.cfg
-    tab.UseTab(2)
-    try {
-        REUI_Tracks_Ensure(&cfg)
-    } catch {
+; ------------------------------- 列表/数据 -------------------------------
+REUI_Tracks_Ensure(cfg) {
+    if !IsObject(cfg) {
+        return
     }
-
-    lv := dlg.Add("ListView", "xm y+8 w820 r12 +Grid"
-        , ["ID", "名称", "线程", "最长ms", "最短停留", "下一轨", "监视数", "规则数"])
-    btnAdd := dlg.Add("Button", "xm y+8 w90", "新增")
-    btnEdit := dlg.Add("Button", "x+8 w90", "编辑")
-    btnDel := dlg.Add("Button", "x+8 w90", "删除")
-    btnUp := dlg.Add("Button", "x+8 w90", "上移")
-    btnDn := dlg.Add("Button", "x+8 w90", "下移")
-    btnSave := dlg.Add("Button", "x+20 w110", "保存轨道")
-
-    try {
-        REUI_Tracks_FillList(lv, cfg)
-    } catch {
-    }
-
-    btnAdd.OnEvent("Click", (*) => REUI_Tracks_OnAdd(cfg, dlg, lv))
-    btnEdit.OnEvent("Click", (*) => REUI_Tracks_OnEdit(lv, cfg, dlg))
-    btnDel.OnEvent("Click", (*) => REUI_Tracks_OnDel(lv, cfg))
-    btnUp.OnEvent("Click", (*) => REUI_Tracks_OnMove(lv, cfg, -1))
-    btnDn.OnEvent("Click", (*) => REUI_Tracks_OnMove(lv, cfg, 1))
-    lv.OnEvent("DoubleClick", (*) => REUI_Tracks_OnEdit(lv, cfg, dlg))
-    btnSave.OnEvent("Click", SaveTracks)
-
-    SaveTracks(*) {
-        global App
-        if !(IsSet(App) && App.Has("CurrentProfile") && App.Has("ProfileData")) {
-            MsgBox "未选择配置或配置未加载。"
-            return
-        }
-
-        name := ""
-        try {
-            name := App["CurrentProfile"]
-        } catch {
-            name := ""
-        }
-        if (name = "") {
-            MsgBox "未选择配置。"
-            return
-        }
-
-        p := 0
-        try {
-            p := Storage_Profile_LoadFull(name)
-        } catch {
-            MsgBox "加载配置失败。"
-            return
-        }
-
-        dbgTracks := 0
-        try {
-            if Logger_IsEnabled(50, "Tracks") {
-                dbgTracks := 1
-            } else {
-                dbgTracks := 0
-            }
-        } catch {
-            dbgTracks := 0
-        }
-        if (dbgTracks) {
-            f0 := Map()
-            try {
-                f0["profile"] := name
-            } catch {
-            }
-            try {
-                Logger_Debug("Tracks", "RE_UI_Page_Tracks.SaveTracks begin", f0)
-            } catch {
-            }
-        }
-
-        ; 建立 索引 → 稳定 Id 的映射（技能/规则），用 OM_Get 读取 Map 字段
-        skIdByIdx := Map()
-        rlIdByIdx := Map()
-        try {
-            if (p.Has("Skills") && IsObject(p["Skills"])) {
-                si := 1
-                while (si <= p["Skills"].Length) {
-                    sid := 0
-                    try {
-                        sid := OM_Get(p["Skills"][si], "Id", 0)
-                    } catch {
-                        sid := 0
-                    }
-                    skIdByIdx[si] := sid
-                    si := si + 1
-                }
-            }
-        } catch {
-        }
-        try {
-            if (p.Has("Rules") && IsObject(p["Rules"])) {
-                ri := 1
-                while (ri <= p["Rules"].Length) {
-                    rid := 0
-                    try {
-                        rid := OM_Get(p["Rules"][ri], "Id", 0)
-                    } catch {
-                        rid := 0
-                    }
-                    rlIdByIdx[ri] := rid
-                    ri := ri + 1
-                }
-            }
-        } catch {
-        }
-
-        if (dbgTracks) {
-            f1 := Map()
-            i := 1
-            while (i <= 10) {
-                v := ""
-                try {
-                    if skIdByIdx.Has(i) {
-                        v := skIdByIdx[i]
-                    } else {
-                        v := "(none)"
-                    }
-                } catch {
-                    v := "(err)"
-                }
-                try {
-                    f1["s" i] := v
-                } catch {
-                }
-                i := i + 1
-            }
-            try {
-                Logger_Debug("Tracks", "Skill idx→Id map (first 10)", f1)
-            } catch {
-            }
-
-            f2 := Map()
-            i := 1
-            while (i <= 10) {
-                v2 := ""
-                try {
-                    if rlIdByIdx.Has(i) {
-                        v2 := rlIdByIdx[i]
-                    } else {
-                        v2 := "(none)"
-                    }
-                } catch {
-                    v2 := "(err)"
-                }
-                try {
-                    f2["r" i] := v2
-                } catch {
-                }
-                i := i + 1
-            }
-            try {
-                Logger_Debug("Tracks", "Rule idx→Id map (first 10)", f2)
-            } catch {
-            }
-        }
-
-        ; 运行时 cfg.Tracks（索引引用） → 文件夹模型 Tracks（Id 引用）
-        newTracks := []
-        totTracks := 0
-        totWatch := 0
-        totWatchZero := 0
-        totRefs := 0
-        totRefsZero := 0
-
-        cfg := ctx.cfg
-        try {
-            if (HasProp(cfg, "Tracks") && IsObject(cfg.Tracks)) {
-                i := 1
-                while (i <= cfg.Tracks.Length) {
-                    t := cfg.Tracks[i]
-
-                    if (dbgTracks) {
-                        info := Map()
-                        tid0 := 0
-                        nm0 := ""
-                        th0 := 1
-                        wc0 := 0
-                        rc0 := 0
-                        try {
-                            tid0 := HasProp(t, "Id") ? t.Id : 0
-                        } catch {
-                            tid0 := 0
-                        }
-                        try {
-                            nm0 := HasProp(t, "Name") ? t.Name : ""
-                        } catch {
-                            nm0 := ""
-                        }
-                        try {
-                            th0 := HasProp(t, "ThreadId") ? t.ThreadId : 1
-                        } catch {
-                            th0 := 1
-                        }
-                        try {
-                            if (HasProp(t, "Watch") && IsObject(t.Watch)) {
-                                wc0 := t.Watch.Length
-                            } else {
-                                wc0 := 0
-                            }
-                        } catch {
-                            wc0 := 0
-                        }
-                        try {
-                            if (HasProp(t, "RuleRefs") && IsObject(t.RuleRefs)) {
-                                rc0 := t.RuleRefs.Length
-                            } else {
-                                rc0 := 0
-                            }
-                        } catch {
-                            rc0 := 0
-                        }
-                        try {
-                            info["TrackRow"] := i
-                            info["Tid"] := tid0
-                            info["Name"] := nm0
-                            info["ThreadId"] := th0
-                            info["WatchCount"] := wc0
-                            info["RuleRefCount"] := rc0
-                            Logger_Info("Tracks", "Track begin", info)
-                        } catch {
-                        }
-                    }
-
-                    tr := Map()
-                    tid := 0
-                    try {
-                        tid := HasProp(t, "Id") ? t.Id : 0
-                    } catch {
-                        tid := 0
-                    }
-                    tr["Id"] := tid
-
-                    nm := ""
-                    try {
-                        nm := HasProp(t, "Name") ? t.Name : ""
-                    } catch {
-                        nm := ""
-                    }
-                    tr["Name"] := nm
-
-                    v := 1
-                    try {
-                        v := HasProp(t, "ThreadId") ? t.ThreadId : 1
-                    } catch {
-                        v := 1
-                    }
-                    tr["ThreadId"] := v
-
-                    v := 8000
-                    try {
-                        v := HasProp(t, "MaxDurationMs") ? t.MaxDurationMs : 8000
-                    } catch {
-                        v := 8000
-                    }
-                    tr["MaxDurationMs"] := v
-
-                    v := 0
-                    try {
-                        v := HasProp(t, "MinStayMs") ? t.MinStayMs : 0
-                    } catch {
-                        v := 0
-                    }
-                    tr["MinStayMs"] := v
-
-                    v := 0
-                    try {
-                        v := HasProp(t, "NextTrackId") ? t.NextTrackId : 0
-                    } catch {
-                        v := 0
-                    }
-                    tr["NextTrackId"] := v
-
-                    ; Watch（SkillIndex → SkillId）
-                    wArr := []
-                    try {
-                        if (HasProp(t, "Watch") && IsObject(t.Watch)) {
-                            j := 1
-                            while (j <= t.Watch.Length) {
-                                w := t.Watch[j]
-                                si := 0
-                                need := 1
-                                vb := 0
-                                try {
-                                    si := HasProp(w, "SkillIndex") ? Integer(w.SkillIndex) : 0
-                                } catch {
-                                    si := 0
-                                }
-                                try {
-                                    need := HasProp(w, "RequireCount") ? w.RequireCount : 1
-                                } catch {
-                                    need := 1
-                                }
-                                try {
-                                    vb := HasProp(w, "VerifyBlack") ? w.VerifyBlack : 0
-                                } catch {
-                                    vb := 0
-                                }
-
-                                sid := 0
-                                try {
-                                    if (skIdByIdx.Has(si)) {
-                                        sid := skIdByIdx[si]
-                                    } else {
-                                        sid := 0
-                                    }
-                                } catch {
-                                    sid := 0
-                                }
-
-                                if (dbgTracks) {
-                                    rowLog := Map()
-                                    try {
-                                        rowLog["TrackRow"] := i
-                                        rowLog["WatchIdx"] := j
-                                        rowLog["SkillIndex"] := si
-                                        rowLog["SkillId"] := sid
-                                        rowLog["RequireCount"] := need
-                                        rowLog["VerifyBlack"] := vb
-                                        Logger_Debug("Tracks", "Map Watch SkillIndex→SkillId", rowLog)
-                                    } catch {
-                                    }
-                                }
-
-                                totWatch := totWatch + 1
-                                if (sid <= 0) {
-                                    totWatchZero := totWatchZero + 1
-                                }
-
-                                wArr.Push(Map("SkillId", sid, "RequireCount", need, "VerifyBlack", vb))
-                                j := j + 1
-                            }
-                        }
-                    } catch {
-                    }
-                    tr["Watch"] := wArr
-
-                    ; RuleRefs（规则索引 → RuleId）
-                    rArr := []
-                    try {
-                        if (HasProp(t, "RuleRefs") && IsObject(t.RuleRefs)) {
-                            j := 1
-                            while (j <= t.RuleRefs.Length) {
-                                idx := 0
-                                try {
-                                    idx := Integer(t.RuleRefs[j])
-                                } catch {
-                                    idx := 0
-                                }
-                                rid := 0
-                                try {
-                                    if (rlIdByIdx.Has(idx)) {
-                                        rid := rlIdByIdx[idx]
-                                    } else {
-                                        rid := 0
-                                    }
-                                } catch {
-                                    rid := 0
-                                }
-
-                                if (dbgTracks) {
-                                    rrLog := Map()
-                                    try {
-                                        rrLog["TrackRow"] := i
-                                        rrLog["RuleRefIdx"] := j
-                                        rrLog["RuleIndex"] := idx
-                                        rrLog["RuleId"] := rid
-                                        Logger_Debug("Tracks", "Map RuleIndex→RuleId", rrLog)
-                                    } catch {
-                                    }
-                                }
-
-                                totRefs := totRefs + 1
-                                if (rid <= 0) {
-                                    totRefsZero := totRefsZero + 1
-                                }
-
-                                rArr.Push(rid)
-                                j := j + 1
-                            }
-                        }
-                    } catch {
-                    }
-                    tr["RuleRefs"] := rArr
-
-                    newTracks.Push(tr)
-                    totTracks := totTracks + 1
-                    i := i + 1
-                }
-            }
-        } catch {
-        }
-
-        if (dbgTracks) {
-            sum := Map()
-            try {
-                sum["Tracks"] := totTracks
-                sum["WatchTotal"] := totWatch
-                sum["WatchZero"] := totWatchZero
-                sum["RuleRefTotal"] := totRefs
-                sum["RuleRefZero"] := totRefsZero
-                Logger_Warn("Tracks", "RE_UI_Page_Tracks.SaveTracks summary", sum)
-            } catch {
-            }
-        }
-
-        ; 写入文件夹模型并保存
-        try {
-            if !(p.Has("Rotation")) {
-                p["Rotation"] := Map()
-            }
-        } catch {
-        }
-        try {
-            p["Rotation"]["Tracks"] := newTracks
-        } catch {
-            p["Rotation"] := Map("Tracks", newTracks)
-        }
-
-        ok := false
-        try {
-            SaveModule_Tracks(p)
-            ok := true
-        } catch {
-            ok := false
-        }
-        if (!ok) {
-            MsgBox "保存失败。"
-            return
-        }
-
-        ; 默认轨道联动修正
-        needFix := false
-        newDef := 0
-        try {
-            defId := 0
-            try {
-                defId := App["ProfileData"].Rotation.DefaultTrackId
-            } catch {
-                defId := 0
-            }
-
-            idSet := Map()
-            for _, trk in newTracks {
-                tid := 0
-                try {
-                    tid := trk.Has("Id") ? trk["Id"] : 0
-                } catch {
-                    tid := 0
-                }
-                try {
-                    idSet[tid] := 1
-                } catch {
-                }
-            }
-
-            hasDef := false
-            try {
-                hasDef := (defId != 0 && idSet.Has(defId))
-            } catch {
-                hasDef := false
-            }
-
-            if (!hasDef) {
-                for _, trk in newTracks {
-                    tid := 0
-                    try {
-                        tid := trk.Has("Id") ? trk["Id"] : 0
-                    } catch {
-                        tid := 0
-                    }
-                    if (tid > 0) {
-                        newDef := tid
-                        break
-                    }
-                }
-                needFix := true
-            }
-        } catch {
-            needFix := false
-        }
-        if (needFix) {
-            rot := Map()
-            try {
-                rot := p["Rotation"]
-            } catch {
-                rot := Map()
-            }
-            try {
-                rot["DefaultTrackId"] := newDef
-            } catch {
-            }
-            try {
-                p["Rotation"] := rot
-            } catch {
-            }
-            try {
-                SaveModule_RotationBase(p)
-            } catch {
-            }
-        }
-
-        ; 重载 → 规范化 → 刷新列表
-        try {
-            p2 := Storage_Profile_LoadFull(name)
-            rt := PM_ToRuntime(p2)
-            App["ProfileData"] := rt
-        } catch {
-            MsgBox "保存成功，但重新加载失败，请切换配置后重试。"
-            return
-        }
-
-        try {
-            cfg2 := App["ProfileData"].Rotation
-            REUI_Tracks_Ensure(&cfg2)
-            REUI_Tracks_FillList(lv, cfg2)
-        } catch {
-        }
-
-        Notify("轨道已保存")
-    }
-
-    return { Save: () => 0 }
-}
-
-;------------------------------- 列表/数据 -------------------------------
-REUI_Tracks_Ensure(&cfg) {
     if !HasProp(cfg, "Tracks") || !IsObject(cfg.Tracks) {
         cfg.Tracks := []
     }
@@ -645,7 +112,6 @@ REUI_Tracks_OnAdd(cfg, owner, lv) {
     }
     tr := { Id: 0, Name: "轨道" newIdx, ThreadId: 1, MaxDurationMs: 8000, MinStayMs: 0, NextTrackId: 0, Watch: [],
         RuleRefs: [] }
-    REUI_TrackEditor_Open(owner, cfg, tr, 0, OnSaved)
     OnSaved(saved, idx) {
         try {
             cfg.Tracks.Push(saved)
@@ -653,6 +119,7 @@ REUI_Tracks_OnAdd(cfg, owner, lv) {
         } catch {
         }
     }
+    REUI_TrackEditor_Open(owner, cfg, tr, 0, OnSaved)
 }
 
 REUI_Tracks_OnEdit(lv, cfg, owner) {
@@ -670,7 +137,6 @@ REUI_Tracks_OnEdit(lv, cfg, owner) {
         return
     }
     cur := cfg.Tracks[row]
-    REUI_TrackEditor_Open(owner, cfg, cur, row, OnSaved)
     OnSaved(saved, i) {
         try {
             cfg.Tracks[i] := saved
@@ -678,6 +144,7 @@ REUI_Tracks_OnEdit(lv, cfg, owner) {
         } catch {
         }
     }
+    REUI_TrackEditor_Open(owner, cfg, cur, row, OnSaved)
 }
 
 REUI_Tracks_OnDel(lv, cfg) {
@@ -706,7 +173,6 @@ REUI_Tracks_OnDel(lv, cfg) {
     } catch {
         defId := 0
     }
-
     found := REUI_ArrayContains(ids, defId)
     if (!found) {
         if (ids.Length >= 1) {
@@ -719,7 +185,6 @@ REUI_Tracks_OnDel(lv, cfg) {
             cfg.DefaultTrackId := 0
         }
     }
-
     try {
         REUI_Tracks_FillList(lv, cfg)
     } catch {
@@ -761,7 +226,7 @@ REUI_Tracks_OnMove(lv, cfg, dir) {
     }
 }
 
-;------------------------------- 监视条目编辑器（先定义，避免 #Warn） -------------------------------
+;------------------------------- 监视条目编辑器（先定义） -------------------------------
 REUI_WatchEditor_Open(owner, w, idx := 0, onSaved := 0) {
     global App
     if !IsObject(w) {
@@ -776,7 +241,6 @@ REUI_WatchEditor_Open(owner, w, idx := 0, onSaved := 0) {
     if !HasProp(w, "VerifyBlack") {
         w.VerifyBlack := 0
     }
-
     g2 := 0
     try {
         g2 := Gui("+Owner" owner.Hwnd, (idx = 0) ? "新增监视" : "编辑监视")
@@ -919,8 +383,7 @@ REUI_TrackEditor_Open(owner, cfg, t, idx := 0, onSaved := 0) {
     g.MarginX := 12
     g.MarginY := 10
     g.SetFont("s10", "Segoe UI")
-
-    ; ID（Id=0 表示待分配）
+    ; ID
     g.Add("Text", "xm ym w100 Right", "ID：")
     idText := "(待分配)"
     try {
@@ -985,7 +448,7 @@ REUI_TrackEditor_Open(owner, cfg, t, idx := 0, onSaved := 0) {
     g.Add("Text", "x+20 w100 Right", "最短停留：")
     edMin := g.Add("Edit", "x+6 w160 Number Center", HasProp(t, "MinStayMs") ? t.MinStayMs : 0)
 
-    ; 下一轨（不展示 Id=0 的项）
+    ; 下一轨
     g.Add("Text", "xm y+8 w100 Right", "下一轨：")
     ddNext := g.Add("DropDownList", "x+6 w160")
     ids := REUI_ListTrackIds(cfg)
@@ -1253,7 +716,6 @@ REUI_RuleRefsPicker_Open(owner, t, labRulesCtl) {
         } catch {
         }
     }
-
     g3.Add("Text", "x+16 yp", "已选择（顺序生效）：")
     lvSel := g3.Add("ListView", "x+0 w360 r12 +Grid", ["序", "ID", "名称"])
     loop 3 {

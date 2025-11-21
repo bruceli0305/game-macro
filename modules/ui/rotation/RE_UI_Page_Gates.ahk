@@ -1,577 +1,11 @@
 #Requires AutoHotkey v2
-; modules\ui\rotation\RE_UI_Page_Gates.ahk
 #Include "RE_UI_Common.ahk"
 
-REUI_Page_Gates_Build(ctx) {
-    dlg := ctx.dlg
-    tab := ctx.tab
-    cfg := ctx.cfg
-
-    tab.UseTab(3)
-    try {
-        REUI_Gates_Ensure(&cfg)
-    } catch {
-    }
-
-    lv := dlg.Add("ListView", "xm y+8 w820 r12 +Grid", ["优先级","来源轨","目标轨","逻辑","条件数"])
-    btnAdd  := dlg.Add("Button", "xm y+8 w90", "新增")
-    btnEdit := dlg.Add("Button", "x+8 w90", "编辑")
-    btnDel  := dlg.Add("Button", "x+8 w90", "删除")
-    btnUp   := dlg.Add("Button", "x+8 w90", "上移")
-    btnDn   := dlg.Add("Button", "x+8 w90", "下移")
-    btnSave := dlg.Add("Button", "x+20 w110", "保存跳轨")
-
-    try {
-        REUI_Gates_FillList(lv, cfg)
-    } catch {
-    }
-
-    btnAdd.OnEvent("Click", (*) => REUI_Gates_OnAdd(cfg, dlg, lv))
-    btnEdit.OnEvent("Click", (*) => REUI_Gates_OnEdit(lv, cfg, dlg))
-    btnDel.OnEvent("Click", (*) => REUI_Gates_OnDel(lv, cfg, dlg))
-    btnUp.OnEvent("Click", (*) => REUI_Gates_OnMove(lv, cfg, -1))
-    btnDn.OnEvent("Click", (*) => REUI_Gates_OnMove(lv, cfg, 1))
-    lv.OnEvent("DoubleClick", (*) => REUI_Gates_OnEdit(lv, cfg, dlg))
-    btnSave.OnEvent("Click", SaveGates)
-
-    SaveGates(*) {
-        global App
-        if !(IsSet(App) && App.Has("CurrentProfile") && App.Has("ProfileData")) {
-            MsgBox "未选择配置或配置未加载。"
-            return
-        }
-
-        name := ""
-        try {
-            name := App["CurrentProfile"]
-        } catch {
-            name := ""
-        }
-        if (name = "") {
-            MsgBox "未选择配置。"
-            return
-        }
-
-        p := 0
-        try {
-            p := Storage_Profile_LoadFull(name)
-        } catch {
-            MsgBox "加载配置失败。"
-            return
-        }
-
-        dbgG := 0
-        try {
-            if Logger_IsEnabled(50, "Gates") {
-                dbgG := 1
-            } else {
-                dbgG := 0
-            }
-        } catch {
-            dbgG := 0
-        }
-        if (dbgG) {
-            f0 := Map()
-            try {
-                f0["profile"] := name
-                Logger_Debug("Gates", "REUI_Page_Gates.SaveGates begin", f0)
-            } catch {
-            }
-        }
-
-        ; 映射索引→Id
-        skIdByIdx := Map()
-        ptIdByIdx := Map()
-        rlIdByIdx := Map()
-        try {
-            if (p.Has("Skills") && IsObject(p["Skills"])) {
-                i := 1
-                while (i <= p["Skills"].Length) {
-                    sid := 0
-                    try {
-                        sid := OM_Get(p["Skills"][i], "Id", 0)
-                    } catch {
-                        sid := 0
-                    }
-                    skIdByIdx[i] := sid
-                    i := i + 1
-                }
-            }
-        } catch {
-        }
-        try {
-            if (p.Has("Points") && IsObject(p["Points"])) {
-                i := 1
-                while (i <= p["Points"].Length) {
-                    pid := 0
-                    try {
-                        pid := OM_Get(p["Points"][i], "Id", 0)
-                    } catch {
-                        pid := 0
-                    }
-                    ptIdByIdx[i] := pid
-                    i := i + 1
-                }
-            }
-        } catch {
-        }
-        try {
-            if (p.Has("Rules") && IsObject(p["Rules"])) {
-                i := 1
-                while (i <= p["Rules"].Length) {
-                    rid := 0
-                    try {
-                        rid := OM_Get(p["Rules"][i], "Id", 0)
-                    } catch {
-                        rid := 0
-                    }
-                    rlIdByIdx[i] := rid
-                    i := i + 1
-                }
-            }
-        } catch {
-        }
-
-        if (dbgG) {
-            f1 := Map()
-            i := 1
-            while (i <= 10) {
-                v := ""
-                try {
-                    if skIdByIdx.Has(i) {
-                        v := skIdByIdx[i]
-                    } else {
-                        v := "(none)"
-                    }
-                } catch {
-                    v := "(err)"
-                }
-                try {
-                    f1["s" i] := v
-                } catch {
-                }
-                i := i + 1
-            }
-            try {
-                Logger_Debug("Gates", "Skill idx→Id map (first 10)", f1)
-            } catch {
-            }
-        }
-
-        cfg := ctx.cfg
-        newGates := []
-        tot := 0
-        bad := 0
-
-        try {
-            if (HasProp(cfg, "Gates") && IsObject(cfg.Gates)) {
-                i := 1
-                while (i <= cfg.Gates.Length) {
-                    g0 := cfg.Gates[i]
-                    g := Map()
-
-                    gid := 0
-                    try {
-                        gid := OM_Get(g0, "Id", 0)
-                    } catch {
-                        gid := 0
-                    }
-                    try {
-                        g["Id"] := gid
-                    } catch {
-                    }
-                    pri := i
-                    try {
-                        pri := OM_Get(g0, "Priority", i)
-                    } catch {
-                        pri := i
-                    }
-                    try {
-                        g["Priority"] := pri
-                    } catch {
-                    }
-                    fr := 0
-                    try {
-                        fr := OM_Get(g0, "FromTrackId", 0)
-                    } catch {
-                        fr := 0
-                    }
-                    try {
-                        g["FromTrackId"] := fr
-                    } catch {
-                    }
-                    to := 0
-                    try {
-                        to := OM_Get(g0, "ToTrackId", 0)
-                    } catch {
-                        to := 0
-                    }
-                    try {
-                        g["ToTrackId"] := to
-                    } catch {
-                    }
-                    lg := "AND"
-                    try {
-                        lg := OM_Get(g0, "Logic", "AND")
-                    } catch {
-                        lg := "AND"
-                    }
-                    try {
-                        g["Logic"] := lg
-                    } catch {
-                    }
-
-                    cArr := []
-                    try {
-                        if (HasProp(g0, "Conds") && IsObject(g0.Conds)) {
-                            j := 1
-                            while (j <= g0.Conds.Length) {
-                                c0 := g0.Conds[j]
-                                kind := ""
-                                try {
-                                    kind := OM_Get(c0, "Kind", "PixelReady")
-                                } catch {
-                                    kind := "PixelReady"
-                                }
-                                kU := ""
-                                try {
-                                    kU := StrUpper(kind)
-                                } catch {
-                                    kU := "PIXELREADY"
-                                }
-
-                                c := Map()
-                                try {
-                                    c["Kind"] := kU
-                                } catch {
-                                }
-
-                                if (kU = "PIXELREADY") {
-                                    rt := "Skill"
-                                    try {
-                                        rt := OM_Get(c0, "RefType", "Skill")
-                                    } catch {
-                                        rt := "Skill"
-                                    }
-                                    ri := 0
-                                    try {
-                                        ri := OM_Get(c0, "RefIndex", 0)
-                                    } catch {
-                                        ri := 0
-                                    }
-                                    refId := 0
-                                    if (StrUpper(rt) = "SKILL") {
-                                        try {
-                                            if (skIdByIdx.Has(ri)) {
-                                                refId := skIdByIdx[ri]
-                                            } else {
-                                                refId := 0
-                                            }
-                                        } catch {
-                                            refId := 0
-                                        }
-                                    } else {
-                                        try {
-                                            if (ptIdByIdx.Has(ri)) {
-                                                refId := ptIdByIdx[ri]
-                                            } else {
-                                                refId := 0
-                                            }
-                                        } catch {
-                                            refId := 0
-                                        }
-                                    }
-
-                                    op := "NEQ"
-                                    try {
-                                        op := OM_Get(c0, "Op", "NEQ")
-                                    } catch {
-                                        op := "NEQ"
-                                    }
-                                    col := "0x000000"
-                                    try {
-                                        col := OM_Get(c0, "Color", "0x000000")
-                                    } catch {
-                                        col := "0x000000"
-                                    }
-                                    tl := 16
-                                    try {
-                                        tl := OM_Get(c0, "Tol", 16)
-                                    } catch {
-                                        tl := 16
-                                    }
-
-                                    rIdx := 0
-                                    try {
-                                        rIdx := OM_Get(c0, "RuleId", 0)
-                                    } catch {
-                                        rIdx := 0
-                                    }
-                                    rId := 0
-                                    try {
-                                        if (rlIdByIdx.Has(rIdx)) {
-                                            rId := rlIdByIdx[rIdx]
-                                        } else {
-                                            rId := 0
-                                        }
-                                    } catch {
-                                        rId := 0
-                                    }
-
-                                    q := 0
-                                    try {
-                                        q := OM_Get(c0, "QuietMs", 0)
-                                    } catch {
-                                        q := 0
-                                    }
-                                    cmp := "GE"
-                                    try {
-                                        cmp := OM_Get(c0, "Cmp", "GE")
-                                    } catch {
-                                        cmp := "GE"
-                                    }
-                                    val := 0
-                                    try {
-                                        val := OM_Get(c0, "Value", 0)
-                                    } catch {
-                                        val := 0
-                                    }
-                                    ems := 0
-                                    try {
-                                        ems := OM_Get(c0, "ElapsedMs", 0)
-                                    } catch {
-                                        ems := 0
-                                    }
-
-                                    try {
-                                        c["RefType"] := rt
-                                        c["RefId"] := refId
-                                        c["Op"] := op
-                                        c["Color"] := col
-                                        c["Tol"] := tl
-                                        c["RuleId"] := rId
-                                        c["QuietMs"] := q
-                                        c["Cmp"] := cmp
-                                        c["Value"] := val
-                                        c["ElapsedMs"] := ems
-                                    } catch {
-                                    }
-
-                                    if (refId <= 0) {
-                                        bad := bad + 1
-                                    }
-                                } else if (kU = "RULEQUIET") {
-                                    rIdx := 0
-                                    try {
-                                        rIdx := OM_Get(c0, "RuleId", 0)
-                                    } catch {
-                                        rIdx := 0
-                                    }
-                                    rId := 0
-                                    try {
-                                        if (rlIdByIdx.Has(rIdx)) {
-                                            rId := rlIdByIdx[rIdx]
-                                        } else {
-                                            rId := 0
-                                        }
-                                    } catch {
-                                        rId := 0
-                                    }
-                                    q2 := 0
-                                    try {
-                                        q2 := OM_Get(c0, "QuietMs", 0)
-                                    } catch {
-                                        q2 := 0
-                                    }
-                                    try {
-                                        c["RuleId"] := rId
-                                        c["QuietMs"] := q2
-                                    } catch {
-                                    }
-                                    if (rId <= 0) {
-                                        bad := bad + 1
-                                    }
-                                } else if (kU = "COUNTER") {
-                                    si := 0
-                                    try {
-                                        si := OM_Get(c0, "RefIndex", 0)
-                                    } catch {
-                                        si := 0
-                                    }
-                                    sid := 0
-                                    try {
-                                        if (skIdByIdx.Has(si)) {
-                                            sid := skIdByIdx[si]
-                                        } else {
-                                            sid := 0
-                                        }
-                                    } catch {
-                                        sid := 0
-                                    }
-                                    cp := "GE"
-                                    try {
-                                        cp := OM_Get(c0, "Cmp", "GE")
-                                    } catch {
-                                        cp := "GE"
-                                    }
-                                    vv := 1
-                                    try {
-                                        vv := OM_Get(c0, "Value", 1)
-                                    } catch {
-                                        vv := 1
-                                    }
-                                    try {
-                                        c["SkillId"] := sid
-                                        c["Cmp"] := cp
-                                        c["Value"] := vv
-                                    } catch {
-                                    }
-                                    if (sid <= 0) {
-                                        bad := bad + 1
-                                    }
-                                } else if (kU = "ELAPSED") {
-                                    cp2 := "GE"
-                                    try {
-                                        cp2 := OM_Get(c0, "Cmp", "GE")
-                                    } catch {
-                                        cp2 := "GE"
-                                    }
-                                    ms2 := 0
-                                    try {
-                                        ms2 := OM_Get(c0, "ElapsedMs", 0)
-                                    } catch {
-                                        ms2 := 0
-                                    }
-                                    try {
-                                        c["Cmp"] := cp2
-                                        c["ElapsedMs"] := ms2
-                                    } catch {
-                                    }
-                                } else {
-                                    rt2 := "Skill"
-                                    try {
-                                        rt2 := OM_Get(c0, "RefType", "Skill")
-                                    } catch {
-                                        rt2 := "Skill"
-                                    }
-                                    ri2 := 0
-                                    try {
-                                        ri2 := OM_Get(c0, "RefIndex", 0)
-                                    } catch {
-                                        ri2 := 0
-                                    }
-                                    refId2 := 0
-                                    if (StrUpper(rt2) = "SKILL") {
-                                        try {
-                                            if (skIdByIdx.Has(ri2)) {
-                                                refId2 := skIdByIdx[ri2]
-                                            } else {
-                                                refId2 := 0
-                                            }
-                                        } catch {
-                                            refId2 := 0
-                                        }
-                                    } else {
-                                        try {
-                                            if (ptIdByIdx.Has(ri2)) {
-                                                refId2 := ptIdByIdx[ri2]
-                                            } else {
-                                                refId2 := 0
-                                            }
-                                        } catch {
-                                            refId2 := 0
-                                        }
-                                    }
-                                    try {
-                                        c["RefType"] := rt2
-                                        c["RefId"] := refId2
-                                        c["Op"] := OM_Get(c0, "Op", "NEQ")
-                                        c["Color"] := OM_Get(c0, "Color", "0x000000")
-                                        c["Tol"] := OM_Get(c0, "Tol", 16)
-                                    } catch {
-                                    }
-                                    if (refId2 <= 0) {
-                                        bad := bad + 1
-                                    }
-                                }
-
-                                cArr.Push(c)
-                                j := j + 1
-                            }
-                        }
-                    } catch {
-                    }
-                    try {
-                        g["Conds"] := cArr
-                    } catch {
-                    }
-
-                    newGates.Push(g)
-                    tot := tot + 1
-                    i := i + 1
-                }
-            }
-        } catch {
-        }
-
-        if (dbgG) {
-            sm := Map()
-            try {
-                sm["Gates"] := tot
-                sm["BadRefs"] := bad
-                Logger_Warn("Gates", "REUI_Page_Gates.SaveGates summary", sm)
-            } catch {
-            }
-        }
-
-        try {
-            if !(p.Has("Rotation")) {
-                p["Rotation"] := Map()
-            }
-        } catch {
-        }
-        try {
-            p["Rotation"]["Gates"] := newGates
-        } catch {
-            p["Rotation"] := Map("Gates", newGates)
-        }
-
-        ok := false
-        try {
-            SaveModule_Gates(p)
-            ok := true
-        } catch {
-            ok := false
-        }
-        if (!ok) {
-            MsgBox "保存失败。"
-            return
-        }
-
-        try {
-            p2 := Storage_Profile_LoadFull(name)
-            rt := PM_ToRuntime(p2)
-            App["ProfileData"] := rt
-        } catch {
-            MsgBox "保存成功，但重新加载失败，请切换配置后重试。"
-            return
-        }
-
-        try {
-            cfg2 := App["ProfileData"].Rotation
-            REUI_Gates_Ensure(&cfg2)
-            REUI_Gates_FillList(lv, cfg2)
-        } catch {
-        }
-
-        Notify("跳轨已保存")
-    }
-
-    return { Save: () => 0 }
-}
-
 ;------------------------------ 列表/数据 ------------------------------
-REUI_Gates_Ensure(&cfg) {
+REUI_Gates_Ensure(cfg) {
+    if (!IsObject(cfg)) {
+        return
+    }
     if (!HasProp(cfg, "Gates") || !IsObject(cfg.Gates)) {
         cfg.Gates := []
     }
@@ -596,6 +30,7 @@ REUI_Gates_Ensure(&cfg) {
         }
     }
 }
+
 REUI_Gates_FillList(lv, cfg) {
     try {
         lv.Opt("-Redraw")
@@ -635,6 +70,7 @@ REUI_Gates_FillList(lv, cfg) {
         }
     }
 }
+
 REUI_Gates_Renum(cfg) {
     if HasProp(cfg,"Gates") && IsObject(cfg.Gates) {
         for i, g in cfg.Gates {
@@ -642,6 +78,7 @@ REUI_Gates_Renum(cfg) {
         }
     }
 }
+
 REUI_Gates_OnAdd(cfg, owner, lv) {
     OnSaved(ng, idx) {
         try {
@@ -654,6 +91,7 @@ REUI_Gates_OnAdd(cfg, owner, lv) {
     g := { Priority: (HasProp(cfg,"Gates")?cfg.Gates.Length:0)+1, FromTrackId: 0, ToTrackId: 0, Logic:"AND", Conds:[] }
     REUI_GateEditor_Open(owner, cfg, g, 0, OnSaved)
 }
+
 REUI_Gates_OnEdit(lv, cfg, owner) {
     row := 0
     try {
@@ -679,6 +117,7 @@ REUI_Gates_OnEdit(lv, cfg, owner) {
     }
     REUI_GateEditor_Open(owner, cfg, cur, row, OnSaved)
 }
+
 REUI_Gates_OnDel(lv, cfg, owner) {
     row := 0
     try {
@@ -698,6 +137,7 @@ REUI_Gates_OnDel(lv, cfg, owner) {
     REUI_Gates_FillList(lv, cfg)
     Notify("已删除跳轨规则")
 }
+
 REUI_Gates_OnMove(lv, cfg, dir) {
     row := 0
     try {
@@ -729,6 +169,7 @@ REUI_Gates_OnMove(lv, cfg, dir) {
     } catch {
     }
 }
+
 ;------------------------------ Gate 编辑器（保持索引引用） ------------------------------
 REUI_GateEditor_Open(owner, cfg, g, idx := 0, onSaved := 0) {
     global UI
@@ -777,7 +218,7 @@ REUI_GateEditor_Open(owner, cfg, g, idx := 0, onSaved := 0) {
     ge.Add("Text", "w90 Right", "优先级：")
     edPri := ge.Add("Edit", "x+6 w120 Number", g.Priority)
 
-    ; 构建轨道 Id 与显示名称（名称为空回退“轨道<Id>”）
+    ; 构建轨道 Id 与显示名称
     trackIds := []
     trackLabels := []
     try {
@@ -807,7 +248,7 @@ REUI_GateEditor_Open(owner, cfg, g, idx := 0, onSaved := 0) {
     } catch {
     }
 
-    ; 来源轨（显示名称）
+    ; 来源轨
     ge.Add("Text", "xm y+8 w90 Right", "来源轨：")
     ddFrom := ge.Add("DropDownList", "x+6 w220")
     try {
@@ -839,7 +280,7 @@ REUI_GateEditor_Open(owner, cfg, g, idx := 0, onSaved := 0) {
     }
     ddFrom.Value := (trackLabels.Length > 0) ? selFrom : 0
 
-    ; 目标轨（显示名称）
+    ; 目标轨
     ge.Add("Text", "x+20 w90 Right", "目标轨：")
     ddTo := ge.Add("DropDownList", "x+6 w220")
     try {
@@ -988,6 +429,7 @@ REUI_GateEditor_FillConds(lv, g) {
     }
     lv.Opt("+Redraw")
 }
+
 REUI_GateCond_Summary(c) {
     kind := HasProp(c,"Kind") ? StrUpper(c.Kind) : "?"
     if (kind="PIXELREADY") {
@@ -1145,6 +587,8 @@ REUI_CondEditor_Open(owner, cfg, c, idx := 0, onSaved := 0) {
             cnt := 0
             try {
                 cnt := App["ProfileData"].Points.Length
+            } catch {
+                cnt := 0
             }
             if (cnt > 0) {
                 names := []
@@ -1164,6 +608,8 @@ REUI_CondEditor_Open(owner, cfg, c, idx := 0, onSaved := 0) {
             cnt := 0
             try {
                 cnt := App["ProfileData"].Skills.Length
+            } catch {
+                cnt := 0
             }
             if (cnt > 0) {
                 names := []
@@ -1186,6 +632,8 @@ REUI_CondEditor_Open(owner, cfg, c, idx := 0, onSaved := 0) {
         cnt := 0
         try {
             cnt := App["ProfileData"].Rules.Length
+        } catch {
+            cnt := 0
         }
         if (cnt > 0) {
             names := []
@@ -1207,6 +655,8 @@ REUI_CondEditor_Open(owner, cfg, c, idx := 0, onSaved := 0) {
         cnt := 0
         try {
             cnt := App["ProfileData"].Skills.Length
+        } catch {
+            cnt := 0
         }
         if (cnt > 0) {
             names := []

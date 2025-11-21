@@ -152,3 +152,62 @@ REUI_ArrayIndexOf(arr, value) {
 REUI_ArrayContains(arr, value) {
     return REUI_ArrayIndexOf(arr, value) != 0
 }
+
+REUI_Rotation_Ensure(cfg) {
+    ; 与 REUI_EnsureRotationDefaults 等价，无 ByRef
+    if !IsObject(cfg) {
+        cfg := {}
+    }
+    if !HasProp(cfg, "Enabled") {
+        cfg.Enabled := 0
+    }
+    if !HasProp(cfg, "DefaultTrackId") {
+        cfg.DefaultTrackId := 1
+    }
+    if !HasProp(cfg, "BusyWindowMs") {
+        cfg.BusyWindowMs := 200
+    }
+    if !HasProp(cfg, "ColorTolBlack") {
+        cfg.ColorTolBlack := 16
+    }
+    if !HasProp(cfg, "RespectCastLock") {
+        cfg.RespectCastLock := 1
+    }
+    if !HasProp(cfg, "SwapKey") {
+        cfg.SwapKey := ""
+    }
+    if !HasProp(cfg, "VerifySwap") {
+        cfg.VerifySwap := 0
+    }
+    if !HasProp(cfg, "SwapTimeoutMs") {
+        cfg.SwapTimeoutMs := 800
+    }
+    if !HasProp(cfg, "SwapRetry") {
+        cfg.SwapRetry := 0
+    }
+    if !HasProp(cfg, "GatesEnabled") {
+        cfg.GatesEnabled := 0
+    }
+    if !HasProp(cfg, "GateCooldownMs") {
+        cfg.GateCooldownMs := 0
+    }
+    if !HasProp(cfg, "BlackGuard") {
+        cfg.BlackGuard := { Enabled:1, SampleCount:5, BlackRatioThresh:0.7
+                          , WindowMs:120, CooldownMs:600
+                          , MinAfterSendMs:60, MaxAfterSendMs:800
+                          , UniqueRequired:1 }
+    }
+    if !HasProp(cfg, "Tracks") && HasProp(cfg, "Track1") {
+        t1 := cfg.Track1
+        t2 := 0
+        try t2 := (HasProp(cfg,"Track2") ? cfg.Track2 : 0)
+        cfg.Tracks := []
+        if t1 {
+            cfg.Tracks.Push(t1)
+        }
+        if t2 {
+            cfg.Tracks.Push(t2)
+        }
+    }
+    return cfg
+}
