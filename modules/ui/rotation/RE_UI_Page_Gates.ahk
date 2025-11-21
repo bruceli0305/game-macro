@@ -777,44 +777,99 @@ REUI_GateEditor_Open(owner, cfg, g, idx := 0, onSaved := 0) {
     ge.Add("Text", "w90 Right", "优先级：")
     edPri := ge.Add("Edit", "x+6 w120 Number", g.Priority)
 
-    ; 来源轨
-    ge.Add("Text", "xm y+8 w90 Right", "来源轨：")
-    ddFrom := ge.Add("DropDownList", "x+6 w120")
-    trackIds := REUI_ListTrackIds(cfg)
-    arrFrom := []
-    for _, id in trackIds {
-        arrFrom.Push(id)
+    ; 构建轨道 Id 与显示名称（名称为空回退“轨道<Id>”）
+    trackIds := []
+    trackLabels := []
+    try {
+        if (HasProp(cfg, "Tracks") && IsObject(cfg.Tracks)) {
+            for _, t in cfg.Tracks {
+                idv := 0
+                try {
+                    idv := HasProp(t, "Id") ? Integer(t.Id) : 0
+                } catch {
+                    idv := 0
+                }
+                if (idv > 0) {
+                    nm := ""
+                    try {
+                        nm := HasProp(t, "Name") ? "" t.Name : ""
+                    } catch {
+                        nm := ""
+                    }
+                    if (nm = "") {
+                        nm := "轨道" idv
+                    }
+                    trackIds.Push(idv)
+                    trackLabels.Push(nm)
+                }
+            }
+        }
+    } catch {
     }
-    if (arrFrom.Length) {
-        ddFrom.Add(arrFrom)
+
+    ; 来源轨（显示名称）
+    ge.Add("Text", "xm y+8 w90 Right", "来源轨：")
+    ddFrom := ge.Add("DropDownList", "x+6 w220")
+    try {
+        if (trackLabels.Length > 0) {
+            ddFrom.Add(trackLabels)
+        }
+    } catch {
     }
     selFrom := 1
-    for i, v in arrFrom {
-        if (Integer(v) = Integer(g.FromTrackId)) {
+    i := 1
+    while (i <= trackIds.Length) {
+        v := 0
+        try {
+            v := trackIds[i]
+        } catch {
+            v := 0
+        }
+        want := 0
+        try {
+            want := Integer(g.FromTrackId)
+        } catch {
+            want := 0
+        }
+        if (v = want) {
             selFrom := i
             break
         }
+        i := i + 1
     }
-    ddFrom.Value := selFrom
+    ddFrom.Value := (trackLabels.Length > 0) ? selFrom : 0
 
-    ; 目标轨
+    ; 目标轨（显示名称）
     ge.Add("Text", "x+20 w90 Right", "目标轨：")
-    ddTo := ge.Add("DropDownList", "x+6 w120")
-    arrTo := []
-    for _, id in trackIds {
-        arrTo.Push(id)
-    }
-    if (arrTo.Length) {
-        ddTo.Add(arrTo)
+    ddTo := ge.Add("DropDownList", "x+6 w220")
+    try {
+        if (trackLabels.Length > 0) {
+            ddTo.Add(trackLabels)
+        }
+    } catch {
     }
     selTo := 1
-    for i, v in arrTo {
-        if (Integer(v) = Integer(g.ToTrackId)) {
+    i := 1
+    while (i <= trackIds.Length) {
+        v := 0
+        try {
+            v := trackIds[i]
+        } catch {
+            v := 0
+        }
+        want := 0
+        try {
+            want := Integer(g.ToTrackId)
+        } catch {
+            want := 0
+        }
+        if (v = want) {
             selTo := i
             break
         }
+        i := i + 1
     }
-    ddTo.Value := selTo
+    ddTo.Value := (trackLabels.Length > 0) ? selTo : 0
 
     ge.Add("Text", "xm y+8 w90 Right", "逻辑：")
     ddLogic := ge.Add("DropDownList", "x+6 w120", ["AND", "OR"])
@@ -841,26 +896,81 @@ REUI_GateEditor_Open(owner, cfg, g, idx := 0, onSaved := 0) {
     ge.Show()
 
     SaveGate(*) {
-        p := (edPri.Value != "") ? Integer(edPri.Value) : (idx = 0 ? 1 : idx)
-        g.Priority := Max(1, p)
+        p := 1
+        try {
+            p := (edPri.Value != "") ? Integer(edPri.Value) : (idx = 0 ? 1 : idx)
+        } catch {
+            p := (idx = 0 ? 1 : idx)
+        }
+        if (p < 1) {
+            p := 1
+        }
+        try {
+            g.Priority := p
+        } catch {
+        }
 
-        if (ddFrom.Value < 1 || ddFrom.Value > arrFrom.Length) {
-            MsgBox "请选择来源轨。"
+        if (trackIds.Length <= 0) {
+            MsgBox "当前没有可用的轨道，请先在“轨道”页新增。"
             return
         }
-        if (ddTo.Value < 1 || ddTo.Value > arrTo.Length) {
-            MsgBox "请选择目标轨。"
-            return
+
+        fromPos := 1
+        toPos := 1
+        try {
+            fromPos := ddFrom.Value
+        } catch {
+            fromPos := 1
+        }
+        try {
+            toPos := ddTo.Value
+        } catch {
+            toPos := 1
+        }
+        if (fromPos < 1 || fromPos > trackIds.Length) {
+            fromPos := 1
+        }
+        if (toPos < 1 || toPos > trackIds.Length) {
+            toPos := 1
         }
 
-        g.FromTrackId := Integer(arrFrom[ddFrom.Value])
-        g.ToTrackId   := Integer(arrTo[ddTo.Value])
-        g.Logic := (ddLogic.Value = 2) ? "OR" : "AND"
+        fromId := 0
+        toId := 0
+        try {
+            fromId := trackIds[fromPos]
+        } catch {
+            fromId := 0
+        }
+        try {
+            toId := trackIds[toPos]
+        } catch {
+            toId := 0
+        }
+
+        try {
+            g.FromTrackId := fromId
+        } catch {
+        }
+        try {
+            g.ToTrackId := toId
+        } catch {
+        }
+        try {
+            g.Logic := (ddLogic.Value = 2) ? "OR" : "AND"
+        } catch {
+            g.Logic := "AND"
+        }
 
         if onSaved {
-            onSaved(g, (idx = 0 ? 0 : idx))
+            try {
+                onSaved(g, (idx = 0 ? 0 : idx))
+            } catch {
+            }
         }
-        ge.Destroy()
+        try {
+            ge.Destroy()
+        } catch {
+        }
         Notify(isNew ? "已新增跳轨" : "已保存跳轨")
     }
 }

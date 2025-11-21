@@ -684,6 +684,7 @@ Page_RotGates_OnSave(*) {
         p2 := Storage_Profile_LoadFull(name)
         rt := PM_ToRuntime(p2)
         App["ProfileData"] := rt
+        try RE_OnProfileDataReplaced(App["ProfileData"])
     } catch {
         MsgBox "保存成功，但重新加载失败，请切换配置后重试。"
         return

@@ -1,4 +1,4 @@
-; Hotkeys.ahk - 热键绑定/切换
+; modules\runtime\Hotkeys.ahk - 热键绑定/切换
 Hotkeys_BindStartHotkey(hk) {
     global App
     hk := Trim(hk)

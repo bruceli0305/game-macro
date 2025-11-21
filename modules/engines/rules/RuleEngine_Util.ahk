@@ -88,3 +88,131 @@ RuleEngine_SendVerified(thr, idx, ruleName) {
     }
     return false
 }
+; 按稳定 RuleId 列表设置允许规则（内部转为运行时索引）
+RE_SetAllowedRulesByStableIds(prof, ruleIdArr) {
+    if !IsObject(prof) {
+        return
+    }
+    if !IsObject(ruleIdArr) {
+        return
+    }
+    idxMap := Map()
+    i := 1
+    while (i <= prof.Rules.Length) {
+        rid := 0
+        try {
+            rid := HasProp(prof.Rules[i], "Id") ? prof.Rules[i].Id : 0
+        } catch {
+            rid := 0
+        }
+        if (rid > 0) {
+            idxMap[rid] := i
+        }
+        i := i + 1
+    }
+
+    allow := Map()
+    j := 1
+    while (j <= ruleIdArr.Length) {
+        rid2 := 0
+        try {
+            rid2 := Integer(ruleIdArr[j])
+        } catch {
+            rid2 := 0
+        }
+        if (idxMap.Has(rid2)) {
+            try {
+                allow[idxMap[rid2]] := 1
+            } catch {
+            }
+        }
+        j := j + 1
+    }
+    RE_SetAllowedRules(allow)  ; 仍沿用原有接口，键=运行时规则索引
+}
+
+; 按稳定 SkillId 列表设置允许技能（内部转为运行时索引）
+RE_SetAllowedSkillsByStableIds(prof, skillIdArr) {
+    if !IsObject(prof) {
+        return
+    }
+    if !IsObject(skillIdArr) {
+        return
+    }
+    idxMap := Map()
+    i := 1
+    while (i <= prof.Skills.Length) {
+        sid := 0
+        try {
+            sid := HasProp(prof.Skills[i], "Id") ? prof.Skills[i].Id : 0
+        } catch {
+            sid := 0
+        }
+        if (sid > 0) {
+            idxMap[sid] := i
+        }
+        i := i + 1
+    }
+
+    allow := Map()
+    j := 1
+    while (j <= skillIdArr.Length) {
+        sid2 := 0
+        try {
+            sid2 := Integer(skillIdArr[j])
+        } catch {
+            sid2 := 0
+        }
+        if (idxMap.Has(sid2)) {
+            try {
+                allow[idxMap[sid2]] := 1
+            } catch {
+            }
+        }
+        j := j + 1
+    }
+    RE_SetAllowedSkills(allow) ; 键=运行时技能索引
+}
+
+; 可选工具：按稳定 RuleId 列表注入扫描顺序（若调用方只有稳定 Id）
+RE_SetScanOrderByStableIds(prof, ruleIdArr) {
+    if !IsObject(prof) {
+        return
+    }
+    if !IsObject(ruleIdArr) {
+        return
+    }
+    idxMap := Map()
+    i := 1
+    while (i <= prof.Rules.Length) {
+        rid := 0
+        try {
+            rid := HasProp(prof.Rules[i], "Id") ? prof.Rules[i].Id : 0
+        } catch {
+            rid := 0
+        }
+        if (rid > 0) {
+            idxMap[rid] := i
+        }
+        i := i + 1
+    }
+
+    order := []
+    j := 1
+    while (j <= ruleIdArr.Length) {
+        rid2 := 0
+        try {
+            rid2 := Integer(ruleIdArr[j])
+        } catch {
+            rid2 := 0
+        }
+        if (idxMap.Has(rid2)) {
+            try {
+                order.Push(idxMap[rid2])
+            } catch {
+            }
+        }
+        j := j + 1
+    }
+    RE_SetScanOrder(order) ; 仍传运行时索引数组
+}
