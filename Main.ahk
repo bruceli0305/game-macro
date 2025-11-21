@@ -28,7 +28,6 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 #Include "modules\i18n\Lang.ahk"
 #Include "modules\core\AppConfig.ahk"
 #Include "modules\core\Core.ahk"
-#Include "modules\storage\Storage.ahk"
 #Include "modules\engines\Rotation.ahk"
 #Include "modules\engines\Dup.ahk"
 #Include "modules\engines\Pixel.ahk"

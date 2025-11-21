@@ -33,7 +33,7 @@
 #Include "advanced\rotation\Page_RotOpener.ahk"
 
 ; tools
-#Include "tools\Page_Tools_IO.ahk"
+; #Include "tools\Page_Tools_IO.ahk"
 #Include "tools\Page_Tools_Quick.ahk"
 
 ; settings
