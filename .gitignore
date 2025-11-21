@@ -5,9 +5,9 @@
 *.exe
 
 # 日志文件
-s/*.
-s/*.txt
-Logs/
+Logs/*.
+Logs/*.txt
+Logs/*.log
 # 导出目录（包含用户生成的配置文件）
 Exports/
 
@@ -28,7 +28,7 @@ Thumbs.db
 *~
 
 # 用户特定的配置文件（可能包含敏感信息）
-Profiles/*.ini
+Profiles/
 
 # 编译缓存
 *.cache

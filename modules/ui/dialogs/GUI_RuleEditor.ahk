@@ -1,7 +1,8 @@
-; GUI_RuleEditor.ahk - 技能循环规则管理与编辑（支持“计数条件”）
-; v2 安全风格：无单行大括号 if、显式连接、避免隐式拼接
+#Requires AutoHotkey v2
+; modules\ui\dialogs\GUI_RuleEditor.ahk
+; 技能循环规则管理与编辑（支持“计数条件”）
+; 严格块结构，不使用单行 if/try/catch
 
-; 打开规则管理器
 RulesManager_Show() {
     global App
     prof := App["ProfileData"]
@@ -16,9 +17,9 @@ RulesManager_Show() {
     btnAdd := dlg.Add("Button", "xm w90", "新增规则")
     btnEdit := dlg.Add("Button", "x+8 w90", "编辑规则")
     btnDel := dlg.Add("Button", "x+8 w90", "删除规则")
-    btnUp  := dlg.Add("Button", "x+8 w90", "上移")
-    btnDn  := dlg.Add("Button", "x+8 w90", "下移")
-    btnSave:= dlg.Add("Button", "x+20 w100", "保存")
+    btnUp := dlg.Add("Button", "x+8 w90", "上移")
+    btnDn := dlg.Add("Button", "x+8 w90", "下移")
+    btnSave := dlg.Add("Button", "x+20 w100", "保存")
 
     RefreshLV()
 
@@ -26,36 +27,109 @@ RulesManager_Show() {
     btnAdd.OnEvent("Click", (*) => AddRule())
     btnEdit.OnEvent("Click", (*) => EditSel())
     btnDel.OnEvent("Click", (*) => DelSel())
-    btnUp.OnEvent("Click",  (*) => MoveSel(-1))
-    btnDn.OnEvent("Click",  (*) => MoveSel(1))
-    btnSave.OnEvent("Click",(*) => SaveAll())
+    btnUp.OnEvent("Click", (*) => MoveSel(-1))
+    btnDn.OnEvent("Click", (*) => MoveSel(1))
+    btnSave.OnEvent("Click", (*) => SaveAll())
     dlg.OnEvent("Close", (*) => dlg.Destroy())
 
     dlg.Show()
 
     RefreshLV() {
-        lv.Opt("-Redraw")
-        lv.Delete()
-        for i, r in prof.Rules {
-            tname := ThreadNameById(HasProp(r, "ThreadId") ? r.ThreadId : 1)
-            lv.Add("", i
-                , (r.Enabled ? "√" : "")
-                , r.Name, r.Logic
-                , r.Conditions.Length, r.Actions.Length
-                , r.CooldownMs, r.Priority, r.ActionGapMs
-                , tname)
+        try {
+            lv.Opt("-Redraw")
+            lv.Delete()
+        } catch {
         }
-        loop 10
-            lv.ModifyCol(A_Index, "AutoHdr")
-        lv.Opt("+Redraw")
+        try {
+            for i, r in prof.Rules {
+                rid := 0
+                en := ""
+                name := ""
+                logic := ""
+                cc := 0
+                ac := 0
+                cd := 0
+                prio := i
+                gap := 60
+                tname := ""
+
+                try {
+                    rid := OM_Get(r, "Id", 0)
+                } catch {
+                    rid := 0
+                }
+                try {
+                    en := (HasProp(r, "Enabled") && r.Enabled) ? "√" : ""
+                } catch {
+                    en := ""
+                }
+                try {
+                    name := HasProp(r, "Name") ? r.Name : ("Rule" i)
+                } catch {
+                    name := "Rule"
+                }
+                try {
+                    logic := HasProp(r, "Logic") ? r.Logic : "AND"
+                } catch {
+                    logic := "AND"
+                }
+                try {
+                    cc := HasProp(r, "Conditions") ? r.Conditions.Length : 0
+                } catch {
+                    cc := 0
+                }
+                try {
+                    ac := HasProp(r, "Actions") ? r.Actions.Length : 0
+                } catch {
+                    ac := 0
+                }
+                try {
+                    cd := HasProp(r, "CooldownMs") ? r.CooldownMs : 0
+                } catch {
+                    cd := 0
+                }
+                try {
+                    prio := HasProp(r, "Priority") ? r.Priority : i
+                } catch {
+                    prio := i
+                }
+                try {
+                    gap := HasProp(r, "ActionGapMs") ? r.ActionGapMs : 60
+                } catch {
+                    gap := 60
+                }
+                try {
+                    tname := ThreadNameById(HasProp(r, "ThreadId") ? r.ThreadId : 1)
+                } catch {
+                    tname := "默认线程"
+                }
+                lv.Add("", rid, en, name, logic, cc, ac, cd, prio, gap, tname)
+            }
+            loop 10 {
+                try {
+                    lv.ModifyCol(A_Index, "AutoHdr")
+                } catch {
+                }
+            }
+        } catch {
+        } finally {
+            try {
+                lv.Opt("+Redraw")
+            } catch {
+            }
+        }
     }
 
     ThreadNameById(id) {
         global App
         if HasProp(App["ProfileData"], "Threads") {
             for _, t in App["ProfileData"].Threads {
-                if (t.Id = id)
-                    return t.Name
+                try {
+                    if (t.Id = id) {
+                        return t.Name
+                    }
+                } catch {
+                }
             }
         }
         return (id = 1) ? "默认线程" : "线程#" id
@@ -63,22 +137,32 @@ RulesManager_Show() {
 
     AddRule() {
         newR := {
-            Name: "新规则", Enabled: 1, Logic: "AND", CooldownMs: 500
-          , Priority: prof.Rules.Length + 1, ActionGapMs: 60
-          , Conditions: [], Actions: [], LastFire: 0, ThreadId: 1
+            Id: 0, Name: "新规则", Enabled: 1, Logic: "AND", CooldownMs: 500, Priority: prof.Rules.Length + 1, ActionGapMs: 60,
+            Conditions: [], Actions: [], LastFire: 0, ThreadId: 1
         }
         RuleEditor_Open(newR, 0, OnSavedNew)
     }
 
     OnSavedNew(savedR, idx) {
         global App
+        try {
+            if !HasProp(savedR, "Id") {
+                savedR.Id := 0
+            }
+        } catch {
+        }
         App["ProfileData"].Rules.Push(savedR)
         RefreshLV()
     }
 
     EditSel() {
-        row := lv.GetNext(0, "Focused")
-        if !row {
+        row := 0
+        try {
+            row := lv.GetNext(0, "Focused")
+        } catch {
+            row := 0
+        }
+        if (!row) {
             MsgBox "请先选中一个规则。"
             return
         }
@@ -89,59 +173,298 @@ RulesManager_Show() {
 
     OnSavedEdit(savedR, idx2) {
         global App
+        try {
+            old := App["ProfileData"].Rules[idx2]
+            if (old && HasProp(old, "Id")) {
+                savedR.Id := old.Id
+            }
+        } catch {
+        }
         App["ProfileData"].Rules[idx2] := savedR
         RefreshLV()
     }
 
     DelSel() {
-        row := lv.GetNext(0, "Focused")
-        if !row {
+        row := 0
+        try {
+            row := lv.GetNext(0, "Focused")
+        } catch {
+            row := 0
+        }
+        if (!row) {
             MsgBox "请先选中一个规则。"
             return
         }
         idx := row
         prof.Rules.RemoveAt(idx)
-        for i, r in prof.Rules
+        for i, r in prof.Rules {
             r.Priority := i
+        }
         RefreshLV()
         Notify("已删除规则")
     }
 
     MoveSel(dir) {
-        row := lv.GetNext(0, "Focused")
-        if !row
+        row := 0
+        try {
+            row := lv.GetNext(0, "Focused")
+        } catch {
+            row := 0
+        }
+        if (!row) {
             return
-        from := row, to := from + dir
-        if (to < 1 || to > prof.Rules.Length)
+        }
+        from := row
+        to := from + dir
+        if (to < 1 || to > prof.Rules.Length) {
             return
+        }
         item := prof.Rules[from]
         prof.Rules.RemoveAt(from)
         prof.Rules.InsertAt(to, item)
-        for i, r in prof.Rules
+        for i, r in prof.Rules {
             r.Priority := i
+        }
         RefreshLV()
-        lv.Modify(to, "Select Focus Vis")
+        try {
+            lv.Modify(to, "Select Focus Vis")
+        } catch {
+        }
     }
 
     SaveAll() {
-        Storage_SaveProfile(prof)
+        global App
+        if !(IsSet(App) && App.Has("CurrentProfile") && App.Has("ProfileData")) {
+            MsgBox "未选择配置或配置未加载。"
+            return
+        }
+
+        name := ""
+        try {
+            name := App["CurrentProfile"]
+        } catch {
+            name := ""
+        }
+        if (name = "") {
+            MsgBox "未选择配置。"
+            return
+        }
+
+        p := 0
+        try {
+            p := Storage_Profile_LoadFull(name)
+        } catch {
+            MsgBox "加载配置失败。"
+            return
+        }
+
+        newArr := []
+        try {
+            if (HasProp(App["ProfileData"], "Rules") && IsObject(App["ProfileData"].Rules)) {
+                skIdByIdx := Map()
+                ptIdByIdx := Map()
+
+                try {
+                    if (p.Has("Skills") && IsObject(p["Skills"])) {
+                        si := 1
+                        while (si <= p["Skills"].Length) {
+                            sid := 0
+                            try {
+                                sid := OM_Get(p["Skills"][si], "Id", 0)
+                            } catch {
+                                sid := 0
+                            }
+                            skIdByIdx[si] := sid
+                            si := si + 1
+                        }
+                    }
+                } catch {
+                }
+
+                try {
+                    if (p.Has("Points") && IsObject(p["Points"])) {
+                        pi := 1
+                        while (pi <= p["Points"].Length) {
+                            pid := 0
+                            try {
+                                pid := OM_Get(p["Points"][pi], "Id", 0)
+                            } catch {
+                                pid := 0
+                            }
+                            ptIdByIdx[pi] := pid
+                            pi := pi + 1
+                        }
+                    }
+                } catch {
+                }
+
+                i := 1
+                while (i <= App["ProfileData"].Rules.Length) {
+                    rr := App["ProfileData"].Rules[i]
+                    r := PM_NewRule()
+                    try {
+                        r["Id"] := OM_Get(rr, "Id", 0)
+                    } catch {
+                    }
+                    r["Name"] := OM_Get(rr, "Name", "Rule")
+                    r["Enabled"] := OM_Get(rr, "Enabled", 1)
+                    r["Logic"] := OM_Get(rr, "Logic", "AND")
+                    r["CooldownMs"] := OM_Get(rr, "CooldownMs", 500)
+                    r["Priority"] := OM_Get(rr, "Priority", i)
+                    r["ActionGapMs"] := OM_Get(rr, "ActionGapMs", 60)
+                    r["ThreadId"] := OM_Get(rr, "ThreadId", 1)
+                    r["SessionTimeoutMs"] := OM_Get(rr, "SessionTimeoutMs", 0)
+                    r["AbortCooldownMs"] := OM_Get(rr, "AbortCooldownMs", 0)
+
+                    ; 条件（索引 → Id）
+                    conds := []
+                    try {
+                        if (HasProp(rr, "Conditions") && IsObject(rr.Conditions)) {
+                            j := 1
+                            while (j <= rr.Conditions.Length) {
+                                c0 := rr.Conditions[j]
+                                kind := OM_Get(c0, "Kind", "Pixel")
+                                kindU := StrUpper(kind)
+
+                                if (kindU = "COUNTER") {
+                                    si := OM_Get(c0, "SkillIndex", 0)
+                                    sid := 0
+                                    try {
+                                        sid := skIdByIdx.Has(si) ? skIdByIdx[si] : 0
+                                    } catch {
+                                        sid := 0
+                                    }
+                                    cmp := OM_Get(c0, "Cmp", "GE")
+                                    val := OM_Get(c0, "Value", 1)
+                                    rst := OM_Get(c0, "ResetOnTrigger", 0)
+                                    conds.Push({ Kind: "Counter", SkillId: sid, Cmp: cmp, Value: val, ResetOnTrigger: rst })
+                                } else {
+                                    rt := OM_Get(c0, "RefType", "Skill")
+                                    ri := OM_Get(c0, "RefIndex", 0)
+                                    op := OM_Get(c0, "Op", "EQ")
+                                    refId := 0
+                                    if (StrUpper(rt) = "SKILL") {
+                                        try {
+                                            refId := skIdByIdx.Has(ri) ? skIdByIdx[ri] : 0
+                                        } catch {
+                                            refId := 0
+                                        }
+                                    } else {
+                                        try {
+                                            refId := ptIdByIdx.Has(ri) ? ptIdByIdx[ri] : 0
+                                        } catch {
+                                            refId := 0
+                                        }
+                                    }
+                                    conds.Push({ Kind: "Pixel", RefType: rt, RefId: refId, Op: op, Color: "0x000000",
+                                        Tol: 16 })
+                                }
+                                j := j + 1
+                            }
+                        }
+                    } catch {
+                    }
+                    r["Conditions"] := conds
+
+                    ; 动作（索引 → Id）
+                    acts := []
+                    try {
+                        if (HasProp(rr, "Actions") && IsObject(rr.Actions)) {
+                            j := 1
+                            while (j <= rr.Actions.Length) {
+                                a0 := rr.Actions[j]
+                                si := OM_Get(a0, "SkillIndex", 0)
+                                sid := 0
+                                try {
+                                    sid := skIdByIdx.Has(si) ? skIdByIdx[si] : 0
+                                } catch {
+                                    sid := 0
+                                }
+
+                                a := PM_NewAction()
+                                a["SkillId"] := sid
+                                a["DelayMs"] := OM_Get(a0, "DelayMs", 0)
+                                a["HoldMs"] := OM_Get(a0, "HoldMs", -1)
+                                a["RequireReady"] := OM_Get(a0, "RequireReady", 0)
+                                a["Verify"] := OM_Get(a0, "Verify", 0)
+                                a["VerifyTimeoutMs"] := OM_Get(a0, "VerifyTimeoutMs", 600)
+                                a["Retry"] := OM_Get(a0, "Retry", 0)
+                                a["RetryGapMs"] := OM_Get(a0, "RetryGapMs", 150)
+                                acts.Push(a)
+                                j := j + 1
+                            }
+                        }
+                    } catch {
+                    }
+                    r["Actions"] := acts
+
+                    newArr.Push(r)
+                    i := i + 1
+                }
+            }
+        } catch {
+        }
+
+        p["Rules"] := newArr
+
+        ok := false
+        try {
+            SaveModule_Rules(p)
+            ok := true
+        } catch {
+            ok := false
+        }
+        if (!ok) {
+            MsgBox "保存失败。"
+            return
+        }
+
+        try {
+            p2 := Storage_Profile_LoadFull(name)
+            rt := PM_ToRuntime(p2)
+            App["ProfileData"] := rt
+        } catch {
+            MsgBox "保存成功，但重新加载失败，请切换配置后重试。"
+            return
+        }
+
+        try {
+            WorkerPool_Rebuild()
+        } catch {
+        }
+        try {
+            Counters_Init()
+        } catch {
+        }
+        try {
+            Rotation_Reset()
+            Rotation_InitFromProfile()
+        } catch {
+        }
+
+        RefreshLV()
         Notify("循环配置已保存")
     }
 }
 
-; 规则编辑器
+; 规则编辑器（与原版基本一致，仍使用索引引用）
 RuleEditor_Open(rule, idx := 0, onSaved := 0) {
     global App
     isNew := (idx = 0)
 
-    defaults := Map("Name","新规则","Enabled",1,"Logic","AND","CooldownMs",500,"Priority",1,"ActionGapMs",60,"ThreadId",1)
-    for k, v in defaults
-        if !HasProp(rule, k)
+    defaults := Map("Name", "新规则", "Enabled", 1, "Logic", "AND", "CooldownMs", 500, "Priority", 1, "ActionGapMs", 60,
+        "ThreadId", 1)
+    for k, v in defaults {
+        if !HasProp(rule, k) {
             rule.%k% := v
-    if !HasProp(rule, "Conditions")
+        }
+    }
+    if !HasProp(rule, "Conditions") {
         rule.Conditions := []
-    if !HasProp(rule, "Actions")
+    }
+    if !HasProp(rule, "Actions") {
         rule.Actions := []
+    }
 
     dlg := Gui("+Owner" UI.Main.Hwnd, isNew ? "新增规则" : "编辑规则")
     dlg.MarginX := 12, dlg.MarginY := 10
@@ -167,38 +490,36 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
     edGap := dlg.Add("Edit", "x+6 w160 Number", rule.ActionGapMs)
 
     dlg.Add("Text", "x+20 w90 Right", "会话超时(ms)：")
-    edSessTO := dlg.Add("Edit", "x+6 w160 Number", HasProp(rule,"SessionTimeoutMs") ? rule.SessionTimeoutMs : 0)
-    
+    edSessTO := dlg.Add("Edit", "x+6 w160 Number", HasProp(rule, "SessionTimeoutMs") ? rule.SessionTimeoutMs : 0)
+
     dlg.Add("Text", "x+20 w100 Right", "中止冷却(ms)：")
-    edAbortCd := dlg.Add("Edit", "x+6 w160 Number", HasProp(rule,"AbortCooldownMs") ? rule.AbortCooldownMs : 0)
+    edAbortCd := dlg.Add("Edit", "x+6 w160 Number", HasProp(rule, "AbortCooldownMs") ? rule.AbortCooldownMs : 0)
 
     dlg.Add("Text", "x+20 w90 Right", "线程：")
     ddThread := dlg.Add("DropDownList", "x+6 w160")
     names := []
-    for _, t in App["ProfileData"].Threads
+    for _, t in App["ProfileData"].Threads {
         names.Push(t.Name)
-    if names.Length
+    }
+    if names.Length {
         ddThread.Add(names)
+    }
     curTid := HasProp(rule, "ThreadId") ? rule.ThreadId : 1
     ddThread.Value := (curTid >= 1 && curTid <= names.Length) ? curTid : 1
 
-    ; 条件
     dlg.Add("Text", "xm y+10", "条件：")
-    ; 保持旧列名：类型/引用/操作/使用引用坐标/X/Y
-    ; 对 Counter：X=阈值、Y=当前计数
     lvC := dlg.Add("ListView", "xm w760 r7 +Grid", ["类型", "引用", "操作", "使用引用坐标", "X", "Y"])
     btnCAdd := dlg.Add("Button", "xm w90", "新增条件")
-    btnCEdit:= dlg.Add("Button", "x+8 w90", "编辑条件")
-    btnCDel:= dlg.Add("Button", "x+8 w90", "删除条件")
+    btnCEdit := dlg.Add("Button", "x+8 w90", "编辑条件")
+    btnCDel := dlg.Add("Button", "x+8 w90", "删除条件")
 
-    ; 动作
     dlg.Add("Text", "xm y+10", "动作（释放技能步骤）：")
     lvA := dlg.Add("ListView", "xm w760 r6 +Grid", ["序", "技能名", "延时(ms)", "按住(ms)", "需就绪", "验证", "重试"])
     btnAAdd := dlg.Add("Button", "xm w110", "新增动作")
-    btnAEdit:= dlg.Add("Button", "x+8  w110", "编辑动作")
+    btnAEdit := dlg.Add("Button", "x+8  w110", "编辑动作")
     btnADel := dlg.Add("Button", "x+8  w110", "删除动作")
-    btnAUp  := dlg.Add("Button", "x+20 w90", "上移")
-    btnADn  := dlg.Add("Button", "x+8  w90", "下移")
+    btnAUp := dlg.Add("Button", "x+20 w90", "上移")
+    btnADn := dlg.Add("Button", "x+8  w90", "下移")
 
     btnSave := dlg.Add("Button", "xm y+10 w100", "保存")
     btnCancel := dlg.Add("Button", "x+8 w100", "取消")
@@ -213,8 +534,8 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
     btnAAdd.OnEvent("Click", (*) => ActAdd())
     btnAEdit.OnEvent("Click", (*) => ActEditSel())
     btnADel.OnEvent("Click", (*) => ActDelSel())
-    btnAUp.OnEvent("Click",  (*) => ActMove(-1))
-    btnADn.OnEvent("Click",  (*) => ActMove(1))
+    btnAUp.OnEvent("Click", (*) => ActMove(-1))
+    btnADn.OnEvent("Click", (*) => ActMove(1))
 
     btnSave.OnEvent("Click", (*) => SaveRule())
     btnCancel.OnEvent("Click", (*) => dlg.Destroy())
@@ -224,60 +545,126 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
     dlg.Show()
 
     RefreshC() {
-        lvC.Opt("-Redraw")
-        lvC.Delete()
-        for _, c in rule.Conditions {
-            if (HasProp(c,"Kind") && StrUpper(c.Kind) = "COUNTER") {
-                ; 计数条件展示
-                si := HasProp(c,"SkillIndex") ? c.SkillIndex : 1
-                sName := (si>=1 && si<=App["ProfileData"].Skills.Length)
-                    ? App["ProfileData"].Skills[si].Name
-                    : ("技能#" . si)
-                cmpText := CmpToText(HasProp(c,"Cmp") ? c.Cmp : "GE")
-                curCnt := Counters_Get(si)
-                lvC.Add("", "计数", sName, cmpText, "-", c.Value, curCnt)
-            } else {
-                ; Pixel 条件展示（兼容旧数据无 Kind）
-                refType := HasProp(c,"RefType") ? c.RefType : "Skill"
-                refIdx  := HasProp(c,"RefIndex") ? c.RefIndex : 1
-                opText  := (StrUpper(HasProp(c,"Op") ? c.Op : "EQ") = "EQ") ? "等于" : "不等于"
-                refName := (StrUpper(refType) = "SKILL")
-                    ? (refIdx <= App["ProfileData"].Skills.Length ? App["ProfileData"].Skills[refIdx].Name : ("技能#" . refIdx))
-                    : (refIdx <= App["ProfileData"].Points.Length ? App["ProfileData"].Points[refIdx].Name : ("点位#" . refIdx))
-                lvC.Add("", refType, refName, opText, (HasProp(c,"UseRefXY") && c.UseRefXY ? "是" : "否"), c.X, c.Y)
+        try {
+            lvC.Opt("-Redraw")
+            lvC.Delete()
+        } catch {
+        }
+        try {
+            for _, c in rule.Conditions {
+                if (HasProp(c, "Kind") && StrUpper(c.Kind) = "COUNTER") {
+                    si := HasProp(c, "SkillIndex") ? c.SkillIndex : 1
+                    sName := ""
+                    try {
+                        if (si >= 1 && si <= App["ProfileData"].Skills.Length) {
+                            sName := App["ProfileData"].Skills[si].Name
+                        } else {
+                            sName := "技能#" si
+                        }
+                    } catch {
+                        sName := "技能#" si
+                    }
+                    cmpText := CmpToText(HasProp(c, "Cmp") ? c.Cmp : "GE")
+                    curCnt := 0
+                    try {
+                        curCnt := Counters_Get(si)
+                    } catch {
+                        curCnt := 0
+                    }
+                    lvC.Add("", "计数", sName, cmpText, "-", HasProp(c, "Value") ? c.Value : 1, curCnt)
+                } else {
+                    refType := HasProp(c, "RefType") ? c.RefType : "Skill"
+                    refIdx := HasProp(c, "RefIndex") ? c.RefIndex : 1
+                    opText := (StrUpper(HasProp(c, "Op") ? c.Op : "EQ") = "EQ") ? "等于" : "不等于"
+                    refName := ""
+                    if (StrUpper(refType) = "SKILL") {
+                        try {
+                            refName := (refIdx <= App["ProfileData"].Skills.Length) ? App["ProfileData"].Skills[refIdx]
+                                .Name : ("技能#" refIdx)
+                        } catch {
+                            refName := "技能#" refIdx
+                        }
+                    } else {
+                        try {
+                            refName := (refIdx <= App["ProfileData"].Points.Length) ? App["ProfileData"].Points[refIdx]
+                                .Name : ("点位#" refIdx)
+                        } catch {
+                            refName := "点位#" refIdx
+                        }
+                    }
+                    lvC.Add("", refType, refName, opText, (HasProp(c, "UseRefXY") && c.UseRefXY ? "是" : "否"), HasProp(c,
+                        "X") ? c.X : 0, HasProp(c, "Y") ? c.Y : 0)
+                }
+            }
+            loop 7 {
+                try {
+                    lvC.ModifyCol(A_Index, "AutoHdr")
+                } catch {
+                }
+            }
+        } catch {
+        } finally {
+            try {
+                lvC.Opt("+Redraw")
+            } catch {
             }
         }
-        loop 7
-            lvC.ModifyCol(A_Index, "AutoHdr")
-        lvC.Opt("+Redraw")
     }
 
     CmpToText(cmp) {
-        switch StrUpper(cmp) {
-            case "GE": return ">="
-            case "EQ": return "=="
-            case "GT": return ">"
-            case "LE": return "<="
-            case "LT": return "<"
-            default:   return ">="
+        k := StrUpper(cmp)
+        if (k = "GE") {
+            return ">="
         }
+        if (k = "EQ") {
+            return "=="
+        }
+        if (k = "GT") {
+            return ">"
+        }
+        if (k = "LE") {
+            return "<="
+        }
+        if (k = "LT") {
+            return "<"
+        }
+        return ">="
     }
 
     RefreshA() {
-        lvA.Opt("-Redraw")
-        lvA.Delete()
-        for i, a in rule.Actions {
-            sName := (a.SkillIndex <= App["ProfileData"].Skills.Length)
-                ? App["ProfileData"].Skills[a.SkillIndex].Name
-                : ("技能#" . a.SkillIndex)
-            lvA.Add("", i, sName
-                , (HasProp(a,"DelayMs") ? a.DelayMs : 0)
-                , (HasProp(a,"HoldMs") ? a.HoldMs : -1)
-                , ((HasProp(a,"RequireReady") && a.RequireReady) ? "√" : ""))
+        try {
+            lvA.Opt("-Redraw")
+            lvA.Delete()
+        } catch {
         }
-        loop 5
-            lvA.ModifyCol(A_Index, "AutoHdr")
-        lvA.Opt("+Redraw")
+        try {
+            for i, a in rule.Actions {
+                sName := ""
+                try {
+                    sName := (a.SkillIndex <= App["ProfileData"].Skills.Length)
+                        ? App["ProfileData"].Skills[a.SkillIndex].Name
+                        : ("技能#" a.SkillIndex)
+                } catch {
+                    sName := "技能#" a.SkillIndex
+                }
+                lvA.Add("", i, sName
+                    , (HasProp(a, "DelayMs") ? a.DelayMs : 0)
+                    , (HasProp(a, "HoldMs") ? a.HoldMs : -1)
+                    , ((HasProp(a, "RequireReady") && a.RequireReady) ? "√" : ""))
+            }
+            loop 5 {
+                try {
+                    lvA.ModifyCol(A_Index, "AutoHdr")
+                } catch {
+                }
+            }
+        } catch {
+        } finally {
+            try {
+                lvA.Opt("+Redraw")
+            } catch {
+            }
+        }
     }
 
     CondAdd() {
@@ -290,8 +677,13 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
     }
 
     CondEditSel() {
-        row := lvC.GetNext(0, "Focused")
-        if !row {
+        row := 0
+        try {
+            row := lvC.GetNext(0, "Focused")
+        } catch {
+            row := 0
+        }
+        if (!row) {
             MsgBox "请选择一个条件"
             return
         }
@@ -305,8 +697,13 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
     }
 
     CondDelSel() {
-        row := lvC.GetNext(0, "Focused")
-        if !row {
+        row := 0
+        try {
+            row := lvC.GetNext(0, "Focused")
+        } catch {
+            row := 0
+        }
+        if (!row) {
             MsgBox "请选择一个条件"
             return
         }
@@ -324,8 +721,13 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
     }
 
     ActEditSel() {
-        row := lvA.GetNext(0, "Focused")
-        if !row {
+        row := 0
+        try {
+            row := lvA.GetNext(0, "Focused")
+        } catch {
+            row := 0
+        }
+        if (!row) {
             MsgBox "请选择一个动作"
             return
         }
@@ -339,45 +741,106 @@ RuleEditor_Open(rule, idx := 0, onSaved := 0) {
     }
 
     ActDelSel() {
-        row := lvA.GetNext(0, "Focused")
-        if !row {
+        row := 0
+        try {
+            row := lvA.GetNext(0, "Focused")
+        } catch {
+            row := 0
+        }
+        if (!row) {
             MsgBox "请选择一个动作"
             return
         }
         rule.Actions.RemoveAt(row)
         RefreshA()
     }
+
     ActMove(dir) {
-        row := lvA.GetNext(0, "Focused")
-        if !row
+        row := 0
+        try {
+            row := lvA.GetNext(0, "Focused")
+        } catch {
+            row := 0
+        }
+        if (!row) {
             return
-        from := row, to := from + dir
-        if (to < 1 || to > rule.Actions.Length)
+        }
+        from := row
+        to := from + dir
+        if (to < 1 || to > rule.Actions.Length) {
             return
+        }
         item := rule.Actions[from]
         rule.Actions.RemoveAt(from)
         rule.Actions.InsertAt(to, item)
         RefreshA()
-        lvA.Modify(to, "Select Focus Vis")
+        try {
+            lvA.Modify(to, "Select Focus Vis")
+        } catch {
+        }
     }
+
+    btnSave := dlg.Add("Button", "xm y+10 w100", "保存")
+    btnCancel := dlg.Add("Button", "x+8 w100", "取消")
+
+    btnSave.OnEvent("Click", (*) => SaveRule())
+    btnCancel.OnEvent("Click", (*) => dlg.Destroy())
+
     SaveRule() {
-        name := Trim(tbName.Value)
+        name := ""
+        try {
+            name := Trim(tbName.Value)
+        } catch {
+            name := ""
+        }
         if (name = "") {
             MsgBox "名称不可为空"
             return
         }
-        rule.Name := name
-        rule.Enabled := cbEn.Value ? 1 : 0
-        rule.Logic := (ddLogic.Value = 2) ? "OR" : "AND"
-        rule.CooldownMs := (edCd.Value != "") ? Integer(edCd.Value) : 500
-        rule.Priority := (edPrio.Value != "") ? Integer(edPrio.Value) : 1
-        rule.ActionGapMs := (edGap.Value != "") ? Integer(edGap.Value) : 60
-        rule.ThreadId := ddThread.Value ? ddThread.Value : 1
-        rule.SessionTimeoutMs := (edSessTO.Value != "") ? Integer(edSessTO.Value) : 0
-        rule.AbortCooldownMs  := (edAbortCd.Value != "") ? Integer(edAbortCd.Value) : 0
-        if onSaved
+        try {
+            rule.Name := name
+        } catch {
+        }
+        try {
+            rule.Enabled := cbEn.Value ? 1 : 0
+        } catch {
+        }
+        try {
+            rule.Logic := (ddLogic.Value = 2) ? "OR" : "AND"
+        } catch {
+        }
+        try {
+            rule.CooldownMs := (edCd.Value != "") ? Integer(edCd.Value) : 500
+        } catch {
+        }
+        try {
+            rule.Priority := (edPrio.Value != "") ? Integer(edPrio.Value) : 1
+        } catch {
+        }
+        try {
+            rule.ActionGapMs := (edGap.Value != "") ? Integer(edGap.Value) : 60
+        } catch {
+        }
+        try {
+            rule.ThreadId := ddThread.Value ? ddThread.Value : 1
+        } catch {
+        }
+        try {
+            rule.SessionTimeoutMs := (edSessTO.Value != "") ? Integer(edSessTO.Value) : 0
+        } catch {
+        }
+        try {
+            rule.AbortCooldownMs := (edAbortCd.Value != "") ? Integer(edAbortCd.Value) : 0
+        } catch {
+        }
+
+        if onSaved {
             onSaved(rule, idx)
-        dlg.Destroy()
+        }
+        try {
+            dlg.Destroy()
+        } catch {
+        }
         Notify(isNew ? "已新增规则" : "已保存规则")
     }
 }
@@ -392,13 +855,13 @@ CondEditor_Open(cond, idx := 0, onSaved := 0) {
 
     ; Pixel 缺省字段
     if (StrUpper(cond.Kind) = "PIXEL") {
-        defaultsP := Map("RefType","Skill","RefIndex",1,"Op","EQ","UseRefXY",1,"X",0,"Y",0)
+        defaultsP := Map("RefType", "Skill", "RefIndex", 1, "Op", "EQ", "UseRefXY", 1, "X", 0, "Y", 0)
         for k, v in defaultsP
             if !HasProp(cond, k)
                 cond.%k% := v
     } else {
         ; Counter 缺省字段
-        defaultsC := Map("SkillIndex",1,"Cmp","GE","Value",1,"ResetOnTrigger",0)
+        defaultsC := Map("SkillIndex", 1, "Cmp", "GE", "Value", 1, "ResetOnTrigger", 0)
         for k, v in defaultsC
             if !HasProp(cond, k)
                 cond.%k% := v
@@ -410,55 +873,57 @@ CondEditor_Open(cond, idx := 0, onSaved := 0) {
 
     ; 条件类型
     dlg.Add("Text", "w90 Right", "条件类型：")
-    ddKind := dlg.Add("DropDownList", "x+6 w160", ["像素(Pixel)","计数(Counter)"])
+    ddKind := dlg.Add("DropDownList", "x+6 w160", ["像素(Pixel)", "计数(Counter)"])
     ddKind.Value := (StrUpper(cond.Kind) = "COUNTER") ? 2 : 1
 
     ; ---------- Pixel 区 ----------
     txtType := dlg.Add("Text", "xm y+10 w90 Right", "引用类型：")
-    ddType  := dlg.Add("DropDownList", "x+6 w160", ["Skill", "Point"])
-    ddType.Value := (StrUpper(HasProp(cond,"RefType") ? cond.RefType : "Skill") = "POINT") ? 2 : 1
+    ddType := dlg.Add("DropDownList", "x+6 w160", ["Skill", "Point"])
+    ddType.Value := (StrUpper(HasProp(cond, "RefType") ? cond.RefType : "Skill") = "POINT") ? 2 : 1
 
     txtObj := dlg.Add("Text", "xm w90 Right", "引用对象：")
-    ddObj  := dlg.Add("DropDownList", "x+6 w160")
+    ddObj := dlg.Add("DropDownList", "x+6 w160")
 
-    txtOp  := dlg.Add("Text", "xm w90 Right", "操作：")
-    ddOp   := dlg.Add("DropDownList", "x+6 w160", ["等于", "不等于"])
-    ddOp.Value := (StrUpper(HasProp(cond,"Op") ? cond.Op : "EQ") = "NEQ") ? 2 : 1
+    txtOp := dlg.Add("Text", "xm w90 Right", "操作：")
+    ddOp := dlg.Add("DropDownList", "x+6 w160", ["等于", "不等于"])
+    ddOp.Value := (StrUpper(HasProp(cond, "Op") ? cond.Op : "EQ") = "NEQ") ? 2 : 1
 
     txtInfo := dlg.Add("Text", "xm y+10 w90 Right", "对象详情：")
-    labX    := dlg.Add("Text", "xm w48 Right", "X:")
-    edRefX  := dlg.Add("Edit", "x+6 w100 ReadOnly Center")
-    labY    := dlg.Add("Text", "x+18 w48 Right", "Y:")
-    edRefY  := dlg.Add("Edit", "x+6 w100 ReadOnly Center")
-    labC    := dlg.Add("Text", "x+18 w48 Right", "颜色:")
-    edRefCol:= dlg.Add("Edit", "x+6 w100 ReadOnly Center")
-    labT    := dlg.Add("Text", "x+18 w48 Right", "容差:")
-    edRefTol:= dlg.Add("Edit", "x+6 w100 ReadOnly Center")
+    labX := dlg.Add("Text", "xm w48 Right", "X:")
+    edRefX := dlg.Add("Edit", "x+6 w100 ReadOnly Center")
+    labY := dlg.Add("Text", "x+18 w48 Right", "Y:")
+    edRefY := dlg.Add("Edit", "x+6 w100 ReadOnly Center")
+    labC := dlg.Add("Text", "x+18 w48 Right", "颜色:")
+    edRefCol := dlg.Add("Edit", "x+6 w100 ReadOnly Center")
+    labT := dlg.Add("Text", "x+18 w48 Right", "容差:")
+    edRefTol := dlg.Add("Edit", "x+6 w100 ReadOnly Center")
 
-    grpPixel := [txtType, ddType, txtObj, ddObj, txtOp, ddOp, txtInfo, labX, edRefX, labY, edRefY, labC, edRefCol, labT, edRefTol]
+    grpPixel := [txtType, ddType, txtObj, ddObj, txtOp, ddOp, txtInfo, labX, edRefX, labY, edRefY, labC, edRefCol, labT,
+        edRefTol]
 
     ; ---------- Counter 区 ----------
     txtCntSkill := dlg.Add("Text", "xm y+10 w90 Right", "计数技能：")
-    ddCntSkill  := dlg.Add("DropDownList", "x+6 w240")
+    ddCntSkill := dlg.Add("DropDownList", "x+6 w240")
     names := []
     for _, s in App["ProfileData"].Skills
         names.Push(s.Name)
     if names.Length
         ddCntSkill.Add(names)
-    ddCntSkill.Value := Min(Max(HasProp(cond,"SkillIndex") ? cond.SkillIndex : 1, 1), Max(names.Length, 1))
+    ddCntSkill.Value := Min(Max(HasProp(cond, "SkillIndex") ? cond.SkillIndex : 1, 1), Max(names.Length, 1))
 
     txtCmp := dlg.Add("Text", "xm w90 Right", "比较：")
-    ddCmp  := dlg.Add("DropDownList", "x+6 w120", [">=","==",">","<=","<"])
-    cmpMapT2K := Map(">=","GE","==","EQ",">","GT","<=","LE","<","LT")
-    cmpMapK2T := Map("GE",">=","EQ","==","GT",">","LE","<=","LT","<")
-    defCmp := StrUpper(HasProp(cond,"Cmp") ? cond.Cmp : "GE")
-    ddCmp.Value := (defCmp="GE")?1:(defCmp="EQ")?2:(defCmp="GT")?3:(defCmp="LE")?4:(defCmp="LT")?5:1
+    ddCmp := dlg.Add("DropDownList", "x+6 w120", [">=", "==", ">", "<=", "<"])
+    cmpMapT2K := Map(">=", "GE", "==", "EQ", ">", "GT", "<=", "LE", "<", "LT")
+    cmpMapK2T := Map("GE", ">=", "EQ", "==", "GT", ">", "LE", "<=", "LT", "<")
+    defCmp := StrUpper(HasProp(cond, "Cmp") ? cond.Cmp : "GE")
+    ddCmp.Value := (defCmp = "GE") ? 1 : (defCmp = "EQ") ? 2 : (defCmp = "GT") ? 3 : (defCmp = "LE") ? 4 : (defCmp =
+        "LT") ? 5 : 1
 
     txtVal := dlg.Add("Text", "xm w90 Right", "阈值：")
-    edVal  := dlg.Add("Edit", "x+6 w120 Number", HasProp(cond,"Value") ? cond.Value : 1)
+    edVal := dlg.Add("Edit", "x+6 w120 Number", HasProp(cond, "Value") ? cond.Value : 1)
 
     cbReset := dlg.Add("CheckBox", "xm y+8", "触发后清零")
-    cbReset.Value := HasProp(cond,"ResetOnTrigger") ? (cond.ResetOnTrigger ? 1 : 0) : 0
+    cbReset.Value := HasProp(cond, "ResetOnTrigger") ? (cond.ResetOnTrigger ? 1 : 0) : 0
 
     grpCounter := [txtCntSkill, ddCntSkill, txtCmp, ddCmp, txtVal, edVal, cbReset]
 
@@ -523,7 +988,7 @@ CondEditor_Open(cond, idx := 0, onSaved := 0) {
     UpdateInfo()
     ToggleKind(0)
     ; 两组对齐到同一块区域（计数组对齐到像素组）
-    Group_GetTopLeft(grpPixel,  &px, &py)
+    Group_GetTopLeft(grpPixel, &px, &py)
     Group_GetTopLeft(grpCounter, &cx, &cy)
     Group_Offset(grpCounter, px - cx, py - cy)
 
@@ -534,7 +999,7 @@ CondEditor_Open(cond, idx := 0, onSaved := 0) {
         if (isCounter) {
             Group_GetBounds(grpCounter, &minX, &minY, &maxX, &maxY)
         } else {
-            Group_GetBounds(grpPixel,   &minX, &minY, &maxX, &maxY)
+            Group_GetBounds(grpPixel, &minX, &minY, &maxX, &maxY)
         }
         btnY := maxY + 12
         btnSave.GetPos(&sx, &sy, &sw, &sh)
@@ -618,7 +1083,7 @@ CondEditor_Open(cond, idx := 0, onSaved := 0) {
             cmpKey := cmpMapT2K[ddCmp.Text]
             val := (edVal.Value != "") ? Integer(edVal.Value) : 1
             rst := cbReset.Value ? 1 : 0
-            newC := { Kind:"Counter", SkillIndex: si, Cmp: cmpKey, Value: val, ResetOnTrigger: rst }
+            newC := { Kind: "Counter", SkillIndex: si, Cmp: cmpKey, Value: val, ResetOnTrigger: rst }
             if onSaved
                 onSaved(newC, idx)
             dlg.Destroy()
@@ -640,7 +1105,7 @@ CondEditor_Open(cond, idx := 0, onSaved := 0) {
         op := (ddOp.Value = 2) ? "NEQ" : "EQ"
         x := Integer(edRefX.Value)
         y := Integer(edRefY.Value)
-        newC := { Kind:"Pixel", RefType: refType, RefIndex: refIdx, Op: op, UseRefXY: 1, X: x, Y: y }
+        newC := { Kind: "Pixel", RefType: refType, RefIndex: refIdx, Op: op, UseRefXY: 1, X: x, Y: y }
         if onSaved
             onSaved(newC, idx)
         dlg.Destroy()
@@ -673,22 +1138,22 @@ ActEditor_Open(act, idx := 0, onSaved := 0) {
     edD := dlg.Add("Edit", "x+6 w240 Number", act.DelayMs)
 
     dlg.Add("Text", "xm w90 Right", "按住(ms)：")
-    edHold := dlg.Add("Edit", "x+6 w240 Number", HasProp(act,"HoldMs") ? act.HoldMs : -1)
+    edHold := dlg.Add("Edit", "x+6 w240 Number", HasProp(act, "HoldMs") ? act.HoldMs : -1)
 
     cbReady := dlg.Add("CheckBox", "xm y+8", "需就绪")
-    cbReady.Value := HasProp(act,"RequireReady") ? (act.RequireReady ? 1 : 0) : 0
+    cbReady.Value := HasProp(act, "RequireReady") ? (act.RequireReady ? 1 : 0) : 0
 
     cbVerify := dlg.Add("CheckBox", "xm y+8", "验证")
-    cbVerify.Value := HasProp(act,"Verify") ? (act.Verify ? 1 : 0) : 0
+    cbVerify.Value := HasProp(act, "Verify") ? (act.Verify ? 1 : 0) : 0
 
     dlg.Add("Text", "xm w110 Right", "验证超时(ms)：")
-    edVto := dlg.Add("Edit", "x+6 w240 Number", HasProp(act,"VerifyTimeoutMs") ? act.VerifyTimeoutMs : 600)
+    edVto := dlg.Add("Edit", "x+6 w240 Number", HasProp(act, "VerifyTimeoutMs") ? act.VerifyTimeoutMs : 600)
 
     dlg.Add("Text", "xm w110 Right", "重试次数：")
-    edRetry := dlg.Add("Edit", "x+6 w240 Number", HasProp(act,"Retry") ? act.Retry : 0)
+    edRetry := dlg.Add("Edit", "x+6 w240 Number", HasProp(act, "Retry") ? act.Retry : 0)
 
     dlg.Add("Text", "xm w110 Right", "重试间隔(ms)：")
-    edRgap := dlg.Add("Edit", "x+6 w120 Number", HasProp(act,"RetryGapMs") ? act.RetryGapMs : 150)
+    edRgap := dlg.Add("Edit", "x+6 w120 Number", HasProp(act, "RetryGapMs") ? act.RetryGapMs : 150)
 
     btnSave := dlg.Add("Button", "xm y+10 w100", "保存")
     btnCancel := dlg.Add("Button", "x+8 w100", "取消")
@@ -705,9 +1170,8 @@ ActEditor_Open(act, idx := 0, onSaved := 0) {
         vto := (edVto.Value != "") ? Integer(edVto.Value) : 600
         rt := (edRetry.Value != "") ? Integer(edRetry.Value) : 0
         rg := (edRgap.Value != "") ? Integer(edRgap.Value) : 150
-        newA := { SkillIndex: idxS, DelayMs: d, HoldMs: h
-                , RequireReady: rr, Verify: vf, VerifyTimeoutMs: vto
-                , Retry: rt, RetryGapMs: rg }
+        newA := { SkillIndex: idxS, DelayMs: d, HoldMs: h, RequireReady: rr, Verify: vf, VerifyTimeoutMs: vto, Retry: rt,
+            RetryGapMs: rg }
         if onSaved
             onSaved(newA, idx)
         dlg.Destroy()

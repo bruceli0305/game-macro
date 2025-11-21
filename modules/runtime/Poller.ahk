@@ -1,4 +1,4 @@
-; Poller.ahk - 简单轮询逻辑（像素检测 -> Send 键位），集成帧级取色缓存 + ROI 快照 + 默认技能兜底
+; modules\runtime\Poller.ahk - 简单轮询逻辑（像素检测 -> Send 键位），集成帧级取色缓存 + ROI 快照 + 默认技能兜底
 
 global gPoller := { running: false, timerBound: 0 }
 

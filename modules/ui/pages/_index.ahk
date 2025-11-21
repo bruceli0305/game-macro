@@ -1,4 +1,4 @@
-; _index.ahk
+;modules\ui\pages\_index.ahk
 ;页面聚合器：先引入框架，再引入所有页面
 #Requires AutoHotkey v2
 
@@ -33,7 +33,7 @@
 #Include "advanced\rotation\Page_RotOpener.ahk"
 
 ; tools
-#Include "tools\Page_Tools_IO.ahk"
+; #Include "tools\Page_Tools_IO.ahk"
 #Include "tools\Page_Tools_Quick.ahk"
 
 ; settings

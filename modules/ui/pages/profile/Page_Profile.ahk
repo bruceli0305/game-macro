@@ -1,7 +1,7 @@
-; ============================== modules\ui\pages\profile\Page_Profile.ahk ==============================
 #Requires AutoHotkey v2
+;modules\ui\pages\profile\Page_Profile.ahk 角色配置页面
 ; 概览与配置（紧凑版）
-; 兼容：Build(page:=0) / Layout(rc:=0) 双签名；严格块结构；带详细日志
+; 严格块结构：所有 if/try/catch 使用块语法，不使用单行形式
 
 global g_Profile_Populating := IsSet(g_Profile_Populating) ? g_Profile_Populating : false
 
@@ -13,6 +13,10 @@ Page_Profile_Build(page := 0) {
         rc := UI_GetPageRect()
     } catch {
         rc := { X: 244, Y: 10, W: 804, H: 760 }
+    }
+    try {
+        Logger_Info("UI", "Profile_Build begin", Map("x", rc.X, "y", rc.Y, "w", rc.W, "h", rc.H))
+    } catch {
     }
 
     pg := 0
@@ -112,14 +116,22 @@ Page_Profile_Build(page := 0) {
         } catch {
         }
     }
-    ; 鼠标热键回显（Hotkey 控件不支持显示鼠标键，这里单独显示）
+
+    ; 鼠标热键回显
     UI.LblStartEcho := UI.Main.Add("Text", Format("x{} y{} w120", xCtrl + 180 + 8, yLine1 + 4), "")
     if (IsObject(pg)) {
-        try pg.Controls.Push(UI.LblStartEcho)
+        try {
+            pg.Controls.Push(UI.LblStartEcho)
+        } catch {
+        }
     }
 
-    ; 当用户在 Hotkey 控件内手动输入/修改键盘热键时，清空鼠标热键回显与缓存
-    try UI.HkStart.OnEvent("Change", Profile_OnHotkeyChanged)
+    ; 当用户手动输入键盘热键时，清空鼠标回显与缓存
+    try {
+        UI.HkStart.OnEvent("Change", Profile_OnHotkeyChanged)
+    } catch {
+    }
+
     UI.BtnCapStartMouse := UI.Main.Add("Button", Format("x{} y{} w110 h26", xCtrl, yLine1 + rowH - 2), T("btn.captureMouse","捕获鼠标键"))
     if (IsObject(pg)) {
         try {
@@ -252,6 +264,18 @@ Page_Profile_Build(page := 0) {
         UI.BtnApply.OnEvent("Click", Profile_OnApplyGeneral)
     } catch {
     }
+
+    ; 构建完成后立即填充下拉
+    try {
+        ok := Profile_UI_PopulateProfilesDD()
+        Logger_Info("UI", "PopulateProfilesDD after build", Map("ok", ok ? 1 : 0))
+    } catch {
+    }
+
+    try {
+        Logger_Info("UI", "Profile_Build end", Map())
+    } catch {
+    }
 }
 
 Page_Profile_Layout(rc := 0) {
@@ -299,7 +323,6 @@ Page_Profile_Layout(rc := 0) {
         UI.HkStart.Move(xCtrl, y1, 180)
     } catch {
     }
-    ; 新增/替换：按钮放在下一行，左对齐 Hotkey
     try {
         UI.BtnCapStartMouse.Move(xCtrl, y1 + rowH - 2, 110, 26)
     } catch {
@@ -378,10 +401,36 @@ Page_Profile_Layout(rc := 0) {
 
 Page_Profile_OnEnter(*) {
     try {
-        Profile_RefreshAll_Strong()
+        Logger_Info("UI", "Profile_OnEnter", Map())
+    } catch {
+    }
+
+    ok := false
+    try {
+        ok := Profile_RefreshAll_Strong()
+    } catch {
+        ok := false
     }
     try {
-        if IsSet(App) && App.Has("ProfileData") {
+        Logger_Info("UI", "Profile_OnEnter RefreshAll", Map("ok", ok ? 1 : 0))
+    } catch {
+    }
+
+    ; 保底：再次填充下拉为当前配置
+    try {
+        cur := ""
+        try {
+            cur := App["CurrentProfile"]
+        } catch {
+            cur := ""
+        }
+        ok2 := Profile_UI_PopulateProfilesDD(cur)
+        Logger_Info("UI", "PopulateProfilesDD on enter", Map("ok", ok2 ? 1 : 0, "cur", cur))
+    } catch {
+    }
+
+    try {
+        if (IsSet(App) && App.Has("ProfileData")) {
             Profile_UI_SetStartHotkeyEcho(App["ProfileData"].StartHotkey)
         }
     } catch {
@@ -393,31 +442,48 @@ Profile_OnProfilesChanged(*) {
     if (g_Profile_Populating) {
         return
     }
+
     name := ""
     try {
         name := UI.ProfilesDD.Text
     } catch {
         name := ""
     }
+
     cur := ""
     try {
         cur := App["CurrentProfile"]
     } catch {
         cur := ""
     }
+
     if (name = "" || cur = name) {
         return
     }
+
+    ok := false
     try {
         ok := Profile_SwitchProfile_Strong(name)
-        if (ok) {
-            try Profile_UI_SetStartHotkeyEcho(App["ProfileData"].StartHotkey)
+    } catch {
+        ok := false
+    }
+
+    try {
+        Logger_Info("UI", "ProfilesChanged", Map("name", name, "ok", ok ? 1 : 0))
+    } catch {
+    }
+
+    if (ok) {
+        try {
+            Profile_UI_SetStartHotkeyEcho(App["ProfileData"].StartHotkey)
+        } catch {
         }
     }
 }
 
 Profile_OnNew(*) {
     global App, UI
+
     name := ""
     try {
         ib := InputBox(T("label.profileName","配置名称："), T("dlg.newProfile","新建配置"))
@@ -428,34 +494,58 @@ Profile_OnNew(*) {
     } catch {
         name := ""
     }
+
     if (name = "") {
         MsgBox T("msg.nameEmpty","名称不可为空")
         return
     }
+
+    ok := false
     try {
-        data := Core_DefaultProfileData()
-        data.Name := name
-        Storage_SaveProfile(data)
-        App["CurrentProfile"] := name
-        Profile_RefreshAll_Strong()
-        Notify(T("msg.created","已创建：") name)
+        Storage_Profile_Create(name)
+        ok := true
     } catch as e {
-        MsgBox T("msg.createFail","创建失败：") e.Message
+        ok := false
+        try {
+            Logger_Exception("UI", e, Map("where", "Profile_OnNew", "name", name))
+        } catch {
+        }
+    }
+
+    if (!ok) {
+        MsgBox T("msg.createFail","创建失败")
+        return
+    }
+
+    try {
+        App["CurrentProfile"] := name
+    } catch {
+    }
+
+    try {
+        Profile_RefreshAll_Strong()
+        Profile_UI_PopulateProfilesDD(name)
+        Notify(T("msg.created","已创建：") name)
+        Logger_Info("UI", "ProfileNew", Map("name", name))
+    } catch {
     }
 }
 
 Profile_OnClone(*) {
     global App
+
     src := ""
     try {
         src := App["CurrentProfile"]
     } catch {
         src := ""
     }
+
     if (src = "") {
         MsgBox T("msg.noProfile","未选择配置")
         return
     }
+
     newName := ""
     try {
         ib := InputBox(T("label.newProfileName","新配置名称："), T("dlg.cloneProfile","复制配置"), src "_Copy")
@@ -466,66 +556,125 @@ Profile_OnClone(*) {
     } catch {
         newName := src "_Copy"
     }
+
     if (newName = "") {
         MsgBox T("msg.nameEmpty","名称不可为空")
         return
     }
+
+    ok := false
     try {
-        data := Storage_LoadProfile(src)
-        data.Name := newName
-        Storage_SaveProfile(data)
+        ; 读取源配置，修改名称，写入新文件夹（全模块）
+        p := Storage_Profile_LoadFull(src)
+        p["Name"] := newName
+        try {
+            p["Meta"]["DisplayName"] := newName
+        } catch {
+        }
+        FS_Meta_Write(p)
+        SaveModule_General(p)
+        SaveModule_Skills(p)
+        SaveModule_Points(p)
+        SaveModule_Rules(p)
+        SaveModule_Buffs(p)
+        SaveModule_RotationBase(p)
+        SaveModule_Tracks(p)
+        SaveModule_Gates(p)
+        SaveModule_Opener(p)
+        ok := true
+    } catch as e {
+        ok := false
+        try {
+            Logger_Exception("UI", e, Map("where", "Profile_OnClone", "src", src, "dst", newName))
+        } catch {
+        }
+    }
+
+    if (!ok) {
+        MsgBox T("msg.cloneFail","复制失败")
+        return
+    }
+
+    try {
         App["CurrentProfile"] := newName
         Profile_RefreshAll_Strong()
+        Profile_UI_PopulateProfilesDD(newName)
         Notify(T("msg.cloned","已复制为：") newName)
-    } catch as e {
-        MsgBox T("msg.cloneFail","复制失败：") e.Message
+        Logger_Info("UI", "ProfileClone", Map("src", src, "dst", newName))
+    } catch {
     }
 }
 
 Profile_OnDelete(*) {
     global App
+
     names := []
     try {
-        names := Storage_ListProfiles()
+        names := FS_ListProfilesValid()
     } catch {
         names := []
     }
+
     if (names.Length <= 1) {
         MsgBox T("msg.keepOne","至少保留一个配置。")
         return
     }
+
     cur := ""
     try {
         cur := App["CurrentProfile"]
     } catch {
         cur := ""
     }
+
     if (cur = "") {
         MsgBox T("msg.noProfile","未选择配置")
         return
     }
+
     ok := Confirm(T("confirm.deleteProfile","确定删除配置：") cur "？")
     if (!ok) {
         return
     }
+
+    success := false
     try {
-        Storage_DeleteProfile(cur)
-        Notify(T("msg.deleted","已删除：") cur)
+        FS_DeleteProfile(cur)
+        success := true
+    } catch as e {
+        success := false
+        try {
+            Logger_Exception("UI", e, Map("where", "Profile_OnDelete", "name", cur))
+        } catch {
+        }
+    }
+
+    if (!success) {
+        MsgBox T("msg.deleteFail","删除失败")
+        return
+    }
+
+    try {
         App["CurrentProfile"] := ""
         Profile_RefreshAll_Strong()
-    } catch as e {
-        MsgBox T("msg.deleteFail","删除失败：") e.Message
+        Profile_UI_PopulateProfilesDD()
+        Notify(T("msg.deleted","已删除：") cur)
+        Logger_Info("UI", "ProfileDelete", Map("name", cur))
+    } catch {
     }
 }
 
 Profile_OnCaptureStartMouse(*) {
     global UI
+
     ToolTip T("tip.captureMouse","请按下 鼠标中键/侧键 作为开始/停止热键（Esc取消）")
     key := ""
+
     Loop {
         if GetKeyState("Esc", "P") {
             break
         }
+
         for k in ["XButton1", "XButton2", "MButton"] {
             if GetKeyState(k, "P") {
                 key := k
@@ -535,12 +684,15 @@ Profile_OnCaptureStartMouse(*) {
                 break
             }
         }
+
         if (key != "") {
             break
         }
         Sleep 20
     }
+
     ToolTip()
+
     if (key != "") {
         try {
             UI.HkStart.Value := ""
@@ -560,92 +712,169 @@ Profile_OnCaptureStartMouse(*) {
         }
     }
 }
+
 Profile_OnHotkeyChanged(*) {
     global UI, g_Profile_Populating
+
     if (g_Profile_Populating) {
         return
     }
-    ; 用户手动输入键盘热键 → 清空鼠标回显与缓存
-    try UI.HkStart.Tag := ""
-    try UI.LblStartEcho.Text := ""
+
+    try {
+        UI.HkStart.Tag := ""
+    } catch {
+    }
+    try {
+        UI.LblStartEcho.Text := ""
+    } catch {
+    }
 }
+
+; 新版：保存到新存储（general.ini），不再调用旧 Storage_SaveProfile
 Profile_OnApplyGeneral(*) {
     global App, UI
+
     try {
-        if !IsSet(App) {
-            App := Map()
-        }
-        if !App.Has("ProfileData") {
-            App["ProfileData"] := Core_DefaultProfileData()
-        }
-        prof := App["ProfileData"]
+        Logger_Info("UI", "ApplyGeneral begin", Map())
+    } catch {
+    }
 
+    ; 取当前 Profile 名称
+    name := ""
+    try {
+        name := App["CurrentProfile"]
+    } catch {
+        name := ""
+    }
+    if (name = "") {
+        MsgBox T("msg.noProfile","未选择配置")
+        return
+    }
+
+    ; 读 UI 值
+    hk := ""
+    try {
+        hk := UI.HkStart.Value
+    } catch {
         hk := ""
+    }
+    if (hk = "") {
         try {
-            hk := UI.HkStart.Value
+            hk := UI.HkStart.Tag
         } catch {
+            hk := ""
         }
-        if (hk = "") {
-            try hk := UI.HkStart.Tag
-        }
-        prof.StartHotkey := hk
+    }
 
-        pi := 25
+    pi := 25
+    try {
         if (UI.PollEdit.Value != "") {
             pi := Integer(UI.PollEdit.Value)
         }
-        if (pi < 10) {
-            pi := 10
-        }
-        prof.PollIntervalMs := pi
+    } catch {
+        pi := 25
+    }
+    if (pi < 10) {
+        pi := 10
+    }
 
-        delay := 0
+    delay := 0
+    try {
         if (UI.CdEdit.Value != "") {
             delay := Integer(UI.CdEdit.Value)
         }
-        if (delay < 0) {
-            delay := 0
-        }
-        prof.SendCooldownMs := delay
+    } catch {
+        delay := 0
+    }
+    if (delay < 0) {
+        delay := 0
+    }
 
-        prof.PickHoverEnabled := UI.ChkPick.Value ? 1 : 0
+    chPick := 1
+    try {
+        chPick := (UI.ChkPick.Value ? 1 : 0)
+    } catch {
+        chPick := 1
+    }
 
-        offY := -60
+    offY := -60
+    try {
         if (UI.OffYEdit.Value != "") {
             offY := Integer(UI.OffYEdit.Value)
         }
-        prof.PickHoverOffsetY := offY
+    } catch {
+        offY := -60
+    }
 
-        dwell := 120
+    dwell := 120
+    try {
         if (UI.DwellEdit.Value != "") {
             dwell := Integer(UI.DwellEdit.Value)
         }
-        prof.PickHoverDwellMs := dwell
+    } catch {
+        dwell := 120
+    }
 
-        prof.PickConfirmKey := UI.DdPickKey.Text
+    pk := "LButton"
+    try {
+        pk := UI.DdPickKey.Text
+    } catch {
+        pk := "LButton"
+    }
 
-        Storage_SaveProfile(prof)
+    ; 加载文件夹模型 → 写 General → 保存模块 → 规范化到运行时
+    ok := false
+    try {
+        p := Storage_Profile_LoadFull(name)
+        g := p["General"]
+        g["StartHotkey"] := hk
+        g["PollIntervalMs"] := pi
+        g["SendCooldownMs"] := delay
+        g["PickHoverEnabled"] := chPick
+        g["PickHoverOffsetY"] := offY
+        g["PickHoverDwellMs"] := dwell
+        g["PickConfirmKey"] := pk
+        p["General"] := g
+
+        SaveModule_General(p)
+        rt := PM_ToRuntime(p)
+        App["ProfileData"] := rt
+        ok := true
+    } catch as e {
+        ok := false
         try {
-            Profile_UI_SetStartHotkeyEcho(prof.StartHotkey)
+            Logger_Exception("UI", e, Map("where","ApplyGeneral_Save", "profile", name))
+        } catch {
+        }
+    }
+
+    ; 运行时后续
+    if (ok) {
+        try {
+            Profile_UI_SetStartHotkeyEcho(App["ProfileData"].StartHotkey)
         } catch {
         }
         try {
-            Hotkeys_BindStartHotkey(prof.StartHotkey)
+            Hotkeys_BindStartHotkey(App["ProfileData"].StartHotkey)
         } catch {
         }
         try {
             Dup_OnProfileChanged()
         } catch {
         }
-
+        try {
+            Logger_Info("UI", "ApplyGeneral end", Map("hk", hk, "poll", pi, "delay", delay))
+        } catch {
+        }
         Notify(T("msg.saved","配置已保存"))
-    } catch as e {
-        MsgBox T("msg.saveFail","保存失败：") e.Message
+    } else {
+        MsgBox T("msg.saveFail","保存失败")
     }
 }
 
 UI_Profile_FallbackRect() {
     global UI
+
     navW := 220
     mX := 12
     mY := 10
@@ -656,6 +885,7 @@ UI_Profile_FallbackRect() {
         mX := 12
         mY := 10
     }
+
     rc := Buffer(16, 0)
     try {
         DllCall("user32\GetClientRect", "ptr", UI.Main.Hwnd, "ptr", rc.Ptr)
@@ -671,26 +901,44 @@ UI_Profile_FallbackRect() {
     }
 }
 
-; 判断是否为鼠标类热键（支持 ~ 前缀）
 Profile_IsMouseHotkey(hk) {
-    if (hk = "")
+    if (hk = "") {
         return false
+    }
     return RegExMatch(hk, "i)^(~?)(XButton1|XButton2|MButton|Wheel(Up|Down|Left|Right))$")
 }
 
-; 按“已保存/指定”的热键更新UI显示（键盘→Hotkey；鼠标→标签）
 Profile_UI_SetStartHotkeyEcho(hk) {
     global UI, g_Profile_Populating
+
     g_Profile_Populating := true
     try {
         if Profile_IsMouseHotkey(hk) {
-            try UI.HkStart.Value := ""          ; Hotkey 控件不显示鼠标
-            try UI.HkStart.Tag   := hk          ; 在 Tag 里缓存鼠标热键
-            try UI.LblStartEcho.Text := "鼠标: " hk
+            try {
+                UI.HkStart.Value := ""
+            } catch {
+            }
+            try {
+                UI.HkStart.Tag := hk
+            } catch {
+            }
+            try {
+                UI.LblStartEcho.Text := "鼠标: " hk
+            } catch {
+            }
         } else {
-            try UI.HkStart.Tag   := ""          ; 清掉鼠标缓存
-            try UI.LblStartEcho.Text := ""      ; 清掉回显
-            try UI.HkStart.Value := hk          ; 键盘热键回填 Hotkey
+            try {
+                UI.HkStart.Tag := ""
+            } catch {
+            }
+            try {
+                UI.LblStartEcho.Text := ""
+            } catch {
+            }
+            try {
+                UI.HkStart.Value := hk
+            } catch {
+            }
         }
     } catch {
     }

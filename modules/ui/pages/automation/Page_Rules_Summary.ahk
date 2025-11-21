@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-;Page_Rules_Summary.ahk
+; modules\ui\pages\automation\Page_Rules_Summary.ahk
 ; 自动化 → 循环规则（摘要页）
 ; 严格块结构 if/try/catch，不使用单行形式
 ; 控件前缀：RU_
@@ -9,8 +9,6 @@ Page_Rules_Build(page) {
     rc := UI_GetPageRect()
     page.Controls := []
 
-    ; ====== 摘要区 ======
-    ; 计算摘要区实际高度：标题栏26 + 7行文本编辑框(7*22=154) + 按钮区域(26+5=31) = 211像素
     sumH := 26 + 6*22 + 8 + 26 + 10
     UI.RU_GB_Sum := UI.Main.Add("GroupBox", Format("x{} y{} w{} h{}", rc.X, rc.Y, rc.W, sumH), "循环规则 - 摘要")
     page.Controls.Push(UI.RU_GB_Sum)
@@ -24,7 +22,6 @@ Page_Rules_Build(page) {
     UI.RU_BtnSave := UI.Main.Add("Button", "x+8 w100 h26", "保存")
     page.Controls.Push(UI.RU_BtnSave)
 
-    ; ====== 规则列表 ======
     ly := rc.Y + sumH + 10
     listH := Max(300, rc.H - (ly - rc.Y))
     UI.RU_GB_List := UI.Main.Add("GroupBox", Format("x{} y{} w{} h{}", rc.X, ly, rc.W, listH), "规则管理")
@@ -34,23 +31,17 @@ Page_Rules_Build(page) {
         , ["ID","启用","名称","逻辑","条件数","动作数","冷却ms","优先级","动作间隔","线程"])
     page.Controls.Push(UI.RU_LV)
 
-    ; 管理按钮
     UI.RU_BtnAdd := UI.Main.Add("Button", Format("x{} y{} w90 h26", rc.X + 12, ly + listH - 40), "新增规则")
     page.Controls.Push(UI.RU_BtnAdd)
-    
     UI.RU_BtnEdit := UI.Main.Add("Button", "x+8 w90 h26", "编辑规则")
     page.Controls.Push(UI.RU_BtnEdit)
-    
     UI.RU_BtnDel := UI.Main.Add("Button", "x+8 w90 h26", "删除规则")
     page.Controls.Push(UI.RU_BtnDel)
-    
     UI.RU_BtnUp := UI.Main.Add("Button", "x+8 w90 h26", "上移")
     page.Controls.Push(UI.RU_BtnUp)
-    
     UI.RU_BtnDown := UI.Main.Add("Button", "x+8 w90 h26", "下移")
     page.Controls.Push(UI.RU_BtnDown)
 
-    ; 事件
     UI.RU_BtnRefresh.OnEvent("Click", Rules_OnRefresh)
     UI.RU_BtnSave.OnEvent("Click", Rules_OnSave)
     UI.RU_BtnAdd.OnEvent("Click", Rules_OnAdd)
@@ -60,13 +51,11 @@ Page_Rules_Build(page) {
     UI.RU_BtnDown.OnEvent("Click", Rules_OnMoveDown)
     UI.RU_LV.OnEvent("DoubleClick", Rules_OnEdit)
 
-    ; 首次刷新
     Rules_RefreshAll()
 }
 
 Page_Rules_Layout(rc) {
     try {
-        ; 计算摘要区实际高度：标题栏26 + 7行文本编辑框(7*22=154) + 按钮区域(26+5=31) = 211像素
         sumH := 26 + 6*22 + 8 + 26 + 10
         UI.RU_GB_Sum.Move(rc.X, rc.Y, rc.W, sumH)
         UI.RU_Info.Move(rc.X + 12, rc.Y + 26, rc.W - 24)
@@ -117,8 +106,10 @@ Rules_FillSummary() {
                 en := en + 1
             }
             thr := 1
-            if (HasProp(r, "ThreadId")) {
-                thr := r.ThreadId
+            try {
+                thr := HasProp(r, "ThreadId") ? r.ThreadId : 1
+            } catch {
+                thr := 1
             }
             if !byThr.Has(thr) {
                 byThr[thr] := 0
@@ -126,8 +117,10 @@ Rules_FillSummary() {
             byThr[thr] := byThr[thr] + 1
 
             lf := 0
-            if (HasProp(r, "LastFire")) {
-                lf := r.LastFire
+            try {
+                lf := HasProp(r, "LastFire") ? r.LastFire : 0
+            } catch {
+                lf := 0
             }
             if (lf > lastAny) {
                 lastAny := lf
@@ -182,20 +175,76 @@ Rules_FillList() {
             return
         }
         for i, r in App["ProfileData"].Rules {
-            en := (HasProp(r,"Enabled") && r.Enabled) ? "√" : ""
-            name := HasProp(r,"Name") ? r.Name : ("Rule" i)
-            logic := HasProp(r,"Logic") ? r.Logic : "AND"
-            cc := HasProp(r,"Conditions") ? r.Conditions.Length : 0
-            ac := HasProp(r,"Actions") ? r.Actions.Length : 0
-            cd := HasProp(r,"CooldownMs") ? r.CooldownMs : 0
-            prio := HasProp(r,"Priority") ? r.Priority : i
-            gap := HasProp(r,"ActionGapMs") ? r.ActionGapMs : 60
-            thr := HasProp(r,"ThreadId") ? r.ThreadId : 1
+            rid := 0
+            en := ""
+            name := ""
+            logic := ""
+            cc := 0
+            ac := 0
+            cd := 0
+            prio := i
+            gap := 60
+            thr := 1
+            tname := ""
+
+            try {
+                rid := OM_Get(r, "Id", 0)
+            } catch {
+                rid := 0
+            }
+            try {
+                en := (HasProp(r,"Enabled") && r.Enabled) ? "√" : ""
+            } catch {
+                en := ""
+            }
+            try {
+                name := HasProp(r,"Name") ? r.Name : ("Rule" i)
+            } catch {
+                name := "Rule"
+            }
+            try {
+                logic := HasProp(r,"Logic") ? r.Logic : "AND"
+            } catch {
+                logic := "AND"
+            }
+            try {
+                cc := HasProp(r,"Conditions") ? r.Conditions.Length : 0
+            } catch {
+                cc := 0
+            }
+            try {
+                ac := HasProp(r,"Actions") ? r.Actions.Length : 0
+            } catch {
+                ac := 0
+            }
+            try {
+                cd := HasProp(r,"CooldownMs") ? r.CooldownMs : 0
+            } catch {
+                cd := 0
+            }
+            try {
+                prio := HasProp(r,"Priority") ? r.Priority : i
+            } catch {
+                prio := i
+            }
+            try {
+                gap := HasProp(r,"ActionGapMs") ? r.ActionGapMs : 60
+            } catch {
+                gap := 60
+            }
+            try {
+                thr := HasProp(r,"ThreadId") ? r.ThreadId : 1
+            } catch {
+                thr := 1
+            }
             tname := ThreadNameById(thr)
-            UI.RU_LV.Add("", i, en, name, logic, cc, ac, cd, prio, gap, tname)
+            UI.RU_LV.Add("", rid, en, name, logic, cc, ac, cd, prio, gap, tname)
         }
         loop 10 {
-            UI.RU_LV.ModifyCol(A_Index, "AutoHdr")
+            try {
+                UI.RU_LV.ModifyCol(A_Index, "AutoHdr")
+            } catch {
+            }
         }
     } catch {
     } finally {
@@ -210,8 +259,12 @@ ThreadNameById(id) {
     global App
     if HasProp(App["ProfileData"], "Threads") {
         for _, t in App["ProfileData"].Threads {
-            if (t.Id = id)
-                return t.Name
+            try {
+                if (t.Id = id) {
+                    return t.Name
+                }
+            } catch {
+            }
         }
     }
     return (id = 1) ? "默认线程" : "线程#" id
@@ -224,19 +277,225 @@ Rules_OnRefresh(*) {
 }
 
 Rules_OnSave(*) {
-    try {
-        Storage_SaveProfile(App["ProfileData"])
-        Notify("循环配置已保存")
-    } catch {
-        MsgBox "保存失败。"
+    global App
+    if !(IsSet(App) && App.Has("CurrentProfile") && App.Has("ProfileData")) {
+        MsgBox "未选择配置或配置未加载。"
+        return
     }
+
+    name := ""
+    try {
+        name := App["CurrentProfile"]
+    } catch {
+        name := ""
+    }
+    if (name = "") {
+        MsgBox "未选择配置。"
+        return
+    }
+
+    p := 0
+    try {
+        p := Storage_Profile_LoadFull(name)
+    } catch {
+        MsgBox "加载配置失败。"
+        return
+    }
+
+    newArr := []
+    try {
+        if (HasProp(App["ProfileData"], "Rules") && IsObject(App["ProfileData"].Rules)) {
+            skIdByIdx := Map()
+            ptIdByIdx := Map()
+
+            try {
+                if (p.Has("Skills") && IsObject(p["Skills"])) {
+                    si := 1
+                    while (si <= p["Skills"].Length) {
+                        sid := 0
+                        try {
+                            sid := OM_Get(p["Skills"][si], "Id", 0)
+                        } catch {
+                            sid := 0
+                        }
+                        skIdByIdx[si] := sid
+                        si := si + 1
+                    }
+                }
+            } catch {
+            }
+
+            try {
+                if (p.Has("Points") && IsObject(p["Points"])) {
+                    pi := 1
+                    while (pi <= p["Points"].Length) {
+                        pid := 0
+                        try {
+                            pid := OM_Get(p["Points"][pi], "Id", 0)
+                        } catch {
+                            pid := 0
+                        }
+                        ptIdByIdx[pi] := pid
+                        pi := pi + 1
+                    }
+                }
+            } catch {
+            }
+
+            i := 1
+            while (i <= App["ProfileData"].Rules.Length) {
+                rr := App["ProfileData"].Rules[i]
+                r := PM_NewRule()
+                try {
+                    r["Id"] := OM_Get(rr, "Id", 0)
+                } catch {
+                }
+                r["Name"]             := OM_Get(rr, "Name", "Rule")
+                r["Enabled"]          := OM_Get(rr, "Enabled", 1)
+                r["Logic"]            := OM_Get(rr, "Logic", "AND")
+                r["CooldownMs"]       := OM_Get(rr, "CooldownMs", 500)
+                r["Priority"]         := OM_Get(rr, "Priority", i)
+                r["ActionGapMs"]      := OM_Get(rr, "ActionGapMs", 60)
+                r["ThreadId"]         := OM_Get(rr, "ThreadId", 1)
+                r["SessionTimeoutMs"] := OM_Get(rr, "SessionTimeoutMs", 0)
+                r["AbortCooldownMs"]  := OM_Get(rr, "AbortCooldownMs", 0)
+
+                ; 条件（索引 → Id）
+                conds := []
+                try {
+                    if (HasProp(rr, "Conditions") && IsObject(rr.Conditions)) {
+                        j := 1
+                        while (j <= rr.Conditions.Length) {
+                            c0 := rr.Conditions[j]
+                            kind := OM_Get(c0, "Kind", "Pixel")
+                            kindU := StrUpper(kind)
+
+                            if (kindU = "COUNTER") {
+                                si := OM_Get(c0, "SkillIndex", 0)
+                                sid := 0
+                                try {
+                                    sid := skIdByIdx.Has(si) ? skIdByIdx[si] : 0
+                                } catch {
+                                    sid := 0
+                                }
+                                cmp := OM_Get(c0, "Cmp", "GE")
+                                val := OM_Get(c0, "Value", 1)
+                                rst := OM_Get(c0, "ResetOnTrigger", 0)
+                                conds.Push({ Kind:"Counter", SkillId: sid, Cmp: cmp, Value: val, ResetOnTrigger: rst })
+                            } else {
+                                rt  := OM_Get(c0, "RefType", "Skill")
+                                ri  := OM_Get(c0, "RefIndex", 0)
+                                op  := OM_Get(c0, "Op", "EQ")
+                                refId := 0
+                                if (StrUpper(rt) = "SKILL") {
+                                    try {
+                                        refId := skIdByIdx.Has(ri) ? skIdByIdx[ri] : 0
+                                    } catch {
+                                        refId := 0
+                                    }
+                                } else {
+                                    try {
+                                        refId := ptIdByIdx.Has(ri) ? ptIdByIdx[ri] : 0
+                                    } catch {
+                                        refId := 0
+                                    }
+                                }
+                                ; 颜色/容差的持久层字段由 UI 另处确定；此处维持必要字段
+                                conds.Push({ Kind:"Pixel", RefType: rt, RefId: refId, Op: op, Color: "0x000000", Tol: 16 })
+                            }
+                            j := j + 1
+                        }
+                    }
+                } catch {
+                }
+                r["Conditions"] := conds
+
+                ; 动作（索引 → Id）
+                acts := []
+                try {
+                    if (HasProp(rr, "Actions") && IsObject(rr.Actions)) {
+                        j := 1
+                        while (j <= rr.Actions.Length) {
+                            a0 := rr.Actions[j]
+                            si := OM_Get(a0, "SkillIndex", 0)
+                            sid := 0
+                            try {
+                                sid := skIdByIdx.Has(si) ? skIdByIdx[si] : 0
+                            } catch {
+                                sid := 0
+                            }
+
+                            a := PM_NewAction()
+                            a["SkillId"]         := sid
+                            a["DelayMs"]         := OM_Get(a0, "DelayMs", 0)
+                            a["HoldMs"]          := OM_Get(a0, "HoldMs", -1)
+                            a["RequireReady"]    := OM_Get(a0, "RequireReady", 0)
+                            a["Verify"]          := OM_Get(a0, "Verify", 0)
+                            a["VerifyTimeoutMs"] := OM_Get(a0, "VerifyTimeoutMs", 600)
+                            a["Retry"]           := OM_Get(a0, "Retry", 0)
+                            a["RetryGapMs"]      := OM_Get(a0, "RetryGapMs", 150)
+                            acts.Push(a)
+                            j := j + 1
+                        }
+                    }
+                } catch {
+                }
+                r["Actions"] := acts
+
+                newArr.Push(r)
+                i := i + 1
+            }
+        }
+    } catch {
+    }
+
+    p["Rules"] := newArr
+
+    ok := false
+    try {
+        SaveModule_Rules(p)
+        ok := true
+    } catch {
+        ok := false
+    }
+    if (!ok) {
+        MsgBox "保存失败。"
+        return
+    }
+
+    try {
+        p2 := Storage_Profile_LoadFull(name)
+        rt := PM_ToRuntime(p2)
+        App["ProfileData"] := rt
+    } catch {
+        MsgBox "保存成功，但重新加载失败，请切换配置后重试。"
+        return
+    }
+
+    try {
+        WorkerPool_Rebuild()
+    } catch {
+    }
+    try {
+        Counters_Init()
+    } catch {
+    }
+    try {
+        Rotation_Reset()
+        Rotation_InitFromProfile()
+    } catch {
+    }
+
+    Rules_RefreshAll()
+    Notify("循环配置已保存")
 }
 
 Rules_OnAdd(*) {
+    global App
     try {
-        global App
         newR := {
-            Name: "新规则", Enabled: 1, Logic: "AND", CooldownMs: 500
+            Id: 0
+          , Name: "新规则", Enabled: 1, Logic: "AND", CooldownMs: 500
           , Priority: App["ProfileData"].Rules.Length + 1, ActionGapMs: 60
           , Conditions: [], Actions: [], LastFire: 0, ThreadId: 1
         }
@@ -248,13 +507,25 @@ Rules_OnAdd(*) {
 
 OnSavedNew(savedR, idx) {
     global App
+    try {
+        if !HasProp(savedR, "Id") {
+            savedR.Id := 0
+        }
+    } catch {
+    }
     App["ProfileData"].Rules.Push(savedR)
     Rules_RefreshAll()
 }
 
 Rules_OnEdit(*) {
-    row := UI.RU_LV.GetNext(0, "Focused")
-    if !row {
+    global App, UI
+    row := 0
+    try {
+        row := UI.RU_LV.GetNext(0, "Focused")
+    } catch {
+        row := 0
+    }
+    if (!row) {
         MsgBox "请先选中一个规则。"
         return
     }
@@ -269,21 +540,35 @@ Rules_OnEdit(*) {
 
 OnSavedEdit(savedR, idx2) {
     global App
+    try {
+        old := App["ProfileData"].Rules[idx2]
+        if (old && HasProp(old, "Id")) {
+            savedR.Id := old.Id
+        }
+    } catch {
+    }
     App["ProfileData"].Rules[idx2] := savedR
     Rules_RefreshAll()
 }
 
 Rules_OnDelete(*) {
-    row := UI.RU_LV.GetNext(0, "Focused")
-    if !row {
+    global App, UI
+    row := 0
+    try {
+        row := UI.RU_LV.GetNext(0, "Focused")
+    } catch {
+        row := 0
+    }
+    if (!row) {
         MsgBox "请先选中一个规则。"
         return
     }
     try {
         idx := row
         App["ProfileData"].Rules.RemoveAt(idx)
-        for i, r in App["ProfileData"].Rules
+        for i, r in App["ProfileData"].Rules {
             r.Priority := i
+        }
         Rules_RefreshAll()
         Notify("已删除规则")
     } catch {
@@ -292,18 +577,28 @@ Rules_OnDelete(*) {
 }
 
 Rules_OnMoveUp(*) {
-    row := UI.RU_LV.GetNext(0, "Focused")
-    if !row
-        return
+    global App, UI
+    row := 0
     try {
-        from := row, to := from - 1
-        if (to < 1)
+        row := UI.RU_LV.GetNext(0, "Focused")
+    } catch {
+        row := 0
+    }
+    if (!row) {
+        return
+    }
+    try {
+        from := row
+        to := from - 1
+        if (to < 1) {
             return
+        }
         item := App["ProfileData"].Rules[from]
         App["ProfileData"].Rules.RemoveAt(from)
         App["ProfileData"].Rules.InsertAt(to, item)
-        for i, r in App["ProfileData"].Rules
+        for i, r in App["ProfileData"].Rules {
             r.Priority := i
+        }
         Rules_RefreshAll()
         UI.RU_LV.Modify(to, "Select Focus Vis")
     } catch {
@@ -312,18 +607,28 @@ Rules_OnMoveUp(*) {
 }
 
 Rules_OnMoveDown(*) {
-    row := UI.RU_LV.GetNext(0, "Focused")
-    if !row
-        return
+    global App, UI
+    row := 0
     try {
-        from := row, to := from + 1
-        if (to > App["ProfileData"].Rules.Length)
+        row := UI.RU_LV.GetNext(0, "Focused")
+    } catch {
+        row := 0
+    }
+    if (!row) {
+        return
+    }
+    try {
+        from := row
+        to := from + 1
+        if (to > App["ProfileData"].Rules.Length) {
             return
+        }
         item := App["ProfileData"].Rules[from]
         App["ProfileData"].Rules.RemoveAt(from)
         App["ProfileData"].Rules.InsertAt(to, item)
-        for i, r in App["ProfileData"].Rules
+        for i, r in App["ProfileData"].Rules {
             r.Priority := i
+        }
         Rules_RefreshAll()
         UI.RU_LV.Modify(to, "Select Focus Vis")
     } catch {

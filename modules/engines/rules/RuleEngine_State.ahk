@@ -35,3 +35,20 @@ global RE_ScanOrder := IsSet(RE_ScanOrder) ? RE_ScanOrder : []
 RE_SessionActive() {
     return (IsObject(RE_Session) && RE_Session.Active)
 }
+; 在 ProfileData 重新加载/替换后调用
+RE_OnProfileDataReplaced(prof) {
+    global RE_LastFireTick
+    try {
+        RE_LastFireTick := Map()
+    } catch {
+        RE_LastFireTick := Map()
+    }
+
+    RE_ClearFilter()
+    RE_ClearScanOrder()
+
+    ; 可选：根据新轨道注入扫描顺序（若 Rotation 已注入可忽略）
+    ; if (IsObject(prof) && HasProp(prof, "Rotation") && IsObject(prof.Rotation)) {
+    ;     ; 例如：从当前轨道 RuleRefs 注入（这些应是运行时索引）
+    ; }
+}

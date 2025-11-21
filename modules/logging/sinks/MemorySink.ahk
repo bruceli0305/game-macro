@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+;modules\logging\sinks\MemorySink.ahk
 
 global g_LogMem := Map()
 
