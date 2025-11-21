@@ -492,29 +492,56 @@ Rules_OnSave(*) {
 
 Rules_OnAdd(*) {
     global App
+    ; 安全计算新规则的优先级
+    prio := 1
     try {
-        newR := {
-            Id: 0
-          , Name: "新规则", Enabled: 1, Logic: "AND", CooldownMs: 500
-          , Priority: App["ProfileData"].Rules.Length + 1, ActionGapMs: 60
-          , Conditions: [], Actions: [], LastFire: 0, ThreadId: 1
+        if (IsSet(App) && App.Has("ProfileData") && HasProp(App["ProfileData"], "Rules")
+        && IsObject(App["ProfileData"].Rules)) {
+            prio := App["ProfileData"].Rules.Length + 1
+        } else {
+            prio := 1
         }
-        RuleEditor_Open(newR, 0, OnSavedNew)
     } catch {
-        MsgBox "无法新增规则。"
+        prio := 1
     }
-}
 
-OnSavedNew(savedR, idx) {
-    global App
+    newR := { Id: 0
+            , Name: "新规则", Enabled: 1, Logic: "AND"
+            , CooldownMs: 500, Priority: prio, ActionGapMs: 60
+            , Conditions: [], Actions: [], LastFire: 0, ThreadId: 1 }
+
+    ; 尝试打开编辑器，若失败显示具体错误信息，便于定位 include 问题
     try {
-        if !HasProp(savedR, "Id") {
-            savedR.Id := 0
+        RuleEditor_Open(newR, 0, OnSavedNew)
+    } catch as e {
+        msg := "无法新增规则。"
+        try {
+            msg := msg "`r`n" e.Message
         }
-    } catch {
+        MsgBox msg
+        return
     }
-    App["ProfileData"].Rules.Push(savedR)
-    Rules_RefreshAll()
+
+    OnSavedNew(savedR, idx) {
+        global App
+        try {
+            if !HasProp(savedR, "Id") {
+                savedR.Id := 0
+            }
+        } catch {
+        }
+        ; 确保 Rules 数组存在
+        try {
+            if !(IsSet(App) && App.Has("ProfileData") && HasProp(App["ProfileData"], "Rules")
+            && IsObject(App["ProfileData"].Rules)) {
+                App["ProfileData"].Rules := []
+            }
+        } catch {
+            App["ProfileData"].Rules := []
+        }
+        App["ProfileData"].Rules.Push(savedR)
+        Rules_RefreshAll()
+    }
 }
 
 Rules_OnEdit(*) {

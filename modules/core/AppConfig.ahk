@@ -24,6 +24,8 @@ AppConfig_Init() {
     if FileExist(App["AppConfigPath"]) {
         try {
             lang := IniRead(App["AppConfigPath"], "General", "Language", gAppCfg["Language"])
+            version := IniRead(App["AppConfigPath"], "General", "Version", gAppCfg["Version"])
+            gAppCfg["Version"] := version
             gAppCfg["Language"] := lang
         } catch {
         }
