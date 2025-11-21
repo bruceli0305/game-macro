@@ -9,14 +9,15 @@ Page_Settings_About_Build(page) {
     rc := UI_GetPageRect()
     page.Controls := []
 
-    ; 分组：关于与环境
+    ; 分组：关于与环境（初始高度占位，实际在 Layout 中自适应）
     UI.SA_GB := UI.Main.Add("GroupBox", Format("x{} y{} w{} h270", rc.X, rc.Y, rc.W), T("about.title","关于与环境"))
     page.Controls.Push(UI.SA_GB)
 
+    ; Info 文本（初始 r10，占位，Layout 中会改成自适应高度）
     UI.SA_Info := UI.Main.Add("Edit", Format("x{} y{} w{} r10 ReadOnly", rc.X + 12, rc.Y + 26, rc.W - 24))
     page.Controls.Push(UI.SA_Info)
 
-    ; 按钮行1：目录
+    ; 按钮行1：目录（具体位置在 Layout 里按底部贴边重排）
     y1 := rc.Y + 26 + 10*22 + 12
     UI.SA_BtnLogs     := UI.Main.Add("Button", Format("x{} y{} w120 h26", rc.X + 12, y1), T("about.openLogs","打开日志目录"))
     UI.SA_BtnProfiles := UI.Main.Add("Button", "x+8 w120 h26", T("about.openProfiles","打开配置目录"))
@@ -27,7 +28,7 @@ Page_Settings_About_Build(page) {
     page.Controls.Push(UI.SA_BtnExports)
     page.Controls.Push(UI.SA_BtnLangDir)
 
-    ; 按钮行2：日志与依赖
+    ; 按钮行2：日志与依赖（具体位置在 Layout 里按底部贴边重排）
     y2 := y1 + 34
     UI.SA_BtnNative := UI.Main.Add("Button", Format("x{} y{} w150 h26", rc.X + 12, y2), T("about.openNative","打开 DXGI 原生日志"))
     UI.SA_BtnHost   := UI.Main.Add("Button", "x+8 w150 h26", T("about.openHost","打开 WorkerHost 位置"))
@@ -54,20 +55,62 @@ Page_Settings_About_Build(page) {
 
 Page_Settings_About_Layout(rc) {
     try {
-        UI.SA_GB.Move(rc.X, rc.Y, rc.W)
-        UI.SA_Info.Move(rc.X + 12, rc.Y + 26, rc.W - 24)
+        ; —— 计算底部两行按钮的 Y，并固定贴底 —— 
+        margin := 12
+        rowH := 26
+        gap := 8
 
-        y1 := rc.Y + 26 + 10*22 + 12
-        UI.SA_BtnLogs.Move(rc.X + 12, y1)
-        UI.SA_BtnProfiles.Move(, y1)
-        UI.SA_BtnExports.Move(, y1)
-        UI.SA_BtnLangDir.Move(, y1)
+        y2 := rc.Y + rc.H - margin - rowH
+        y1 := y2 - gap - rowH
 
-        y2 := y1 + 34
-        UI.SA_BtnNative.Move(rc.X + 12, y2)
-        UI.SA_BtnHost.Move(, y2)
-        UI.SA_BtnGitHub.Move(, y2)
-        UI.SA_BtnRefresh.Move(, y2)
+        ; 按钮等宽排列：每行4个
+        bwMin := 96
+        bw := Floor((rc.W - 2*margin - 3*gap) / 4)
+        if (bw < bwMin) {
+            bw := bwMin
+        }
+
+        ; 行1（四个等宽）
+        xStart := rc.X + margin
+        xCur := xStart
+
+        UI_MoveSafe(UI.SA_BtnLogs,     xCur, y1, bw)
+        xCur := xCur + bw + gap
+        UI_MoveSafe(UI.SA_BtnProfiles, xCur, y1, bw)
+        xCur := xCur + bw + gap
+        UI_MoveSafe(UI.SA_BtnExports,  xCur, y1, bw)
+        xCur := xCur + bw + gap
+        UI_MoveSafe(UI.SA_BtnLangDir,  xCur, y1, bw)
+
+        ; 行2（四个等宽）
+        xCur := xStart
+        UI_MoveSafe(UI.SA_BtnNative,  xCur, y2, bw)
+        xCur := xCur + bw + gap
+        UI_MoveSafe(UI.SA_BtnHost,    xCur, y2, bw)
+        xCur := xCur + bw + gap
+        UI_MoveSafe(UI.SA_BtnGitHub,  xCur, y2, bw)
+        xCur := xCur + bw + gap
+        UI_MoveSafe(UI.SA_BtnRefresh, xCur, y2, bw)
+
+        ; —— GroupBox 高度填满按钮之上区域 —— 
+        gbX := rc.X
+        gbY := rc.Y
+        gbW := rc.W
+        gbH := y1 - rc.Y - gap
+        if (gbH < 120) {
+            gbH := 120
+        }
+        UI_MoveSafe(UI.SA_GB, gbX, gbY, gbW, gbH)
+
+        ; —— Info 高度自适应 GroupBox —— 
+        infoX := rc.X + 12
+        infoY := rc.Y + 26       ; GroupBox 内顶部留出标题高度
+        infoW := rc.W - 24
+        infoH := gbH - 26 - 12   ; 标题 + 下边距
+        if (infoH < 60) {
+            infoH := 60
+        }
+        UI_MoveSafe(UI.SA_Info, infoX, infoY, infoW, infoH)
     } catch {
     }
 }
@@ -91,16 +134,7 @@ SettingsAbout_BuildSummary() {
     sum := ""
 
     ; 版本与路径
-    ver := "unknown"
-    try {
-        if (IsSet(App) && App.Has("Version")) {
-            ver := App["Version"]
-        } else {
-            ver := "v0"
-        }
-    } catch {
-        ver := "unknown"
-    }
+    ver := SettingsAbout_GetVersion()
     root := A_ScriptDir
     logs := A_ScriptDir "\Logs"
     profiles := ""
@@ -161,7 +195,12 @@ SettingsAbout_BuildSummary() {
 
     ; WorkerHost 存在性
     hostPath := SettingsAbout_FindWorkerHost()
-    hostShown := hostPath != "" ? hostPath : "(未找到)"
+    hostShown := ""
+    if (hostPath != "") {
+        hostShown := hostPath
+    } else {
+        hostShown := "(未找到)"
+    }
 
     sum .= "版本: " ver "`r`n"
     sum .= "架构: " arch "    权限: " admin "    OS: " os "`r`n"
@@ -177,6 +216,56 @@ SettingsAbout_BuildSummary() {
     sum .= "WorkerHost: " hostShown "`r`n"
 
     return sum
+}
+
+; 版本读取策略：
+; 1) 若 App["Version"] 已设置，直接使用
+; 2) 若为编译版，读取可执行文件版本信息
+; 3) 尝试读取脚本目录 version.txt（去除首尾空白）
+; 4) 多重回退 "v0"
+SettingsAbout_GetVersion() {
+    global App
+    ver := ""
+
+    try {
+        if (IsSet(App) && App.Has("Version")) {
+            v0 := App["Version"]
+            if (v0 != "") {
+                return v0
+            }
+        }
+    } catch {
+    }
+
+    try {
+        if (A_IsCompiled) {
+            vexe := ""
+            try {
+                vexe := FileGetVersion(A_ScriptFullPath)
+            } catch {
+                vexe := ""
+            }
+            if (vexe != "") {
+                return vexe
+            }
+        }
+    } catch {
+    }
+
+    try {
+        vfile := A_ScriptDir "\version.txt"
+        if FileExist(vfile) {
+            raw := FileRead(vfile, "UTF-8")
+            if (raw != "") {
+                vtrim := Trim(raw, "`r`n `t")
+                if (vtrim != "") {
+                    return vtrim
+                }
+            }
+        }
+    } catch {
+    }
+    return "v0"
 }
 
 SettingsAbout_FindWorkerHost() {
@@ -295,7 +384,6 @@ SettingsAbout_OnOpenWorkerHost(*) {
 }
 
 SettingsAbout_OnOpenGitHub(*) {
-    ; 打开GitHub项目页面
     githubUrl := "https://github.com/bruceli0305/game-macro"
     try {
         Run githubUrl
