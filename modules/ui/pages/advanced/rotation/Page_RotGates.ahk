@@ -47,13 +47,31 @@ Page_RotGates_Build(page) {
 Page_RotGates_Layout(rc) {
     try {
         UI.RGts_LV.Move(rc.X, rc.Y, rc.W, rc.H - 56)
+
+        ; 统一按钮随窗口移动（全部相对左下角排列）
         yBtn := rc.Y + rc.H - 44
-        UI_MoveSafe(UI.RGts_btnAdd,  rc.X, yBtn)
-        UI_MoveSafe(UI.RGts_btnEdit, "",   yBtn)
-        UI_MoveSafe(UI.RGts_btnDel,  "",   yBtn)
-        UI_MoveSafe(UI.RGts_btnUp,   "",   yBtn)
-        UI_MoveSafe(UI.RGts_btnDn,   "",   yBtn)
-        UI_MoveSafe(UI.RGts_btnSave, "",   yBtn)
+        xCur := rc.X
+        btnW := 90
+        btnGap := 8
+        saveGap := 20
+        saveW := 110
+
+        UI_MoveSafe(UI.RGts_btnAdd,  xCur, yBtn)
+        xCur := xCur + btnW + btnGap
+
+        UI_MoveSafe(UI.RGts_btnEdit, xCur, yBtn)
+        xCur := xCur + btnW + btnGap
+
+        UI_MoveSafe(UI.RGts_btnDel,  xCur, yBtn)
+        xCur := xCur + btnW + btnGap
+
+        UI_MoveSafe(UI.RGts_btnUp,   xCur, yBtn)
+        xCur := xCur + btnW + btnGap
+
+        UI_MoveSafe(UI.RGts_btnDn,   xCur, yBtn)
+        xCur := xCur + btnW + saveGap
+
+        UI_MoveSafe(UI.RGts_btnSave, xCur, yBtn)
     } catch {
     }
 }

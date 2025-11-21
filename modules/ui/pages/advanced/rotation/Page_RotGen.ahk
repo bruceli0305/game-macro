@@ -141,38 +141,131 @@ Page_RotGen_OnEnter(*) {
     Page_RotGen_Refresh()
 }
 
+; 用名称填充“默认轨道”下拉，内部映射到 UI.RG_trackIds（保存时用 Id）
+Page_RotGen_FillDefaultTrackDD(cfg) {
+    global UI
+
+    ; 清空下拉
+    try {
+        DllCall("user32\SendMessageW", "ptr", UI.RG_ddDefTrack.Hwnd, "uint", 0x014B, "ptr", 0, "ptr", 0)  ; CB_RESETCONTENT
+    } catch {
+    }
+
+    names := []
+    ids := []
+
+    ; 优先从 cfg.Tracks 读取 Id 和 Name
+    hasTracks := false
+    try {
+        hasTracks := HasProp(cfg, "Tracks") && IsObject(cfg.Tracks) && (cfg.Tracks.Length > 0)
+    } catch {
+        hasTracks := false
+    }
+
+    if (hasTracks) {
+        for _, t in cfg.Tracks {
+            tid := 0
+            tname := ""
+            try {
+                tid := OM_Get(t, "Id", 0)
+            } catch {
+                tid := 0
+            }
+            try {
+                tname := OM_Get(t, "Name", "")
+            } catch {
+                tname := ""
+            }
+            if (tid > 0) {
+                if (tname = "") {
+                    tname := "轨道#" tid
+                }
+                names.Push(tname)
+                ids.Push(tid)
+            }
+        }
+    }
+
+    ; 没有 Tracks 时，回退到 Id 列表（显示为“轨道#Id”）
+    if (names.Length = 0) {
+        idList := []
+        try {
+            idList := REUI_ListTrackIds(cfg)
+        } catch {
+            idList := []
+        }
+        if (IsObject(idList) && idList.Length > 0) {
+            i := 1
+            while (i <= idList.Length) {
+                idv := 0
+                try {
+                    idv := Integer(idList[i])
+                } catch {
+                    idv := 0
+                }
+                if (idv > 0) {
+                    names.Push("轨道#" idv)
+                    ids.Push(idv)
+                }
+                i := i + 1
+            }
+        }
+    }
+
+    ; 写入下拉与位置信息
+    if (names.Length > 0) {
+        try {
+            UI.RG_ddDefTrack.Add(names)
+        } catch {
+        }
+        UI.RG_trackIds := ids
+
+        wantId := 1
+        try {
+            wantId := OM_Get(cfg, "DefaultTrackId", 1)
+        } catch {
+            wantId := 1
+        }
+        pos := 1
+        i := 1
+        while (i <= ids.Length) {
+            v := 0
+            try {
+                v := Integer(ids[i])
+            } catch {
+                v := 0
+            }
+            if (v = wantId) {
+                pos := i
+                break
+            }
+            i := i + 1
+        }
+        try {
+            UI.RG_ddDefTrack.Value := pos
+            UI.RG_ddDefTrack.Enabled := true
+        } catch {
+        }
+    } else {
+        try {
+            UI.RG_ddDefTrack.Add(["（无轨道）"])
+            UI.RG_ddDefTrack.Value := 1
+            UI.RG_ddDefTrack.Enabled := false
+        } catch {
+        }
+        UI.RG_trackIds := []
+    }
+}
+
 Page_RotGen_Refresh() {
     global UI
     cfg := RotPU_GetRotationCfg()
     if !IsObject(cfg) {
         return
     }
-    ; 默认轨道下拉
-    try {
-        DllCall("user32\SendMessageW", "ptr", UI.RG_ddDefTrack.Hwnd, "uint", 0x014B, "ptr", 0, "ptr", 0)
-    } catch {
-    }
-    ids := REUI_ListTrackIds(cfg)
-    if (IsObject(ids) && ids.Length > 0) {
-        UI.RG_ddDefTrack.Add(ids)
-        pos := 1
-        wantId := OM_Get(cfg, "DefaultTrackId", 1)
-        i := 1
-        while (i <= ids.Length) {
-            idVal := 0
-            try {
-                idVal := Integer(ids[i])
-            } catch {
-                idVal := 0
-            }
-            if (idVal = wantId) {
-                pos := i
-                break
-            }
-            i := i + 1
-        }
-        UI.RG_ddDefTrack.Value := pos
-    }
+
+    ; 默认轨道下拉：显示名称，内部映射到 Id
+    Page_RotGen_FillDefaultTrackDD(cfg)
 
     ; 勾选/数值
     UI.RG_cbEnable.Value := (OM_Get(cfg, "Enabled", 0) ? 1 : 0)
@@ -196,7 +289,6 @@ Page_RotGen_Refresh() {
     UI.RG_edBG_Cool.Value := OM_Get(bg, "CooldownMs", 600)
     UI.RG_edBG_Min.Value := OM_Get(bg, "MinAfterSendMs", 60)
     UI.RG_edBG_Max.Value := OM_Get(bg, "MaxAfterSendMs", 800)
-    ; 补：唯一黑框
     UI.RG_cbBG_Uniq.Value := (OM_Get(bg, "UniqueRequired", 1) ? 1 : 0)
 }
 
@@ -214,16 +306,54 @@ Page_RotGen_OnSave(*) {
     ; 从 UI 写回 cfg
     cfg.Enabled := UI.RG_cbEnable.Value ? 1 : 0
 
-    ids := REUI_ListTrackIds(cfg)
-    if (UI.RG_ddDefTrack.Value >= 1) {
-        if (ids.Length >= UI.RG_ddDefTrack.Value) {
-            cfg.DefaultTrackId := Integer(ids[UI.RG_ddDefTrack.Value])
+    ; 默认轨道：优先用 UI.RG_trackIds，把选择位置映射到 TrackId
+    defId := 1
+    try {
+        if (HasProp(UI, "RG_trackIds") && IsObject(UI.RG_trackIds) && UI.RG_trackIds.Length >= 1) {
+            pos := 0
+            try {
+                pos := UI.RG_ddDefTrack.Value
+            } catch {
+                pos := 0
+            }
+            if (pos >= 1 && pos <= UI.RG_trackIds.Length) {
+                v := 0
+                try {
+                    v := Integer(UI.RG_trackIds[pos])
+                } catch {
+                    v := 0
+                }
+                if (v > 0) {
+                    defId := v
+                }
+            } else {
+                idsFB := REUI_ListTrackIds(cfg)
+                if (IsObject(idsFB) && idsFB.Length >= 1) {
+                    try {
+                        defId := Integer(idsFB[1])
+                    } catch {
+                        defId := 1
+                    }
+                } else {
+                    defId := 1
+                }
+            }
         } else {
-            cfg.DefaultTrackId := 1
+            idsFB2 := REUI_ListTrackIds(cfg)
+            if (IsObject(idsFB2) && idsFB2.Length >= 1) {
+                try {
+                    defId := Integer(idsFB2[1])
+                } catch {
+                    defId := 1
+                }
+            } else {
+                defId := 1
+            }
         }
-    } else {
-        cfg.DefaultTrackId := 1
+    } catch {
+        defId := 1
     }
+    cfg.DefaultTrackId := defId
 
     cfg.BusyWindowMs := (UI.RG_edBusy.Value != "") ? Integer(UI.RG_edBusy.Value) : 200
     cfg.ColorTolBlack := (UI.RG_edTol.Value != "") ? Integer(UI.RG_edTol.Value) : 16
@@ -245,14 +375,8 @@ Page_RotGen_OnSave(*) {
     bg.CooldownMs := (UI.RG_edBG_Cool.Value != "") ? Integer(UI.RG_edBG_Cool.Value) : 600
     bg.MinAfterSendMs := (UI.RG_edBG_Min.Value != "") ? Integer(UI.RG_edBG_Min.Value) : 60
     bg.MaxAfterSendMs := (UI.RG_edBG_Max.Value != "") ? Integer(UI.RG_edBG_Max.Value) : 800
-    ; 补：唯一黑框
     bg.UniqueRequired := UI.RG_cbBG_Uniq.Value ? 1 : 0
     cfg.BlackGuard := bg
-
-    try {
-        Logger_Info("UI.RotGen", "save_click", Map("page", "general", "profile", name))
-    } catch {
-    }
 
     ok := false
     try {

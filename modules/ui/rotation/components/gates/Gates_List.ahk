@@ -1,22 +1,78 @@
 #Requires AutoHotkey v2
 #Include "..\..\RE_UI_Common.ahk"
 
+#Requires AutoHotkey v2
+#Include "..\..\RE_UI_Common.ahk"
+
 REUI_Gates_FillList(lv, cfg) {
     try {
         lv.Opt("-Redraw")
         lv.Delete()
     } catch {
     }
+
+    ; 预构建 TrackId → TrackName 映射
+    trackNames := Map()
     try {
-        if HasProp(cfg, "Gates") && IsObject(cfg.Gates) {
+        if (HasProp(cfg, "Tracks") && IsObject(cfg.Tracks) && cfg.Tracks.Length > 0) {
+            for _, t in cfg.Tracks {
+                tid := 0
+                tname := ""
+                try {
+                    tid := OM_Get(t, "Id", 0)
+                } catch {
+                    tid := 0
+                }
+                try {
+                    tname := OM_Get(t, "Name", "")
+                } catch {
+                    tname := ""
+                }
+                if (tid > 0) {
+                    if (tname = "") {
+                        tname := "轨道#" tid
+                    }
+                    try {
+                        trackNames[tid] := tname
+                    } catch {
+                    }
+                }
+            }
+        }
+    } catch {
+    }
+
+    ; 填充 Gate 列表，来源/目标用名称回显
+    try {
+        if (HasProp(cfg, "Gates") && IsObject(cfg.Gates)) {
             for _, g in cfg.Gates {
-                pri := HasProp(g, "Priority") ? g.Priority : 0
-                frm := HasProp(g, "FromTrackId") ? g.FromTrackId : 0
-                tgt := HasProp(g, "ToTrackId") ? g.ToTrackId : 0
-                lgc := HasProp(g, "Logic") ? g.Logic : "AND"
+                pri := 0
+                frm := 0
+                tgt := 0
+                lgc := "AND"
                 cnt := 0
                 try {
-                    if HasProp(g, "Conds") && IsObject(g.Conds) {
+                    pri := HasProp(g, "Priority") ? g.Priority : OM_Get(g, "Priority", 0)
+                } catch {
+                    pri := 0
+                }
+                try {
+                    frm := HasProp(g, "FromTrackId") ? g.FromTrackId : OM_Get(g, "FromTrackId", 0)
+                } catch {
+                    frm := 0
+                }
+                try {
+                    tgt := HasProp(g, "ToTrackId") ? g.ToTrackId : OM_Get(g, "ToTrackId", 0)
+                } catch {
+                    tgt := 0
+                }
+                try {
+                    lgc := HasProp(g, "Logic") ? g.Logic : OM_Get(g, "Logic", "AND")
+                } catch {
+                    lgc := "AND"
+                }
+                try {
+                    if (HasProp(g, "Conds") && IsObject(g.Conds)) {
                         cnt := g.Conds.Length
                     } else {
                         cnt := 0
@@ -24,17 +80,36 @@ REUI_Gates_FillList(lv, cfg) {
                 } catch {
                     cnt := 0
                 }
+
+                frmTxt := "轨道#" frm
+                tgtTxt := "轨道#" tgt
                 try {
-                    lv.Add("", pri, frm, tgt, lgc, cnt)
+                    if (trackNames.Has(frm)) {
+                        frmTxt := trackNames[frm]
+                    }
+                } catch {
+                }
+                try {
+                    if (trackNames.Has(tgt)) {
+                        tgtTxt := trackNames[tgt]
+                    }
+                } catch {
+                }
+
+                try {
+                    lv.Add("", pri, frmTxt, tgtTxt, lgc, cnt)
                 } catch {
                 }
             }
         }
-        loop 5 {
+
+        i := 1
+        while (i <= 5) {
             try {
-                lv.ModifyCol(A_Index, "AutoHdr")
+                lv.ModifyCol(i, "AutoHdr")
             } catch {
             }
+            i := i + 1
         }
     } catch {
     } finally {

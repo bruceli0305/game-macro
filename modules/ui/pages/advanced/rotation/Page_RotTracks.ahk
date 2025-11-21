@@ -47,13 +47,31 @@ Page_RotTracks_Build(page) {
 Page_RotTracks_Layout(rc) {
     try {
         UI.RT_LV.Move(rc.X, rc.Y, rc.W, rc.H - 56)
+
+        ; 统一按钮随窗口移动（全部相对左下角排列）
         yBtn := rc.Y + rc.H - 44
-        UI_MoveSafe(UI.RT_btnAdd,  rc.X, yBtn)
-        UI_MoveSafe(UI.RT_btnEdit, "",   yBtn)
-        UI_MoveSafe(UI.RT_btnDel,  "",   yBtn)
-        UI_MoveSafe(UI.RT_btnUp,   "",   yBtn)
-        UI_MoveSafe(UI.RT_btnDn,   "",   yBtn)
-        UI_MoveSafe(UI.RT_btnSave, "",   yBtn)
+        xCur := rc.X
+        btnW := 90
+        btnGap := 8
+        saveGap := 20
+        saveW := 110
+
+        UI_MoveSafe(UI.RT_btnAdd,  xCur, yBtn)
+        xCur := xCur + btnW + btnGap
+
+        UI_MoveSafe(UI.RT_btnEdit, xCur, yBtn)
+        xCur := xCur + btnW + btnGap
+
+        UI_MoveSafe(UI.RT_btnDel,  xCur, yBtn)
+        xCur := xCur + btnW + btnGap
+
+        UI_MoveSafe(UI.RT_btnUp,   xCur, yBtn)
+        xCur := xCur + btnW + btnGap
+
+        UI_MoveSafe(UI.RT_btnDn,   xCur, yBtn)
+        xCur := xCur + btnW + saveGap
+
+        UI_MoveSafe(UI.RT_btnSave, xCur, yBtn)
     } catch {
     }
 }
