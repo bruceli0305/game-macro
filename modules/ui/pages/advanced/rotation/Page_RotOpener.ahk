@@ -183,7 +183,7 @@ Page_RotOpener_FillThreads(cfg) {
 }
 
 ; —— 事件（直接转发到 REUI_） ——
-Page_RotOpener_DoWAdd() {
+Page_RotOpener_DoWAdd(*) {
     global UI
     cfg := RotPU_GetRotationCfg()
     if !IsObject(cfg) {
@@ -192,7 +192,7 @@ Page_RotOpener_DoWAdd() {
     RotPU_EnsureOpener(cfg)
     REUI_Opener_WatchAdd(UI.Main, cfg, UI.RO_lvW)
 }
-Page_RotOpener_DoWEdit() {
+Page_RotOpener_DoWEdit(*) {
     global UI
     cfg := RotPU_GetRotationCfg()
     if !IsObject(cfg) {
@@ -201,7 +201,7 @@ Page_RotOpener_DoWEdit() {
     RotPU_EnsureOpener(cfg)
     REUI_Opener_WatchEdit(UI.Main, cfg, UI.RO_lvW)
 }
-Page_RotOpener_DoWDel() {
+Page_RotOpener_DoWDel(*) {
     global UI
     cfg := RotPU_GetRotationCfg()
     if !IsObject(cfg) {
@@ -211,7 +211,7 @@ Page_RotOpener_DoWDel() {
     REUI_Opener_WatchDel(cfg, UI.RO_lvW)
 }
 
-Page_RotOpener_DoSAdd() {
+Page_RotOpener_DoSAdd(*) {
     global UI
     cfg := RotPU_GetRotationCfg()
     if !IsObject(cfg) {
@@ -220,7 +220,7 @@ Page_RotOpener_DoSAdd() {
     RotPU_EnsureOpener(cfg)
     REUI_Opener_StepAdd(UI.Main, cfg, UI.RO_lvS)
 }
-Page_RotOpener_DoSEdit() {
+Page_RotOpener_DoSEdit(*) {
     global UI
     cfg := RotPU_GetRotationCfg()
     if !IsObject(cfg) {
@@ -229,7 +229,7 @@ Page_RotOpener_DoSEdit() {
     RotPU_EnsureOpener(cfg)
     REUI_Opener_StepEdit(UI.Main, cfg, UI.RO_lvS)
 }
-Page_RotOpener_DoSDel() {
+Page_RotOpener_DoSDel(*) {
     global UI
     cfg := RotPU_GetRotationCfg()
     if !IsObject(cfg) {
@@ -238,7 +238,7 @@ Page_RotOpener_DoSDel() {
     RotPU_EnsureOpener(cfg)
     REUI_Opener_StepDel(cfg, UI.RO_lvS)
 }
-Page_RotOpener_DoSUp() {
+Page_RotOpener_DoSUp(*) {
     global UI
     cfg := RotPU_GetRotationCfg()
     if !IsObject(cfg) {
