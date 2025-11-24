@@ -839,6 +839,17 @@ Profile_OnApplyGeneral(*) {
         SaveModule_General(p)
         rt := PM_ToRuntime(p)
         App["ProfileData"] := rt
+        try {
+            CastEngine_InitFromProfile()
+        } catch {
+        }
+        try {
+            if HasProp(App["ProfileData"], "CastDebug") {
+                CastDebug_RebindHotkey(App["ProfileData"].CastDebug.Hotkey)
+                CastDebug_ApplyConfigFromProfile()
+            }
+        } catch {
+        }
         ok := true
     } catch as e {
         ok := false

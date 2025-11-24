@@ -83,6 +83,31 @@ PM_ToRuntime(profile) {
         data.DefaultSkill.LastFire    := 0
     }
 
+    ; === 新增：CastBar 运行时结构 ===
+    data.CastBar := {
+        Enabled: 0
+      , X: 0
+      , Y: 0
+      , Color: "0x000000"
+      , Tol: 10
+      , DebugLog: 0
+      , IgnoreActionDelay: 0
+    }
+    data.CastBar.Enabled := OM_Get(g, "CastBarEnabled", data.CastBar.Enabled)
+    data.CastBar.X := OM_Get(g, "CastBarX", data.CastBar.X)
+    data.CastBar.Y := OM_Get(g, "CastBarY", data.CastBar.Y)
+    data.CastBar.Color := OM_Get(g, "CastBarColor", data.CastBar.Color)
+    data.CastBar.Tol := OM_Get(g, "CastBarTol", data.CastBar.Tol)
+    data.CastBar.DebugLog := OM_Get(g, "CastBarDebugLog", data.CastBar.DebugLog)
+    data.CastBar.IgnoreActionDelay := OM_Get(g, "CastBarIgnoreActionDelay", data.CastBar.IgnoreActionDelay)
+
+    ; === 新增：调试窗口运行时结构 ===
+    data.CastDebug := {
+        Hotkey: OM_Get(g, "CastDebugHotkey", "")
+      , Topmost: OM_Get(g, "CastDebugTopmost", 1)
+      , Alpha: OM_Get(g, "CastDebugAlpha", 230)
+    }
+
     ; ===== Skills =====
     data.Skills := []
     if (profile.Has("Skills") && IsObject(profile["Skills"])) {
@@ -97,7 +122,20 @@ PM_ToRuntime(profile) {
             col  := OM_Get(s, "Color", "0x000000")
             tol  := OM_Get(s, "Tol", 10)
             cast := OM_Get(s, "CastMs", 0)
-            data.Skills.Push({ Id: id, Name: nm, Key: key, X: x, Y: y, Color: col, Tol: tol, CastMs: cast })
+            lock := OM_Get(s, "LockDuringCast", 1)
+            cto  := OM_Get(s, "CastTimeoutMs", 0)
+            data.Skills.Push({
+                  Id: id
+                , Name: nm
+                , Key: key
+                , X: x
+                , Y: y
+                , Color: col
+                , Tol: tol
+                , CastMs: cast
+                , LockDuringCast: lock
+                , CastTimeoutMs: cto
+            })
             i := i + 1
         }
     }

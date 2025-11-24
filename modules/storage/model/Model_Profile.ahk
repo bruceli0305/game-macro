@@ -62,6 +62,20 @@ PM_DefaultGeneral() {
     ds["PreDelayMs"] := 0
     g["DefaultSkill"] := ds
 
+    ; === 新增：施法条配置（CastBar） ===
+    g["CastBarEnabled"] := 0             ; 是否启用施法条检测
+    g["CastBarX"] := 0                   ; 施法条取色点 X
+    g["CastBarY"] := 0                   ; 施法条取色点 Y
+    g["CastBarColor"] := "0x000000"      ; 施法条“激活状态”颜色
+    g["CastBarTol"] := 10                ; 容差
+    g["CastBarDebugLog"] := 0            ; 规则结束时是否写技能状态日志
+    g["CastBarIgnoreActionDelay"] := 0   ; 是否忽略规则的 ActionGapMs / DelayMs
+
+    ; === 新增：技能调试窗口配置（CastDebug） ===
+    g["CastDebugHotkey"] := ""           ; 调试窗口快捷键（例如 "F11"）
+    g["CastDebugTopmost"] := 1           ; 调试窗口是否置顶
+    g["CastDebugAlpha"] := 230           ; 调试窗口透明度 0-255
+
     return g
 }
 
@@ -142,6 +156,13 @@ PM_NewSkill(name := "") {
     s["Color"] := "0x000000"
     s["Tol"] := 10
     s["CastMs"] := 0
+
+    ; 新增：施放期间是否禁止本线程释放其他技能（1=禁止，0=允许穿插）
+    s["LockDuringCast"] := 1
+
+    ; 新增：读条超时（毫秒），0 表示使用 CastMs 或不判超时
+    s["CastTimeoutMs"] := 0
+
     return s
 }
 

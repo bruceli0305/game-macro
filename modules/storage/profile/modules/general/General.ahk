@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-; modules\storage\profile\Save_General.ahk 保存 General 模块
+;modules\storage\profile\modules\general\General.ahk 保存 General 模块
 ; 依赖：OM_Get（modules\util\Obj.ahk）
 
 SaveModule_General(profile) {
@@ -52,7 +52,48 @@ SaveModule_General(profile) {
         IniWrite(OM_Get(g, "PickConfirmKey", "LButton"),  tmp, "General", "PickConfirmKey")
     } catch {
     }
-
+    ; CastBar 配置
+    try {
+        IniWrite(OM_Get(g, "CastBarEnabled", 0), tmp, "General", "CastBarEnabled")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(g, "CastBarX", 0), tmp, "General", "CastBarX")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(g, "CastBarY", 0), tmp, "General", "CastBarY")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(g, "CastBarColor", "0x000000"), tmp, "General", "CastBarColor")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(g, "CastBarTol", 10), tmp, "General", "CastBarTol")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(g, "CastBarDebugLog", 0), tmp, "General", "CastBarDebugLog")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(g, "CastBarIgnoreActionDelay", 0), tmp, "General", "CastBarIgnoreActionDelay")
+    } catch {
+    }
+    ; 调试窗口配置 CastDebug
+    try {
+        IniWrite(OM_Get(g, "CastDebugHotkey", ""), tmp, "General", "CastDebugHotkey")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(g, "CastDebugTopmost", 1), tmp, "General", "CastDebugTopmost")
+    } catch {
+    }
+    try {
+        IniWrite(OM_Get(g, "CastDebugAlpha", 230), tmp, "General", "CastDebugAlpha")
+    } catch {
+    }
     ; DefaultSkill（使用 SkillId）
     ds := Map()
     try {
@@ -183,7 +224,49 @@ FS_Load_General(profileName, profile) {
         g["PickConfirmKey"] := IniRead(file, "General", "PickConfirmKey", OM_Get(g, "PickConfirmKey", "LButton"))
     } catch {
     }
+    ; CastBar 配置
+    try {
+        g["CastBarEnabled"] := Integer(IniRead(file, "General", "CastBarEnabled", OM_Get(g, "CastBarEnabled", 0)))
+    } catch {
+    }
+    try {
+        g["CastBarX"] := Integer(IniRead(file, "General", "CastBarX", OM_Get(g, "CastBarX", 0)))
+    } catch {
+    }
+    try {
+        g["CastBarY"] := Integer(IniRead(file, "General", "CastBarY", OM_Get(g, "CastBarY", 0)))
+    } catch {
+    }
+    try {
+        g["CastBarColor"] := IniRead(file, "General", "CastBarColor", OM_Get(g, "CastBarColor", "0x000000"))
+    } catch {
+    }
+    try {
+        g["CastBarTol"] := Integer(IniRead(file, "General", "CastBarTol", OM_Get(g, "CastBarTol", 10)))
+    } catch {
+    }
+    try {
+        g["CastBarDebugLog"] := Integer(IniRead(file, "General", "CastBarDebugLog", OM_Get(g, "CastBarDebugLog", 0)))
+    } catch {
+    }
+    try {
+        g["CastBarIgnoreActionDelay"] := Integer(IniRead(file, "General", "CastBarIgnoreActionDelay", OM_Get(g, "CastBarIgnoreActionDelay", 0)))
+    } catch {
+    }
 
+    ; 调试窗口配置 CastDebug
+    try {
+        g["CastDebugHotkey"] := IniRead(file, "General", "CastDebugHotkey", OM_Get(g, "CastDebugHotkey", ""))
+    } catch {
+    }
+    try {
+        g["CastDebugTopmost"] := Integer(IniRead(file, "General", "CastDebugTopmost", OM_Get(g, "CastDebugTopmost", 1)))
+    } catch {
+    }
+    try {
+        g["CastDebugAlpha"] := Integer(IniRead(file, "General", "CastDebugAlpha", OM_Get(g, "CastDebugAlpha", 230)))
+    } catch {
+    }
     ; DefaultSkill（SkillId）
     ds := Map()
     try {

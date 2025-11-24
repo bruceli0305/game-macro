@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+;modules\engines\Dup.ahk
 ; DXGI Dup AHK 封装 + 安全兜底（无输出/异常时绝不创建线程）+ 日志
 ; dll: modules\lib\dxgi_dup.dll
 

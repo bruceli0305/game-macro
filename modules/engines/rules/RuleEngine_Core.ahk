@@ -55,12 +55,45 @@ RuleEngine_Tick() {
             }
         }
 
-        if !RuleEngine_EvalRule(r, prof)
+        if !RuleEngine_EvalRule(r, prof) {
             return false
+        }
 
         if RuleEngine_HasCounterCond(r) {
             return RuleEngine_Fire(r, prof, rIdx)
         }
+
+        ; 非计数规则：先构建当前规则技能状态列表（CastEngine）
+        trackId := 0
+        trackName := ""
+        try {
+            if Rotation_IsEnabled() {
+                tr := Rotation_CurrentTrackCfg()
+                if tr {
+                    try {
+                        if HasProp(tr, "Id") {
+                            trackId := tr.Id
+                        }
+                    } catch {
+                    }
+                    try {
+                        if HasProp(tr, "Name") {
+                            trackName := tr.Name
+                        }
+                    } catch {
+                    }
+                }
+            }
+        } catch {
+            trackId := 0
+            trackName := ""
+        }
+
+        try {
+            CastEngine_OnRuleTriggered(prof, rIdx, r, trackId, trackName)
+        } catch {
+        }
+
         RuleEngine_SessionBegin(prof, rIdx, r)
         ; 在 RuleEngine_SessionBegin 之后（或返回 true 前）
         try {
