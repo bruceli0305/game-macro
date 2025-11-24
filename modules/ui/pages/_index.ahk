@@ -1,11 +1,18 @@
-;modules\ui\pages\_index.ahk
-;页面聚合器：先引入框架，再引入所有页面
 #Requires AutoHotkey v2
 
 ; pages aggregator: include framework first, then all pages
 
-; framework (必须先引入，提供 UI_GetPageRect 等通用函数)
+; framework
 #Include "..\UI_Framework.ahk"
+
+; rotation adapters and utils (先于页面)
+#Include "..\rotation\adapters\Rot_MapIndexId.ahk"
+#Include "..\rotation\adapters\Rot_PageUtil.ahk"
+#Include "..\rotation\adapters\Rot_SaveBase.ahk"
+#Include "..\rotation\adapters\Rot_SaveTracks.ahk"
+#Include "..\rotation\adapters\Rot_SaveGates.ahk"
+#Include "..\rotation\adapters\Rot_SaveOpener.ahk"
+
 ; profile API（先于其他页）
 #Include "profile\Page_Profile_API.ahk"
 
@@ -34,7 +41,6 @@
 #Include "advanced\rotation\Page_RotOpener.ahk"
 
 ; tools
-; #Include "tools\Page_Tools_IO.ahk"
 #Include "tools\Page_Tools_Quick.ahk"
 
 ; settings
