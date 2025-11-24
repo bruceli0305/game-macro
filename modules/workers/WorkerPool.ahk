@@ -182,13 +182,28 @@ WorkerPool_SendSkillIndex(threadId, idx, src := "", holdOverride := -1) {
     ok := WorkerPool_FireAndForget(s.Key, delay, finalHold)
 
     if (ok) {
-        try Rotation_OnSkillSent(idx)
+        try {
+            CastEngine_OnSkillSent(idx, src)
+        } catch {
+        }
+
+        try {
+            Rotation_OnSkillSent(idx)
+        } catch {
+        }
+
         newCnt := Counters_Inc(idx)
+
         castMs := 0
-        try castMs := Max(0, Integer(HasProp(s, "CastMs") ? s.CastMs : 0))
+        try {
+            castMs := Max(0, Integer(HasProp(s, "CastMs") ? s.CastMs : 0))
+        } catch {
+            castMs := 0
+        }
         if (castMs > 0) {
             WorkerPool_CastLock(threadId, castMs)
         }
+
         try {
             f := Map()
             f["idx"] := idx

@@ -106,14 +106,24 @@ Profile_RefreshAll_Strong() {
         } catch {
         }
     }
-    ; 新增：首次进入也回填 General 区域，不必等用户切换
+    ; 首次进入也回填 General 区域，并初始化 Cast 引擎
     if (ok) {
         try {
             Profile_UI_ApplyGeneralFromApp()
         } catch {
         }
+        try {
+            CastEngine_InitFromProfile()
+        } catch {
+        }
+        try {
+            if HasProp(App["ProfileData"], "CastDebug") {
+                CastDebug_RebindHotkey(App["ProfileData"].CastDebug.Hotkey)
+                CastDebug_ApplyConfigFromProfile()
+            }
+        } catch {
+        }
     }
-
     ; 6) 运行时后续（绑定热键/重建引擎/ROI）
     try {
         Hotkeys_BindStartHotkey(App["ProfileData"].StartHotkey)
@@ -161,7 +171,18 @@ Profile_SwitchProfile_Strong(name) {
     if (!ok) {
         return false
     }
-
+    ; 初始化 Cast 引擎（基于新的 ProfileData）
+    try {
+        CastEngine_InitFromProfile()
+    } catch {
+    }
+    try {
+        if HasProp(App["ProfileData"], "CastDebug") {
+            CastDebug_RebindHotkey(App["ProfileData"].CastDebug.Hotkey)
+            CastDebug_ApplyConfigFromProfile()
+        }
+    } catch {
+    }
     ; 将值回填到“概览与配置”页（若当前页）
     canWriteUI := false
     try {

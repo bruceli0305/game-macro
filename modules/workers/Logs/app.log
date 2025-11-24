@@ -1,0 +1,200 @@
+2025-11-24 11:10:59.121 [tick=259437718] [pid=22516] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 11:10:59.124 [tick=259437718] [pid=22516] [INFO] [WorkerHost] pid=22516 | start
+2025-11-24 11:10:59.392 [tick=259437984] [pid=22516] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=22516 | fire start
+2025-11-24 11:10:59.403 [tick=259438000] [pid=22516] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=22516 | fire sent
+2025-11-24 11:11:07.141 [tick=259445734] [pid=10260] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 11:11:07.142 [tick=259445734] [pid=10260] [INFO] [WorkerHost] pid=10260 | start
+2025-11-24 11:11:07.404 [tick=259446000] [pid=10260] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=10260 | fire start
+2025-11-24 11:11:07.417 [tick=259446015] [pid=10260] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=10260 | fire sent
+2025-11-24 14:42:34.203 [tick=3865390] [pid=11864] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:42:34.205 [tick=3865390] [pid=11864] [INFO] [WorkerHost] pid=11864 | start
+2025-11-24 14:42:34.475 [tick=3865656] [pid=11864] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=11864 | fire start
+2025-11-24 14:42:34.482 [tick=3865671] [pid=11864] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=11864 | fire sent
+2025-11-24 14:42:42.191 [tick=3873375] [pid=5828] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:42:42.191 [tick=3873375] [pid=5828] [INFO] [WorkerHost] pid=5828 | start
+2025-11-24 14:42:42.457 [tick=3873640] [pid=5828] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=5828 | fire start
+2025-11-24 14:42:42.465 [tick=3873656] [pid=5828] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=5828 | fire sent
+2025-11-24 14:42:53.400 [tick=3884578] [pid=15288] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:42:53.400 [tick=3884578] [pid=15288] [INFO] [WorkerHost] pid=15288 | start
+2025-11-24 14:42:53.656 [tick=3884843] [pid=15288] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=15288 | fire start
+2025-11-24 14:42:53.668 [tick=3884859] [pid=15288] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=15288 | fire sent
+2025-11-24 14:44:23.738 [tick=3974921] [pid=7148] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:44:23.739 [tick=3974921] [pid=7148] [INFO] [WorkerHost] pid=7148 | start
+2025-11-24 14:44:23.996 [tick=3975187] [pid=7148] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=7148 | fire start
+2025-11-24 14:44:24.011 [tick=3975203] [pid=7148] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=7148 | fire sent
+2025-11-24 14:48:24.190 [tick=4215375] [pid=4456] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:24.190 [tick=4215375] [pid=4456] [INFO] [WorkerHost] pid=4456 | start
+2025-11-24 14:48:24.455 [tick=4215640] [pid=4456] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=4456 | fire start
+2025-11-24 14:48:24.466 [tick=4215656] [pid=4456] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=4456 | fire sent
+2025-11-24 14:48:24.688 [tick=4215875] [pid=4396] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:24.688 [tick=4215875] [pid=4396] [INFO] [WorkerHost] pid=4396 | start
+2025-11-24 14:48:24.956 [tick=4216140] [pid=4396] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=4396 | fire start
+2025-11-24 14:48:24.965 [tick=4216156] [pid=4396] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=4396 | fire sent
+2025-11-24 14:48:25.191 [tick=4216375] [pid=4452] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:25.192 [tick=4216375] [pid=4452] [INFO] [WorkerHost] pid=4452 | start
+2025-11-24 14:48:25.459 [tick=4216640] [pid=4452] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=4452 | fire start
+2025-11-24 14:48:25.466 [tick=4216656] [pid=4452] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=4452 | fire sent
+2025-11-24 14:48:25.685 [tick=4216875] [pid=2596] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:25.685 [tick=4216875] [pid=2596] [INFO] [WorkerHost] pid=2596 | start
+2025-11-24 14:48:25.959 [tick=4217140] [pid=2596] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=2596 | fire start
+2025-11-24 14:48:25.966 [tick=4217156] [pid=2596] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=2596 | fire sent
+2025-11-24 14:48:26.192 [tick=4217375] [pid=5000] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:26.192 [tick=4217375] [pid=5000] [INFO] [WorkerHost] pid=5000 | start
+2025-11-24 14:48:26.460 [tick=4217640] [pid=5000] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=5000 | fire start
+2025-11-24 14:48:26.464 [tick=4217656] [pid=5000] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=5000 | fire sent
+2025-11-24 14:48:26.722 [tick=4217906] [pid=17348] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:26.722 [tick=4217906] [pid=17348] [INFO] [WorkerHost] pid=17348 | start
+2025-11-24 14:48:26.991 [tick=4218171] [pid=17348] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=17348 | fire start
+2025-11-24 14:48:26.997 [tick=4218187] [pid=17348] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=17348 | fire sent
+2025-11-24 14:48:27.219 [tick=4218406] [pid=12360] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:27.220 [tick=4218406] [pid=12360] [INFO] [WorkerHost] pid=12360 | start
+2025-11-24 14:48:27.492 [tick=4218671] [pid=12360] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=12360 | fire start
+2025-11-24 14:48:27.498 [tick=4218687] [pid=12360] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=12360 | fire sent
+2025-11-24 14:48:27.719 [tick=4218906] [pid=8556] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:27.720 [tick=4218906] [pid=8556] [INFO] [WorkerHost] pid=8556 | start
+2025-11-24 14:48:27.987 [tick=4219171] [pid=8556] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=8556 | fire start
+2025-11-24 14:48:27.996 [tick=4219187] [pid=8556] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=8556 | fire sent
+2025-11-24 14:48:28.224 [tick=4219406] [pid=3292] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:28.224 [tick=4219406] [pid=3292] [INFO] [WorkerHost] pid=3292 | start
+2025-11-24 14:48:28.486 [tick=4219671] [pid=3292] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=3292 | fire start
+2025-11-24 14:48:28.499 [tick=4219687] [pid=3292] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=3292 | fire sent
+2025-11-24 14:48:28.720 [tick=4219906] [pid=5228] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:28.721 [tick=4219906] [pid=5228] [INFO] [WorkerHost] pid=5228 | start
+2025-11-24 14:48:28.983 [tick=4220171] [pid=5228] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=5228 | fire start
+2025-11-24 14:48:28.999 [tick=4220187] [pid=5228] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=5228 | fire sent
+2025-11-24 14:48:29.220 [tick=4220406] [pid=20968] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:29.220 [tick=4220406] [pid=20968] [INFO] [WorkerHost] pid=20968 | start
+2025-11-24 14:48:29.483 [tick=4220671] [pid=20968] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=20968 | fire start
+2025-11-24 14:48:29.496 [tick=4220687] [pid=20968] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=20968 | fire sent
+2025-11-24 14:48:29.721 [tick=4220906] [pid=6896] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:29.721 [tick=4220906] [pid=6896] [INFO] [WorkerHost] pid=6896 | start
+2025-11-24 14:48:29.982 [tick=4221171] [pid=6896] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=6896 | fire start
+2025-11-24 14:48:29.998 [tick=4221187] [pid=6896] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=6896 | fire sent
+2025-11-24 14:48:30.214 [tick=4221406] [pid=8260] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:30.215 [tick=4221406] [pid=8260] [INFO] [WorkerHost] pid=8260 | start
+2025-11-24 14:48:30.480 [tick=4221671] [pid=8260] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=8260 | fire start
+2025-11-24 14:48:30.499 [tick=4221687] [pid=8260] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=8260 | fire sent
+2025-11-24 14:48:30.715 [tick=4221906] [pid=3088] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:30.715 [tick=4221906] [pid=3088] [INFO] [WorkerHost] pid=3088 | start
+2025-11-24 14:48:30.981 [tick=4222171] [pid=3088] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=3088 | fire start
+2025-11-24 14:48:30.997 [tick=4222187] [pid=3088] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=3088 | fire sent
+2025-11-24 14:48:31.214 [tick=4222390] [pid=8116] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:31.215 [tick=4222406] [pid=8116] [INFO] [WorkerHost] pid=8116 | start
+2025-11-24 14:48:31.495 [tick=4222687] [pid=8116] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=8116 | fire start
+2025-11-24 14:48:31.511 [tick=4222703] [pid=8116] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=8116 | fire sent
+2025-11-24 14:48:31.712 [tick=4222890] [pid=11864] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:31.712 [tick=4222890] [pid=11864] [INFO] [WorkerHost] pid=11864 | start
+2025-11-24 14:48:31.980 [tick=4223171] [pid=11864] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=11864 | fire start
+2025-11-24 14:48:31.997 [tick=4223187] [pid=11864] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=11864 | fire sent
+2025-11-24 14:48:32.232 [tick=4223421] [pid=4068] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:32.232 [tick=4223421] [pid=4068] [INFO] [WorkerHost] pid=4068 | start
+2025-11-24 14:48:32.495 [tick=4223687] [pid=4068] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=4068 | fire start
+2025-11-24 14:48:32.511 [tick=4223703] [pid=4068] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=4068 | fire sent
+2025-11-24 14:48:32.758 [tick=4223937] [pid=17376] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:32.759 [tick=4223937] [pid=17376] [INFO] [WorkerHost] pid=17376 | start
+2025-11-24 14:48:33.013 [tick=4224203] [pid=17376] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=17376 | fire start
+2025-11-24 14:48:33.043 [tick=4224234] [pid=17376] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=17376 | fire sent
+2025-11-24 14:48:33.289 [tick=4224468] [pid=17784] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:33.290 [tick=4224468] [pid=17784] [INFO] [WorkerHost] pid=17784 | start
+2025-11-24 14:48:33.307 [tick=4224484] [pid=2940] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:33.307 [tick=4224484] [pid=2940] [INFO] [WorkerHost] pid=2940 | start
+2025-11-24 14:48:33.542 [tick=4224734] [pid=17784] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=17784 | fire start
+2025-11-24 14:48:33.563 [tick=4224750] [pid=2940] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=2940 | fire start
+2025-11-24 14:48:33.563 [tick=4224750] [pid=17784] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=17784 | fire sent
+2025-11-24 14:48:33.575 [tick=4224765] [pid=2940] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=2940 | fire sent
+2025-11-24 14:48:33.954 [tick=4225140] [pid=4252] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:33.954 [tick=4225140] [pid=4252] [INFO] [WorkerHost] pid=4252 | start
+2025-11-24 14:48:34.227 [tick=4225406] [pid=4252] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=4252 | fire start
+2025-11-24 14:48:34.231 [tick=4225421] [pid=4252] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=4252 | fire sent
+2025-11-24 14:48:34.596 [tick=4225781] [pid=6120] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:34.597 [tick=4225781] [pid=6120] [INFO] [WorkerHost] pid=6120 | start
+2025-11-24 14:48:34.849 [tick=4226031] [pid=6120] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=6120 | fire start
+2025-11-24 14:48:34.855 [tick=4226046] [pid=6120] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=6120 | fire sent
+2025-11-24 14:48:35.215 [tick=4226406] [pid=15260] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:35.215 [tick=4226406] [pid=15260] [INFO] [WorkerHost] pid=15260 | start
+2025-11-24 14:48:35.489 [tick=4226671] [pid=15260] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=15260 | fire start
+2025-11-24 14:48:35.496 [tick=4226687] [pid=15260] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=15260 | fire sent
+2025-11-24 14:48:35.848 [tick=4227031] [pid=10544] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:35.849 [tick=4227031] [pid=10544] [INFO] [WorkerHost] pid=10544 | start
+2025-11-24 14:48:36.111 [tick=4227296] [pid=10544] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=10544 | fire start
+2025-11-24 14:48:36.121 [tick=4227312] [pid=10544] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=10544 | fire sent
+2025-11-24 14:48:36.468 [tick=4227656] [pid=19936] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:36.469 [tick=4227656] [pid=19936] [INFO] [WorkerHost] pid=19936 | start
+2025-11-24 14:48:36.735 [tick=4227921] [pid=19936] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=19936 | fire start
+2025-11-24 14:48:36.747 [tick=4227937] [pid=19936] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=19936 | fire sent
+2025-11-24 14:48:37.096 [tick=4228281] [pid=19044] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:37.097 [tick=4228281] [pid=19044] [INFO] [WorkerHost] pid=19044 | start
+2025-11-24 14:48:37.358 [tick=4228546] [pid=19044] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=19044 | fire start
+2025-11-24 14:48:37.371 [tick=4228562] [pid=19044] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=19044 | fire sent
+2025-11-24 14:48:37.708 [tick=4228890] [pid=2632] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:37.708 [tick=4228890] [pid=2632] [INFO] [WorkerHost] pid=2632 | start
+2025-11-24 14:48:37.968 [tick=4229156] [pid=2632] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=2632 | fire start
+2025-11-24 14:48:37.979 [tick=4229171] [pid=2632] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=2632 | fire sent
+2025-11-24 14:48:38.342 [tick=4229531] [pid=7836] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:38.342 [tick=4229531] [pid=7836] [INFO] [WorkerHost] pid=7836 | start
+2025-11-24 14:48:38.608 [tick=4229796] [pid=7836] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=7836 | fire start
+2025-11-24 14:48:38.621 [tick=4229812] [pid=7836] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=7836 | fire sent
+2025-11-24 14:48:38.960 [tick=4230140] [pid=11168] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:38.960 [tick=4230140] [pid=11168] [INFO] [WorkerHost] pid=11168 | start
+2025-11-24 14:48:39.216 [tick=4230406] [pid=11168] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=11168 | fire start
+2025-11-24 14:48:39.232 [tick=4230421] [pid=11168] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=11168 | fire sent
+2025-11-24 14:48:39.610 [tick=4230796] [pid=9952] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:39.610 [tick=4230796] [pid=9952] [INFO] [WorkerHost] pid=9952 | start
+2025-11-24 14:48:39.885 [tick=4231062] [pid=9952] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=9952 | fire start
+2025-11-24 14:48:39.917 [tick=4231109] [pid=9952] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=9952 | fire sent
+2025-11-24 14:48:40.245 [tick=4231421] [pid=5056] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:40.246 [tick=4231437] [pid=5056] [INFO] [WorkerHost] pid=5056 | start
+2025-11-24 14:48:40.524 [tick=4231703] [pid=5056] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=5056 | fire start
+2025-11-24 14:48:40.554 [tick=4231734] [pid=5056] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=5056 | fire sent
+2025-11-24 14:48:40.881 [tick=4232062] [pid=18376] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:40.881 [tick=4232062] [pid=18376] [INFO] [WorkerHost] pid=18376 | start
+2025-11-24 14:48:41.148 [tick=4232328] [pid=18376] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=18376 | fire start
+2025-11-24 14:48:41.153 [tick=4232343] [pid=18376] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=18376 | fire sent
+2025-11-24 14:48:41.396 [tick=4232578] [pid=2088] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:41.396 [tick=4232578] [pid=2088] [INFO] [WorkerHost] pid=2088 | start
+2025-11-24 14:48:41.447 [tick=4232625] [pid=9408] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:41.447 [tick=4232625] [pid=9408] [INFO] [WorkerHost] pid=9408 | start
+2025-11-24 14:48:41.665 [tick=4232843] [pid=2088] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=2088 | fire start
+2025-11-24 14:48:41.668 [tick=4232859] [pid=2088] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=2088 | fire sent
+2025-11-24 14:48:41.695 [tick=4232875] [pid=9408] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=9408 | fire start
+2025-11-24 14:48:41.699 [tick=4232890] [pid=9408] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=9408 | fire sent
+2025-11-24 14:48:41.937 [tick=4233125] [pid=17016] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:41.937 [tick=4233125] [pid=17016] [INFO] [WorkerHost] pid=17016 | start
+2025-11-24 14:48:42.207 [tick=4233390] [pid=17016] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=17016 | fire start
+2025-11-24 14:48:42.217 [tick=4233406] [pid=17016] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=17016 | fire sent
+2025-11-24 14:48:42.452 [tick=4233640] [pid=3876] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:42.452 [tick=4233640] [pid=3876] [INFO] [WorkerHost] pid=3876 | start
+2025-11-24 14:48:42.726 [tick=4233906] [pid=3876] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=3876 | fire start
+2025-11-24 14:48:42.733 [tick=4233921] [pid=3876] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=3876 | fire sent
+2025-11-24 14:48:42.977 [tick=4234156] [pid=19024] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:42.977 [tick=4234156] [pid=19024] [INFO] [WorkerHost] pid=19024 | start
+2025-11-24 14:48:43.239 [tick=4234421] [pid=19024] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=19024 | fire start
+2025-11-24 14:48:43.245 [tick=4234437] [pid=19024] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=19024 | fire sent
+2025-11-24 14:48:43.470 [tick=4234656] [pid=2060] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:43.470 [tick=4234656] [pid=2060] [INFO] [WorkerHost] pid=2060 | start
+2025-11-24 14:48:43.740 [tick=4234921] [pid=2060] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=2060 | fire start
+2025-11-24 14:48:43.747 [tick=4234937] [pid=2060] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=2060 | fire sent
+2025-11-24 14:48:43.988 [tick=4235171] [pid=15756] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:43.989 [tick=4235171] [pid=15756] [INFO] [WorkerHost] pid=15756 | start
+2025-11-24 14:48:44.257 [tick=4235437] [pid=15756] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=15756 | fire start
+2025-11-24 14:48:44.263 [tick=4235453] [pid=15756] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=15756 | fire sent
+2025-11-24 14:48:44.507 [tick=4235687] [pid=13268] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:44.507 [tick=4235687] [pid=13268] [INFO] [WorkerHost] pid=13268 | start
+2025-11-24 14:48:44.772 [tick=4235953] [pid=13268] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=13268 | fire start
+2025-11-24 14:48:44.778 [tick=4235968] [pid=13268] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=13268 | fire sent
+2025-11-24 14:48:45.000 [tick=4236187] [pid=1948] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:45.001 [tick=4236187] [pid=1948] [INFO] [WorkerHost] pid=1948 | start
+2025-11-24 14:48:45.272 [tick=4236453] [pid=1948] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=1948 | fire start
+2025-11-24 14:48:45.278 [tick=4236468] [pid=1948] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=1948 | fire sent
+2025-11-24 14:48:45.507 [tick=4236687] [pid=4036] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:45.507 [tick=4236687] [pid=4036] [INFO] [WorkerHost] pid=4036 | start
+2025-11-24 14:48:45.771 [tick=4236953] [pid=4036] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=4036 | fire start
+2025-11-24 14:48:45.778 [tick=4236968] [pid=4036] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=4036 | fire sent
+2025-11-24 14:48:46.002 [tick=4237187] [pid=4588] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:46.002 [tick=4237187] [pid=4588] [INFO] [WorkerHost] pid=4588 | start
+2025-11-24 14:48:46.268 [tick=4237453] [pid=4588] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=4588 | fire start
+2025-11-24 14:48:46.276 [tick=4237468] [pid=4588] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=4588 | fire sent
+2025-11-24 14:48:46.500 [tick=4237687] [pid=14872] [INFO] [Core] file=D:\project\AI\AHK\game-macro\modules\workers\Logs\app.log keep=5 rotateMB=10 | Logger initialized
+2025-11-24 14:48:46.501 [tick=4237687] [pid=14872] [INFO] [WorkerHost] pid=14872 | start
+2025-11-24 14:48:46.767 [tick=4237953] [pid=14872] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=14872 | fire start
+2025-11-24 14:48:46.778 [tick=4237968] [pid=14872] [INFO] [WorkerHost] delay=250 hold=0 key=a mode=FIRE pid=14872 | fire sent

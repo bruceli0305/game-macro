@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-;modules\storage\profile\Save_Skills.ahk 保存 Skills 模块
+;modules\storage\profile\modules\skills\Skills.ahk 保存 Skills 模块
 ; 仅新格式：Count + Order + [Skill.<Id>]，不再写旧的 Id.N/NextId
 ; 依赖：OM_Get（modules\util\Obj.ahk）、ID_Next（modules\util\IdGen.ahk）
 ; 依赖：FS_ModulePath / FS_AtomicBegin / FS_AtomicCommit / FS_Meta_Touch
@@ -124,7 +124,8 @@ SaveModule_Skills(profile) {
         IniWrite(OM_Get(s, "Color", "0x000000"), tmp, sec, "Color")
         IniWrite(OM_Get(s, "Tol", 10),           tmp, sec, "Tol")
         IniWrite(OM_Get(s, "CastMs", 0),         tmp, sec, "CastMs")
-
+        IniWrite(OM_Get(s, "LockDuringCast", 1),  tmp, sec, "LockDuringCast")
+        IniWrite(OM_Get(s, "CastTimeoutMs", 0),   tmp, sec, "CastTimeoutMs")
         i := i + 1
     }
 
@@ -206,7 +207,14 @@ FS_Load_Skills(profileName, profile) {
             s["CastMs"] := Integer(IniRead(file, sec, "CastMs", 0))
         } catch {
         }
-
+        try {
+            s["LockDuringCast"] := Integer(IniRead(file, sec, "LockDuringCast", OM_Get(s, "LockDuringCast", 1)))
+        } catch {
+        }
+        try {
+            s["CastTimeoutMs"] := Integer(IniRead(file, sec, "CastTimeoutMs", OM_Get(s, "CastTimeoutMs", 0)))
+        } catch {
+        }
         arr.Push(s)
         i := i + 1
     }

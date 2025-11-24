@@ -24,7 +24,27 @@ RuleEngine_SessionBegin(prof, rIdx, rule) {
             a1 := rule.Actions[1]
             firstDelay := (HasProp(a1,"DelayMs") ? Max(0, Integer(a1.DelayMs)) : 0)
         }
+    } catch {
+        firstDelay := 0
     }
+
+    ; 若启用施法条且配置为忽略动作延迟，则不使用首个 DelayMs
+    ignoreDelay := 0
+    try {
+        if HasProp(prof, "CastBar") {
+            if (prof.CastBar.Enabled && HasProp(prof.CastBar, "IgnoreActionDelay")) {
+                if (prof.CastBar.IgnoreActionDelay) {
+                    ignoreDelay := 1
+                }
+            }
+        }
+    } catch {
+        ignoreDelay := 0
+    }
+    if (ignoreDelay) {
+        firstDelay := 0
+    }
+
     RE_Session.NextAt := A_TickCount + firstDelay
 
     ; 清空验证状态
@@ -63,14 +83,38 @@ RuleEngine_SessionStep() {
     acts := rule.Actions
     now := A_TickCount
 
+    castUse := 0
+    ignoreDelay := 0
+    try {
+        if HasProp(prof, "CastBar") {
+            if (prof.CastBar.Enabled) {
+                castUse := 1
+                if HasProp(prof.CastBar, "IgnoreActionDelay") {
+                    if (prof.CastBar.IgnoreActionDelay) {
+                        ignoreDelay := 1
+                    }
+                }
+            }
+        }
+    } catch {
+        castUse := 0
+        ignoreDelay := 0
+    }
     ; 1) 会话超时/中止冷却
     if (RE_Session.TimeoutAt > 0 && now >= RE_Session.TimeoutAt) {
         abortCd := 0
-        try if (HasProp(rule, "AbortCooldownMs")) abortCd := Max(0, Integer(rule.AbortCooldownMs))
+        try {
+            if (HasProp(rule, "AbortCooldownMs")) {
+                abortCd := Max(0, Integer(rule.AbortCooldownMs))
+            }
+        } catch {
+            abortCd := 0
+        }
         if (abortCd > 0) {
             try {
                 rule.LastFire := now - rule.CooldownMs + abortCd
                 RE_LastFireTick[rIdx] := rule.LastFire
+            } catch {
             }
         }
         ; 日志：Session timeout
@@ -81,6 +125,11 @@ RuleEngine_SessionStep() {
             f["timeoutAt"] := RE_Session.TimeoutAt
             f["elapsed"] := now - RE_Session.StartedAt
             Logger_Warn("RuleEngine", "Session timeout", f)
+        } catch {
+        }
+        ; Cast 引擎调试日志
+        try {
+            CastEngine_LogCurrentRuleIfNeeded("SessionTimeout")
         } catch {
         }
         RE_Session.Active := false
@@ -114,12 +163,28 @@ RuleEngine_SessionStep() {
                 RE_Session.VerTargetInt := 0
                 RE_Session.VerTol := 0
                 RE_Session.Index := RE_Session.Index + 1
-                gap := (HasProp(rule,"ActionGapMs") ? Max(0, Integer(rule.ActionGapMs)) : 0)
+                gap := 0
+                try {
+                    gap := (HasProp(rule,"ActionGapMs") ? Max(0, Integer(rule.ActionGapMs)) : 0)
+                } catch {
+                    gap := 0
+                }
+
                 nextDelay := 0
                 if (RE_Session.Index <= acts.Length) {
                     nextAct := acts[RE_Session.Index]
-                    nextDelay := (HasProp(nextAct,"DelayMs") ? Max(0, Integer(nextAct.DelayMs)) : 0)
+                    try {
+                        nextDelay := (HasProp(nextAct,"DelayMs") ? Max(0, Integer(nextAct.DelayMs)) : 0)
+                    } catch {
+                        nextDelay := 0
+                    }
                 }
+
+                if (ignoreDelay) {
+                    gap := 0
+                    nextDelay := 0
+                }
+
                 RE_Session.NextAt := now + gap + nextDelay
                 return false
             }
@@ -145,11 +210,18 @@ RuleEngine_SessionStep() {
                 return false
             } else {
                 abortCd := 0
-                try if (HasProp(rule, "AbortCooldownMs")) abortCd := Max(0, Integer(rule.AbortCooldownMs))
+                try {
+                    if (HasProp(rule, "AbortCooldownMs")) {
+                        abortCd := Max(0, Integer(rule.AbortCooldownMs))
+                    }
+                } catch {
+                    abortCd := 0
+                }
                 if (abortCd > 0) {
                     try {
                         rule.LastFire := now - rule.CooldownMs + abortCd
                         RE_LastFireTick[rIdx] := rule.LastFire
+                    } catch {
                     }
                 }
                 ; 日志：Verify timeout abort
@@ -162,6 +234,11 @@ RuleEngine_SessionStep() {
                     f["elapsed"] := RE_Session.VerElapsed
                     f["timeoutMs"] := RE_Session.VerTimeoutMs
                     Logger_Warn("RuleEngine", "Verify timeout abort", f)
+                } catch {
+                }
+                ; Cast 引擎调试日志
+                try {
+                    CastEngine_LogCurrentRuleIfNeeded("VerifyTimeoutAbort")
                 } catch {
                 }
                 RE_Session.Active := false
@@ -177,6 +254,7 @@ RuleEngine_SessionStep() {
             try {
                 rule.LastFire := now
                 RE_LastFireTick[rIdx] := now
+            } catch {
             }
         }
          ; 日志：Session end
@@ -186,11 +264,28 @@ RuleEngine_SessionStep() {
             Logger_Info("RuleEngine", "Session end", f)
         } catch {
         }
+        ; Cast 引擎调试日志
+        try {
+            CastEngine_LogCurrentRuleIfNeeded("SessionEnd")
+        } catch {
+        }
         RE_Session.Active := false
         return false
     }
     if (now < RE_Session.NextAt) {
         return false
+    }
+    ; CastBar + LockDuringCast：若前置动作有锁定中的技能，则等待
+    if (castUse) {
+        canProceed := true
+        try {
+            canProceed := RuleEngine_CanProceedNextActionByCastBar(RE_Session.Index, rIdx)
+        } catch {
+            canProceed := true
+        }
+        if (!canProceed) {
+            return false
+        }
     }
 
     thr := RE_Session.ThreadId
@@ -213,11 +308,18 @@ RuleEngine_SessionStep() {
             return false
         }
         abortCd := 0
-        try if (HasProp(rule, "AbortCooldownMs")) abortCd := Max(0, Integer(rule.AbortCooldownMs))
+        try {
+            if (HasProp(rule, "AbortCooldownMs")) {
+                abortCd := Max(0, Integer(rule.AbortCooldownMs))
+            }
+        } catch {
+            abortCd := 0
+        }
         if (abortCd > 0) {
             try {
                 rule.LastFire := now - rule.CooldownMs + abortCd
                 RE_LastFireTick[rIdx] := rule.LastFire
+            } catch {
             }
         }
          ; 日志：Cast lock abort
@@ -229,6 +331,11 @@ RuleEngine_SessionStep() {
             f["budgetMs"] := budget
             f["locked"] := 1
             Logger_Warn("RuleEngine", "Cast lock abort", f)
+        } catch {
+        }
+        ; Cast 引擎调试日志
+        try {
+            CastEngine_LogCurrentRuleIfNeeded("CastLockAbort")
         } catch {
         }
         RE_Session.Active := false
@@ -264,19 +371,35 @@ RuleEngine_SessionStep() {
 
     sent := WorkerPool_SendSkillIndex(thr, si, "RuleSession:" rule.Name, holdOverride)
     if (!sent) {
-        retryLeft := 0, retryGap := 150
-        try retryLeft := Max(0, Integer(HasProp(act,"Retry") ? act.Retry : 0))
-        try retryGap := Max(0, Integer(HasProp(act,"RetryGapMs") ? act.RetryGapMs : 150))
+        retryLeft := 0
+        retryGap := 150
+        try {
+            retryLeft := Max(0, Integer(HasProp(act,"Retry") ? act.Retry : 0))
+        } catch {
+            retryLeft := 0
+        }
+        try {
+            retryGap := Max(0, Integer(HasProp(act,"RetryGapMs") ? act.RetryGapMs : 150))
+        } catch {
+            retryGap := 150
+        }
         if (retryLeft > 0) {
             RE_Session.NextAt := now + retryGap
             return false
         }
         abortCd := 0
-        try if (HasProp(rule, "AbortCooldownMs")) abortCd := Max(0, Integer(rule.AbortCooldownMs))
+        try {
+            if (HasProp(rule, "AbortCooldownMs")) {
+                abortCd := Max(0, Integer(rule.AbortCooldownMs))
+            }
+        } catch {
+            abortCd := 0
+        }
         if (abortCd > 0) {
             try {
                 rule.LastFire := now - rule.CooldownMs + abortCd
                 RE_LastFireTick[rIdx] := rule.LastFire
+            } catch {
             }
         }
         ; 日志：Send fail abort
@@ -287,6 +410,11 @@ RuleEngine_SessionStep() {
             f["skillIdx"] := si
             f["threadId"] := thr
             Logger_Warn("RuleEngine", "Send fail abort", f)
+        } catch {
+        }
+        ; Cast 引擎调试日志
+        try {
+            CastEngine_LogCurrentRuleIfNeeded("SendFailAbort")
         } catch {
         }
         RE_Session.Active := false
@@ -327,13 +455,77 @@ RuleEngine_SessionStep() {
 
     ; 不需要验证 -> 推进到下一个动作
     RE_Session.Index := idx + 1
-    gap := (HasProp(rule,"ActionGapMs") ? Max(0, Integer(rule.ActionGapMs)) : 0)
+    gap := 0
+    try {
+        gap := (HasProp(rule,"ActionGapMs") ? Max(0, Integer(rule.ActionGapMs)) : 0)
+    } catch {
+        gap := 0
+    }
+
     nextDelay := 0
     if (RE_Session.Index <= acts.Length) {
         nextAct := acts[RE_Session.Index]
-        nextDelay := (HasProp(nextAct,"DelayMs") ? Max(0, Integer(nextAct.DelayMs)) : 0)
+        try {
+            nextDelay := (HasProp(nextAct,"DelayMs") ? Max(0, Integer(nextAct.DelayMs)) : 0)
+        } catch {
+            nextDelay := 0
+        }
+    }
+
+    if (ignoreDelay) {
+        gap := 0
+        nextDelay := 0
     }
     RE_Session.NextAt := now + gap + nextDelay
+    return true
+}
+RuleEngine_CanProceedNextActionByCastBar(currActionIndex, ruleIndex) {
+    global gCast, CAST_STATE_CASTING
 
+    ; 若当前无 Cast 会话或规则不匹配，则不做限制
+    if !IsObject(gCast) {
+        return true
+    }
+    if !gCast.Active {
+        return true
+    }
+    try {
+        if (gCast.RuleIndex != ruleIndex) {
+            return true
+        }
+    } catch {
+        return true
+    }
+
+    i := 1
+    while (i <= gCast.Skills.Length) {
+        e := gCast.Skills[i]
+
+        actIdx := 0
+        lockFlag := 0
+        st := 0
+        try {
+            actIdx := e.ActionIndex
+        } catch {
+            actIdx := 0
+        }
+        try {
+            lockFlag := e.LockDuringCast
+        } catch {
+            lockFlag := 0
+        }
+        try {
+            st := e.State
+        } catch {
+            st := 0
+        }
+
+        ; 若某个前置动作的技能仍在 CASTING 且配置为锁定施放，则当前动作不得发送
+        if (actIdx < currActionIndex && lockFlag && st = CAST_STATE_CASTING) {
+            return false
+        }
+
+        i := i + 1
+    }
     return true
 }

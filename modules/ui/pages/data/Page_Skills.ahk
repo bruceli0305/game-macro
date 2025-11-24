@@ -11,7 +11,7 @@ Page_Skills_Build(page) {
 
     ; 列表
     UI.SkillLV := UI.Main.Add("ListView", Format("x{} y{} w{} h{}", rc.X, rc.Y, rc.W, rc.H - 40 - 8)
-        , ["ID","技能名","键位","X","Y","颜色","容差"])
+        , ["ID","技能名","键位","X","Y","颜色","容差","锁定","超时ms"])
     page.Controls.Push(UI.SkillLV)
 
     ; 按钮行
@@ -62,7 +62,7 @@ Page_Skills_Layout(rc) {
         UI.BtnTestSkill.Move(,    yBtn)
         UI.BtnSaveSkill.Move(,    yBtn)
 
-        loop 7 {
+        loop 9 {
             try {
                 UI.SkillLV.ModifyCol(A_Index, "AutoHdr")
             } catch {
@@ -98,9 +98,28 @@ Skills_RefreshList() {
             y    := OM_Get(s, "Y", 0)
             col  := OM_Get(s, "Color", "0x000000")
             tol  := OM_Get(s, "Tol", 10)
-            UI.SkillLV.Add("", id, name, key, x, y, col, tol)
+
+            lock := 1
+            try {
+                lock := OM_Get(s, "LockDuringCast", 1)
+            } catch {
+                lock := 1
+            }
+            tmo := 0
+            try {
+                tmo := OM_Get(s, "CastTimeoutMs", 0)
+            } catch {
+                tmo := 0
+            }
+
+            lockText := ""
+            if (lock) {
+                lockText := "√"
+            }
+
+            UI.SkillLV.Add("", id, name, key, x, y, col, tol, lockText, tmo)
         }
-        loop 7 {
+        loop 9 {
             try {
                 UI.SkillLV.ModifyCol(A_Index, "AutoHdr")
             } catch {
@@ -425,6 +444,8 @@ Skills_OnSaveProfile(*) {
                 col  := OM_Get(rs, "Color", "0x000000")
                 tol  := OM_Get(rs, "Tol", 10)
                 cast := OM_Get(rs, "CastMs", 0)
+                lock := OM_Get(rs, "LockDuringCast", 1)
+                cto  := OM_Get(rs, "CastTimeoutMs", 0)
 
                 ps := 0
                 if (rid > 0 && oldMap.Has(rid)) {
@@ -437,6 +458,8 @@ Skills_OnSaveProfile(*) {
                         ps["Color"] := col
                         ps["Tol"] := tol
                         ps["CastMs"] := cast
+                        ps["LockDuringCast"] := lock
+                        ps["CastTimeoutMs"] := cto
                     } catch {
                         ps := PM_NewSkill(nm)
                         ps["Id"] := rid
@@ -446,6 +469,8 @@ Skills_OnSaveProfile(*) {
                         ps["Color"] := col
                         ps["Tol"] := tol
                         ps["CastMs"] := cast
+                        ps["LockDuringCast"] := lock
+                        ps["CastTimeoutMs"] := cto
                     }
                 } else {
                     ps := PM_NewSkill(nm)
@@ -456,6 +481,8 @@ Skills_OnSaveProfile(*) {
                     ps["Color"] := col
                     ps["Tol"] := tol
                     ps["CastMs"] := cast
+                    ps["LockDuringCast"] := lock
+                    ps["CastTimeoutMs"] := cto
                 }
 
                 newArr.Push(ps)

@@ -31,6 +31,7 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 #Include "modules\engines\Rotation.ahk"
 #Include "modules\engines\Dup.ahk"
 #Include "modules\engines\Pixel.ahk"
+#Include "modules\engines\CastEngine.ahk"
 #Include "modules\engines\RuleEngine.ahk"
 #Include "modules\engines\BuffEngine.ahk"
 #Include "modules\runtime\Counters.ahk"
@@ -42,6 +43,7 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 #Include "modules\ui\dialogs\GUI_PointEditor.ahk"
 #Include "modules\ui\dialogs\GUI_RuleEditor.ahk"
 #Include "modules\ui\dialogs\GUI_BuffEditor.ahk"
+#Include "modules\ui\dialogs\GUI_CastDebug.ahk"
 #Include "modules\ui\UI_Layout.ahk"
 #Include "modules\ui\UI_Shell.ahk"
 ; ========= Bootstrap =========

@@ -62,7 +62,11 @@ Poller_Tick() {
     try if !DX_IsReady()
         Pixel_ROI_BeginSnapshot()
     try Pixel_FrameBegin()
-
+    ; 更新施法条驱动的技能状态机（如启用）
+    try {
+        CastEngine_Tick()
+    } catch {
+    }
     ; 会话优先：若会话活跃，跳过 BUFF/Rotation，直接驱动会话并返回
     try {
         if RE_SessionActive() {

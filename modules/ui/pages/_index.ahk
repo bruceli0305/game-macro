@@ -26,6 +26,7 @@
 #Include "advanced\Page_Rotation_Summary.ahk"
 #Include "advanced\Page_Diag.ahk"
 #Include "advanced\Page_Logs.ahk"
+#Include "advanced\Page_CastDebug.ahk"
 ; 新增：轮换配置子页（第一步：常规、轨道）
 #Include "advanced\rotation\Page_RotGen.ahk"
 #Include "advanced\rotation\Page_RotTracks.ahk"
