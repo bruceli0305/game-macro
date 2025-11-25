@@ -1,208 +1,164 @@
-# Game Macro - AutoHotkey Automation Tool
+# Game Macro - AHK Game Macro Tool v0.2.0
 
-An advanced game automation tool developed with AutoHotkey v2, supporting powerful features like pixel detection, skill cycling, BUFF timing, DXGI screen capture, and rotation engine.
+A powerful AutoHotkey v2 game macro tool with pixel detection, skill rotation, and automation capabilities.
 
-## Features
+## Project Overview
 
-### 🎯 Core Functions
-- **Advanced Pixel Detection**: Support DXGI screen capture, ROI detection, GDI fallback
-- **Multi-threading Support**: Multiple independent skill execution threads with worker pool management
-- **Smart Evasion**: Automatic mouse avoidance to prevent interference during color sampling
-- **Rule Engine**: Conditional automation rule system supporting pixel and counter conditions
-- **BUFF Timer**: Automatic BUFF refresh functionality with priority execution
-- **DXGI Screen Capture**: High-performance screen capture using DirectX Graphics Infrastructure
-- **Rotation Management**: Complex skill cycling sequences supporting opener, tracks, and gates
-- **Internationalization**: Multi-language support with configurable language packs
-- **Automation Pages**: Complete thread, BUFF, rule, and cycle management interface
-- **Real-time Monitoring**: Real-time status monitoring with summary pages and detailed lists
+Game Macro is a professional game automation tool designed for games requiring precise pixel detection and complex skill rotations. It features a modular architecture, multi-threading support, intelligent rule engine, and real-time debugging capabilities.
 
-### 🛠️ Configuration Management
-- **Multi-profile Support**: Independent JSON format configuration files supporting different game characters
-- **Visual Editing**: Complete graphical interface for configuring skills, points, rules, and rotations
-- **Configuration Export**: Package configurations as standalone scripts
-- **Internationalization Support**: Multi-language interface based on INI language pack system
-- **Modular Architecture**: Well-organized code structure for easy maintenance and extension
-- **Skill Management**: Comprehensive skill editor supporting pixel detection configuration
-- **Point Management**: Color detection point configuration with tolerance control
-- **Rule System**: Advanced rule editor supporting condition and action configuration
-- **Rotation Editor**: Complex cycling sequences supporting multi-stage configuration
+## Key Features
+
+### 🎯 Core Features
+- **Pixel Detection Engine**: High-performance screen pixel capture based on DXGI
+- **Skill Rotation System**: Support for complex skill rotations and conditional judgments
+- **Multi-threading Support**: Configurable independent execution threads
+- **Intelligent Rule Engine**: Condition-based automation decision system
+
+### 🛠️ Technical Features
+- **Modular Architecture**: Clear code organization and easy extensibility
+- **Real-time Debugging**: Built-in debugging tools and logging system
+- **Multi-language Support**: Switch between Chinese and English interfaces
+- **Configuration Management**: Complete configuration import/export functionality
+
+### 📊 Advanced Features
+- **BUFF Timer**: Automatic monitoring and management of buff effects
+- **Skill Debugger**: Real-time viewing of cast bars and skill status
+- **Capture Diagnostics**: Detailed pixel capture performance analysis
+- **Black Screen Protection**: Intelligent detection and avoidance of black screen states
 
 ## Quick Start
 
-### Option 1: Portable EXE (Recommended for Beginners)
-1. **Download Latest Release**: Download ZIP file from `releases/` folder
-2. **Extract ZIP File**: Extract to any directory
-3. **Run `game-macro.exe`**: No installation required, run directly
+### System Requirements
+- Windows 10/11 operating system
+- AutoHotkey v2.0 or higher
+- Administrator privileges (for screen capture)
 
-### Option 2: Source Code Version (For Developers)
-#### System Requirements
-- **Windows Operating System**
-- **AutoHotkey v2.0 or higher**
-- **DirectX 11 compatible graphics card** (for DXGI screen capture)
+### Installation Steps
 
-#### Installation Steps
-1. Download and install [AutoHotkey v2](https://www.autohotkey.com/)
-2. Clone or download this project locally
-3. Double-click `Main.ahk` to launch the configuration tool
+1. **Download Project**
+   ```bash
+   git clone https://github.com/your-repo/game-macro.git
+   cd game-macro
+   ```
 
-### Basic Usage Flow
-1. **Launch Tool**: Run `Main.ahk` to open configuration interface
-2. **Create Configuration**: Click "New" to create character configuration
-3. **Configure Skills**: Add skills in the "Skill List" tab
-4. **Setup Rotation**: Configure skill cycling sequences (optional)
-5. **Create Rules**: Set up conditional automation rules (optional)
-6. **Configure BUFF**: Add automatic BUFF refresh timers (optional)
-7. **Set Hotkeys**: Configure start/stop hotkeys (default: F9)
-8. **Save Configuration**: Click "Save Configuration" button
-9. **Start Using**: Press hotkey in game to start macro
+2. **Install Dependencies**
+   - Ensure AutoHotkey v2 is installed
+   - Project includes pre-compiled DXGI libraries, no additional installation needed
 
-## Detailed Configuration
+3. **Run Program**
+   ```bash
+   # Double-click Main.ahk to run
+   # Or use command line
+   AutoHotkey64.exe Main.ahk
+   ```
+
+### Basic Configuration
+
+1. **First Run**: Program automatically creates necessary configuration files and directories
+2. **Interface Language**: Switch between Chinese and English in settings
+3. **Hotkey Configuration**: Default uses F9 key to start/stop macro
+
+## Usage Guide
 
 ### Skill Configuration
-Each skill contains the following parameters:
-- **Skill Name**: Custom name
-- **Key**: Skill hotkey in game
-- **Coordinates**: Position of skill icon on screen
-- **Color**: Pixel color when skill cooldown is complete
-- **Tolerance**: Color matching tolerance range
+1. Open "Skills" page
+2. Add skill name, hotkey, and pixel detection position
+3. Configure color tolerance and detection parameters
 
-### Point Configuration
-Independent color sampling points for detecting game state:
-- **Name**: Point description
-- **Coordinates**: Screen coordinates
-- **Color**: Expected color value
-- **Tolerance**: Color matching tolerance
+### Rotation Rules
+1. Create rules in "Rotation Rules" page
+2. Set trigger conditions and execution actions
+3. Configure priority and cooldown times
 
-### Rule System
-Conditional automation rules:
-- **Conditions**: Pixel detection, counter and other condition judgments
-- **Actions**: Execute skills, delays and other operations
-- **Thread**: Specified execution thread
-- **Priority**: Rule execution priority
+### Multi-threading Management
+1. Manage execution threads in "Thread Configuration" page
+2. Assign different skills and rules to different threads
+3. Set thread priority and scheduling strategies
 
-### BUFF Timer
-Automatic BUFF refresh functionality:
-- **BUFF Name**: Custom name
-- **Duration**: BUFF duration (milliseconds)
-- **Early Refresh**: Early refresh time
-- **Related Skill**: Skill used for BUFF refresh
+## Configuration Files
 
-## Project Architecture
+### Main Configuration Files
+- `Config/AppConfig.ini` - Application global configuration
+- `Languages/` - Language files directory
+- `Profiles/` - User profile directory
 
-The project adopts a modular architecture design with clear module responsibilities for easy maintenance and extension:
+### Configuration Example
+```ini
+[General]
+Language=zh-CN
+Version=0.1.3
 
-- **Core Module** (`core/`): Application configuration management and core system functionality
-- **Engine Module** (`engines/`): Pixel detection, rule processing, BUFF management, rotation management, DXGI capture, etc.
-- **UI Module** (`ui/`): Graphical interface framework, page management, dialog components
-- **Runtime Module** (`runtime/`): Hotkey processing, polling system, counter management
-- **Storage Module** (`storage/`): Configuration export and data storage
-- **Internationalization Module** (`i18n/`): Multi-language support
-- **Utility Module** (`util/`): General utility functions
-- **Worker Module** (`workers/`): Worker pool management
-
-For detailed project structure and implementation, please refer to the documentation in the `docs/` directory.
-
-## Usage Examples
-
-### Basic Skill Cycling
-1. Add skills that need to be cycled
-2. Set skill detection coordinates and colors
-3. Configure polling interval (default 25ms)
-4. Set global delay to prevent skill spam
-
-### Conditional Trigger Rules
-1. Create rules and set conditions
-2. Configure actions when conditions are met
-3. Set rule priority and cooldown time
-4. Specify execution thread
-
-### BUFF Auto Refresh
-1. Add BUFF timers
-2. Set BUFF duration and early refresh time
-3. Associate refresh skills
-4. Configure detection conditions
-
-## Notes
-
-### ⚠️ Important Reminders
-- This tool is for learning and research purposes only
-- Please comply with game service terms and use automation features reasonably
-- Excessive use may pose account risks
-- Recommended for use in single-player games or allowed environments
-
-### 🔧 Technical Limitations
-- Depends on screen pixel detection; resolution changes require reconfiguration
-- Game updates may cause configurations to become invalid
-- Does not support games in full-screen exclusive mode
+[Logging]
+Level=DEBUG
+RotateSizeMB=10
+RotateKeep=5
+```
 
 ## Development Guide
 
-### Extension Development
-The project adopts a modular design for easy extension of new features:
-- New modules only need to be included in `Main.ahk`
-- Follow existing naming and interface specifications
-- Use global `App` Map for state management
+### Module Extension
+The project uses modular design, making it easy to add new features:
 
-### Debugging Tips
-- Check log files in the `Logs/` directory
-- Use test functions to verify skill detection
-- Adjust tolerance parameters to optimize detection accuracy
+1. **Add New Engine**: Create new engine in `modules/engines/` directory
+2. **Extend UI Pages**: Add new pages in `modules/ui/pages/`
+3. **Custom Rules**: Extend condition judgment logic through RuleEngine
 
-## License
+### API Documentation
+Core modules provide clear API interfaces:
 
-This project uses the MIT License - see [LICENSE](LICENSE) file for details.
+- `Core_Init()` - Initialize core system
+- `Logger_Info()` - Log recording
+- `Rotation_Start()` - Start rotation engine
+- `Pixel_GetColor()` - Pixel color acquisition
 
-### License Summary
+## Troubleshooting
 
-The MIT License is a permissive open source license that allows:
-- ✅ Commercial use
-- ✅ Modification and distribution
-- ✅ Private use
-- ✅ Inclusion in proprietary software
+### Common Issues
 
-The only requirement is to retain the original copyright notice and license text.
+**Q: Program cannot run with administrator privileges**
+A: Right-click Main.ahk and select "Run as administrator"
 
-### Important Reminder
+**Q: Pixel detection is inaccurate**
+A: Check color tolerance settings, use capture diagnostics tool for debugging
 
-Although this software is open source, please use it responsibly:
-- Follow game service terms
-- Only use automation features in allowed environments
-- Avoid affecting other players' gaming experience
+**Q: Hotkey conflicts**
+A: Modify default hotkeys in hotkey configuration page
 
-## Changelog
+### Log Viewing
+Program generates detailed log files in `Logs/` directory:
+- Use "Log Viewer" page for real-time monitoring
+- Or directly view log files for debugging
 
-### v0.0.3 (Current Version)
-- **DXGI Screen Capture Engine**: Integrated high-performance DirectX screen capture functionality
-- **Advanced Rotation System**: Support for complex skill cycling with opener, tracks, and gates
-- **Rule Engine Upgrade**: Enhanced conditional judgment and action execution system
-- **Multi-language Support**: Complete internationalization system supporting Chinese and English switching
-- **Modular Refactoring**: Clearer code architecture and module organization
+## Version Information
 
-### v0.0.1-Alpha-0.2
-- **UI Framework Enhancement**: Added complete automation management pages
-- **Real-time Monitoring**: Implemented summary pages for threads, BUFFs, and rules
-- **Layout Optimization**: Improved UI layout calculation for better visual effects
-- **Dynamic Height Calculation**: Enhanced GroupBox height calculation based on content
-- **Button Position Optimization**: Optimized button positions for better user experience
+### Current Version
+- Version: v0.2.0
+- Release Date: 2024
+- Main Features: Complete modular refactoring, added multi-language support
 
-### v0.0.1-Alpha-0.1
-- Initial version release
-- Basic skill detection functionality
-- Graphical configuration interface
-- Rule engine and BUFF timer
+### Version History
+- v0.1.0 - Basic functionality implementation
+- v0.1.3 - UI optimization and stability improvements
+- v0.2.0 - Modular refactoring, added advanced features
 
 ## Contributing
 
-Issue and Pull Request submissions are welcome to improve the project.
+Welcome to submit Issues and Pull Requests to improve the project:
 
-## Support
+1. Fork the project
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-For questions, please check:
-1. Check error information in log files
-2. Verify skill coordinates and color configuration
-3. Confirm game window is not blocked
-4. Adjust detection parameters to optimize accuracy
+## License
+
+This project is licensed under the MIT License. See LICENSE file for details.
+
+## Disclaimer
+
+This tool is for learning and research purposes only. Please comply with the terms of use of relevant games. The developers are not responsible for any consequences resulting from the use of this tool.
 
 ---
 
-**中文版本**: [README_CN.md](README_CN.md)
+**Note**: Using game macros may violate the terms of service of some games. Please use this tool in a legal and compliant manner.

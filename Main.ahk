@@ -51,7 +51,7 @@ AppConfig_Init()
 Lang_Init(AppConfig_Get("Language", "zh-CN"))
 
 opts := Map()
-opts["Level"] := AppConfig_GetLog("Level", "DEBUG")
+opts["Level"] := AppConfig_GetLog("Level", "INFO")
 opts["RotateSizeMB"] := AppConfig_GetLog("RotateSizeMB", 10)
 opts["RotateKeep"] := AppConfig_GetLog("RotateKeep", 5)
 opts["EnableMemory"] := true
@@ -62,18 +62,6 @@ opts["PipeClient"] := false
 opts["PerCategory"] := AppConfig_GetLog("PerCategory", "")
 opts["ThrottlePerSec"] := AppConfig_GetLog("ThrottlePerSec", 5)
 Logger_Init(opts)
-try {
-    Logger_SetLevelFor("Tracks", "DEBUG")
-} catch {
-}
-try {
-    Logger_SetLevelFor("Storage", "DEBUG")
-} catch {
-}
-try {
-    Logger_SetLevelFor("Runtime", "DEBUG")
-} catch {
-}
 try {
     Logger_SetThrottlePerSec(0)
 } catch {

@@ -8,6 +8,7 @@
 Logs/*.
 Logs/*.txt
 Logs/*.log
+modules/workers/Logs/*.log
 # 导出目录（包含用户生成的配置文件）
 Exports/
 

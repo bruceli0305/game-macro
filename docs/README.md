@@ -1,186 +1,261 @@
-# Game Macro - 项目技术文档概览
+# Game Macro Development Manual
 
-> 🎮 基于AutoHotkey v2开发的专业Game Macro工具  
-> 📚 本文档包含项目的完整技术架构和实现细节
+Comprehensive technical documentation for the Game Macro automation system, providing detailed information about each module's architecture, API, and usage.
 
-## 📖 文档导航
+[English Version](README.md) | [中文版本](cn/README.md)
 
-### 核心架构文档
+## Overview
 
-| 文档 | 描述 | 状态 |
-|------|------|------|
-| [主程序框架](./01-主程序框架.md) | 应用程序入口、全局管理、生命周期控制 | ✅ 完成 |
-| [UI框架系统](./03-UI框架系统.md) | 用户界面架构、页面管理、布局系统 | ✅ 完成 |
-| [配置存储系统](./04-配置存储系统.md) | 配置管理、数据持久化、导入导出 | ✅ 完成 |
+The Game Macro system is a sophisticated automation framework built with AutoHotkey v2, designed for game automation with pixel detection, skill casting, buff management, and rule-based automation capabilities.
 
-### 功能引擎文档
+## Module Documentation
 
-| 文档 | 描述 | 状态 |
-|------|------|------|
-| [引擎模块详解](./02-引擎模块详解.md) | 游戏逻辑引擎集合、轮转规则、BUFF管理 | ✅ 完成 |
-| [工作池系统](./05-工作池系统.md) | 多进程管理、技能分发、性能优化 | ✅ 完成 |
-| [运行时组件](./06-运行时组件.md) | 基础服务、计数器、工具函数库 | ✅ 完成 |
+### Core Modules
 
----
+#### [Core Module](core/README.md)
+- Global application state management
+- Configuration file handling
+- Default profile and settings management
+- Application lifecycle control
 
-## 🏗️ 系统架构概览
+#### [Runtime Module](runtime/README.md)
+- Application lifecycle management
+- Thread management system
+- Performance monitoring and optimization
+- Hotkey binding and management
 
-### 整体架构图
+#### [Utility Module](util/README.md)
+- Generic utility functions
+- Object manipulation tools
+- ID generation system
+- Common helper functions
+
+### Engine Modules
+
+#### [Pixel Engine](engines/pixel/README.md)
+- High-performance pixel detection
+- Color management system
+- Frame-level caching
+- ROI (Region of Interest) optimization
+
+#### [DXGI Engine](engines/dup/README.md)
+- Hardware-accelerated screen capture
+- DirectX Graphics Infrastructure integration
+- Multi-monitor support
+- Dynamic FPS adjustment
+
+#### [Cast Engine](engines/cast/README.md)
+- Skill casting automation
+- Cast bar detection
+- Skill state tracking
+- Cooldown management
+
+#### [Buff Engine](engines/buff/README.md)
+- Buff duration tracking
+- Buff state detection
+- Priority-based buff management
+- Automatic buff renewal
+
+#### [Rule Engine](engines/rules/README.md)
+- Rule-based automation system
+- Condition evaluation engine
+- Action execution framework
+- Priority and timing management
+
+#### [Rotation Engine](engines/rotation/README.md)
+- Skill rotation management
+- Phase-based execution
+- Black guard protection
+- Opener sequence handling
+
+### Infrastructure Modules
+
+#### [Storage Module](storage/README.md)
+- Profile management system
+- Configuration persistence
+- Export functionality
+- File system operations
+
+#### [Logging Module](logging/README.md)
+- Comprehensive logging system
+- Multiple sink support (file, memory, pipe)
+- Log rotation and management
+- Performance monitoring
+
+#### [Internationalization (i18n) Module](i18n/README.md)
+- Multi-language support
+- Resource file management
+- Dynamic language switching
+- Translation system
+
+#### [UI Framework](ui/README.md)
+- User interface components
+- Page-based navigation system
+- Modal dialog management
+- Responsive layout design
+
+#### [Workers Module](workers/README.md)
+- Background task management
+- Worker thread pooling
+- Asynchronous operation support
+- Resource management
+
+#### [Native Library](lib/README.md)
+- C++ native implementations
+- DXGI duplication functionality
+- Performance-critical operations
+- Hardware acceleration
+
+## System Architecture
+
+### High-Level Overview
 
 ```
-Game Macro系统架构
-├── 应用层 (Application Layer)
-│   ├── Main.ahk              # 程序入口点
-│   ├── 权限管理              # UAC权限处理
-│   ├── 单实例控制            # 防止重复运行
-│   └── 托盘管理              # 系统托盘功能
-│
-├── 界面层 (UI Layer)
-│   ├── UI_Shell.ahk          # 主界面框架
-│   ├── UI_Framework.ahk      # 页面管理核心
-│   ├── UI_Layout.ahk         # 布局和DPI处理
-│   ├── dialogs/              # 对话框模块
-│   ├── pages/                # 功能页面模块
-│   └── rotation/             # 轮转界面组件
-│
-├── 业务层 (Business Layer)
-│   ├── RuleEngine.ahk        # 规则执行引擎
-│   ├── BuffEngine.ahk        # BUFF管理引擎
-│   ├── Rotation.ahk          # 技能轮转引擎
-│   ├── Dup.ahk               # 重复检测引擎
-│   ├── Pixel.ahk             # 像素检测引擎
-│   └── Poller.ahk            # 轮询调度引擎
-│
-├── 服务层 (Service Layer)
-│   ├── WorkerPool.ahk        # 工作池控制器
-│   ├── WorkerHost.ahk        # 工作进程执行器
-│   ├── Storage.ahk           # 数据存储管理
-│   ├── Exporter.ahk          # 导入导出功能
-│   ├── Counters.ahk          # 计数器服务
-│   └── Hotkeys.ahk           # 热键管理
-│
-├── 核心层 (Core Layer)
-│   ├── Core.ahk              # 核心功能库
-│   ├── AppConfig.ahk         # 应用配置管理
-│   └── Lang.ahk              # 国际化支持
-│
-└── 工具层 (Utility Layer)
-    ├── Utils.ahk             # 通用工具函数
-    └── GUI_Threads.ahk        # 线程配置管理
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│    UI Layer     │◄──►│  Core Services   │◄──►│  Engine Layer   │
+│                 │    │                 │    │                 │
+│ • Pages         │    │ • Configuration │    │ • Pixel Detection│
+│ • Dialogs       │    │ • State Mgmt    │    │ • Skill Casting │
+│ • Navigation    │    │ • Logging       │    │ • Buff Tracking  │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  Storage Layer  │    │ Runtime Layer   │    │ Native Layer   │
+│                 │    │                 │    │                 │
+│ • Profile Mgmt  │    │ • Thread Pool   │    │ • DXGI Capture │
+│ • File I/O      │    │ • Hotkey Mgmt   │    │ • Performance   │
+│ • Export System │    │ • Polling       │    │ • Optimization  │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-### 数据流图
+### Data Flow
 
+1. **User Interaction** → UI Layer → Core Services
+2. **Configuration** → Storage Layer → All Modules
+3. **Automation** → Engine Layer → Native Layer
+4. **Monitoring** → Runtime Layer → Logging System
+
+## Getting Started
+
+### Prerequisites
+- AutoHotkey v2.0 or later
+- Windows 10/11 operating system
+- DirectX compatible graphics card
+- Administrative privileges (for some features)
+
+### Development Setup
+1. Clone the repository
+2. Review module documentation
+3. Set up development environment
+4. Configure application settings
+5. Test with sample profiles
+
+### Module Integration
+Each module is designed for independent development and testing:
+- Clear API boundaries
+- Well-defined interfaces
+- Comprehensive error handling
+- Performance monitoring
+
+## API Reference
+
+### Core APIs
+- **Configuration Management**: AppConfig_* functions
+- **State Management**: Core_* functions
+- **Logging**: Logger_* functions
+- **Internationalization**: Lang_* functions
+
+### Engine APIs
+- **Pixel Detection**: Pixel_* functions
+- **Screen Capture**: Dup_* functions
+- **Skill Casting**: Cast_* functions
+- **Buff Management**: Buff_* functions
+- **Rule Execution**: Rule_* functions
+
+### Utility APIs
+- **Object Manipulation**: Obj_* functions
+- **ID Generation**: IdGen_* functions
+- **Common Utilities**: Utils_* functions
+
+## Configuration Guide
+
+### Application Configuration
+Located in `Config/AppConfig.ini`:
+```ini
+[General]
+Language=zh-CN
+Version=2.0.0
+
+[Logging]
+Level=INFO
+RotateSizeMB=10
+RotateKeep=5
 ```
-用户输入 → UI界面 → 业务引擎 → 工作池 → 技能执行
-    ↓           ↓         ↓        ↓        ↓
-  热键事件   界面更新   逻辑判断   进程管理   游戏操作
-    ↓           ↓         ↓        ↓        ↓
-  线程管理   状态同步   规则执行   性能监控   结果反馈
-```
+
+### Profile Configuration
+Profiles stored in `Profiles/` directory:
+- Skill configurations
+- Rule definitions
+- Buff settings
+- Rotation sequences
+
+## Performance Optimization
+
+### Key Optimization Areas
+1. **Pixel Detection**: Use ROI and frame caching
+2. **Screen Capture**: Leverage DXGI hardware acceleration
+3. **Rule Evaluation**: Optimize condition evaluation order
+4. **Memory Management**: Efficient resource utilization
+5. **Thread Management**: Proper worker thread allocation
+
+### Monitoring Tools
+- Built-in performance counters
+- Detailed logging system
+- Real-time status monitoring
+- Error tracking and reporting
+
+## Troubleshooting
+
+### Common Issues
+1. **DXGI Initialization Failures**: Check graphics drivers and permissions
+2. **Pixel Detection Issues**: Verify color tolerance and coordinates
+3. **Rule Execution Problems**: Review condition logic and priorities
+4. **Performance Degradation**: Monitor system resources and optimize settings
+
+### Debugging Techniques
+- Enable debug logging
+- Use diagnostic tools
+- Review performance metrics
+- Test with simplified configurations
+
+## Contributing
+
+### Development Guidelines
+1. Follow established coding standards
+2. Maintain comprehensive documentation
+3. Include unit tests for new features
+4. Perform thorough testing before submission
+
+### Module Development
+When adding new modules:
+1. Create clear API documentation
+2. Implement proper error handling
+3. Include performance monitoring
+4. Follow established architectural patterns
+
+## License and Attribution
+
+This documentation is part of the Game Macro system. Please refer to the project's license file for usage and distribution terms.
+
+## Support
+
+For technical support and development questions:
+- Review module-specific documentation
+- Check troubleshooting sections
+- Examine example implementations
+- Review API references
 
 ---
 
-## 📋 模块功能对照表
-
-| 模块名称 | 文件路径 | 主要功能 | 依赖关系 |
-|---------|----------|----------|----------|
-| **主程序框架** | `Main.ahk` | 程序启动、全局管理 | UI框架、核心层 |
-| **UI框架** | `modules/ui/` | 界面管理、页面切换 | 主程序框架 |
-| **规则引擎** | `modules/engines/RuleEngine.ahk` | 条件判断、动作执行 | 工作池系统 |
-| **BUFF引擎** | `modules/engines/BuffEngine.ahk` | BUFF监控、续时管理 | 运行时组件 |
-| **轮转引擎** | `modules/engines/Rotation.ahk` | 技能轮转、避免重复 | 工作池系统 |
-| **工作池** | `modules/workers/WorkerPool.ahk` | 多进程管理 | 运行时组件 |
-| **存储系统** | `modules/storage/` | 配置管理、数据持久化 | UI框架 |
-| **计数器系统** | `modules/runtime/Counters.ahk` | 数据统计、性能监控 | 所有引擎模块 |
-
----
-
-## 🚀 快速开始指南
-
-### 开发者指南
-1. **了解整体架构** → 阅读 [主程序框架](./01-主程序框架.md)
-2. **熟悉界面系统** → 阅读 [UI框架系统](./03-UI框架系统.md)
-3. **掌握业务逻辑** → 阅读 [引擎模块详解](./02-引擎模块详解.md)
-4. **理解执行机制** → 阅读 [工作池系统](./05-工作池系统.md)
-
-### 功能模块指南
-- **配置管理** → [配置存储系统](./04-配置存储系统.md)
-- **运行时服务** → [运行时组件](./06-运行时组件.md)
-- **性能优化** → 各文档中的性能优化章节
-
-### 扩展开发指南
-1. **添加新引擎** → 参考现有引擎模块结构
-2. **扩展UI功能** → 基于UI_Framework扩展
-3. **优化性能** → 参考各模块的性能优化策略
-4. **添加配置项** → 扩展AppConfig.ini和相关处理
-
----
-
-## 🔧 技术栈信息
-
-### 核心技术
-- **开发语言**: AutoHotkey v2
-- **架构模式**: 分层架构 + 模块化设计
-- **并发模型**: 多进程池 + 线程管理
-- **数据存储**: INI文件 + Map数据结构
-
-### 关键特性
-- ✅ **模块化设计**: 松耦合架构，易于扩展
-- ✅ **多进程支持**: 高并发技能执行
-- ✅ **智能轮转**: 避免固定模式检测
-- ✅ **实时监控**: 完整的性能和状态监控
-- ✅ **国际化支持**: 多语言界面
-- ✅ **配置灵活**: 丰富的自定义选项
-
----
-
-## 📊 性能特性
-
-### 执行效率
-- **多进程并行**: 支持多线程并发执行
-- **智能调度**: 基于优先级的任务调度
-- **缓存机制**: 减少重复计算和检测
-- **内存优化**: 及时清理和垃圾回收
-
-### 稳定性保障
-- **异常处理**: 完善的错误捕获和恢复
-- **状态监控**: 实时系统状态监控
-- **资源管理**: 进程和内存资源管理
-- **故障恢复**: 自动重启和状态恢复
-
----
-
-## 🛠️ 开发环境要求
-
-### 必需软件
-- **AutoHotkey v2.0+**: 主要开发语言
-- **Windows 10/11**: 目标运行环境
-- **Git**: 版本控制（可选）
-
-### 开发工具推荐
-- **VS Code**: 代码编辑
-- **SciTE4AutoHotkey**: AHK专业编辑器
-- **Process Monitor**: 进程监控工具
-
----
-
-## 📞 技术支持
-
-### 文档使用说明
-- 按需查阅对应模块文档
-- 优先阅读架构概览文档
-- 参考代码示例进行开发
-- 关注性能优化建议
-
-### 开发建议
-- 遵循模块化开发原则
-- 注重代码注释和文档
-- 进行充分的错误处理
-- 关注性能和用户体验
-
----
-
-*📝 最后更新: 2025-11-29*  
-*🔄 文档版本: v1.1*  
-*👨‍💻 维护团队: Game Macro开发组*
+*This documentation is automatically generated and maintained as part of the Game Macro development process.*
