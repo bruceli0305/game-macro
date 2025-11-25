@@ -4,6 +4,8 @@ Game Macro 自动化系统的全面技术文档，提供每个模块的架构、
 
 [English Version](../README.md) | [中文版本](README.md)
 
+📖 **[用户使用手册](../useDocs/index.md)** - 专为普通用户设计的简明使用指南
+
 ## 概述
 
 Game Macro 系统是一个基于 AutoHotkey v2 构建的复杂自动化框架，专为游戏自动化设计，具有像素检测、技能施放、增益管理和基于规则的自动化功能。
