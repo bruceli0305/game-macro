@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+;modules\ui\rotation\components\tracks\RulesPicker_Dialog.ahk
 #Include "..\..\RE_UI_Common.ahk"
 
 REUI_TrackEditor_RulesLabel(t) {

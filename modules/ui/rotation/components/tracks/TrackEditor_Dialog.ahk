@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+;modules\ui\rotation\components\tracks\TrackEditor_Dialog.ahk
 #Include "..\..\RE_UI_Common.ahk"
 
 REUI_TrackEditor_Open(owner, cfg, t, idx := 0, onSaved := 0) {
@@ -89,38 +90,69 @@ REUI_TrackEditor_Open(owner, cfg, t, idx := 0, onSaved := 0) {
     edMin := g.Add("Edit", "x+6 w160 Number Center", HasProp(t, "MinStayMs") ? t.MinStayMs : 0)
 
     g.Add("Text", "xm y+8 w100 Right", "下一轨：")
-    ddNext := g.Add("DropDownList", "x+6 w160")
+    ; 宽度稍微放大一点，方便显示“[id] 名称”
+    ddNext := g.Add("DropDownList", "x+6 w220")
+    ; 构造两个数组：
+    ; arrNextIds    —— 实际保存到配置里的 NextTrackId
+    ; arrNextLabels —— 下拉框里显示的文字
     ids := REUI_ListTrackIds(cfg)
-    ids2 := []
+    arrNextIds := []
+    arrNextLabels := []
+    ; 第一项：0，表示不自动跳轨
+    try {
+        arrNextIds.Push(0)
+        arrNextLabels.Push("（不自动跳轨）")
+    } catch {
+    }
+
     for _, idv in ids {
-        if (Integer(idv) > 0) {
-            ids2.Push(idv)
+        idInt := 0
+        try {
+            idInt := Integer(idv)
+        } catch {
+            idInt := 0
+        }
+        if (idInt <= 0) {
+            continue
+        }
+        try {
+            arrNextIds.Push(idInt)
+        } catch {
+        }
+        lbl := ""
+        try {
+            lbl := REUI_TrackLabelById(cfg, idInt)    ; => "[id] 名称"
+        } catch {
+            lbl := "轨道#" idInt
+        }
+        try {
+            arrNextLabels.Push(lbl)
+        } catch {
         }
     }
-    arrNext := ["0"]
-    for _, idv in ids2 {
-        arrNext.Push(idv)
-    }
+
     try {
-        if (arrNext.Length > 0) {
-            ddNext.Add(arrNext)
+        if (arrNextLabels.Length > 0) {
+            ddNext.Add(arrNextLabels)
         }
     } catch {
     }
+
+    ; 根据当前 t.NextTrackId 选中对应项
+    want := 0
+    try {
+        want := Integer(HasProp(t, "NextTrackId") ? t.NextTrackId : 0)
+    } catch {
+        want := 0
+    }
     nextSel := 1
     i := 1
-    while (i <= arrNext.Length) {
+    while (i <= arrNextIds.Length) {
         v := 0
         try {
-            v := Integer(arrNext[i])
+            v := Integer(arrNextIds[i])
         } catch {
             v := 0
-        }
-        want := 0
-        try {
-            want := Integer(HasProp(t, "NextTrackId") ? t.NextTrackId : 0)
-        } catch {
-            want := 0
         }
         if (v = want) {
             nextSel := i
@@ -196,13 +228,13 @@ REUI_TrackEditor_Open(owner, cfg, t, idx := 0, onSaved := 0) {
         }
         nextIdx := 1
         try {
-            nextIdx := REUI_IndexClamp(ddNext.Value, arrNext.Length)
+            nextIdx := REUI_IndexClamp(ddNext.Value, arrNextIds.Length)
         } catch {
             nextIdx := 1
         }
         nextVal := 0
         try {
-            nextVal := Integer(arrNext[nextIdx])
+            nextVal := Integer(arrNextIds[nextIdx])
         } catch {
             nextVal := 0
         }
