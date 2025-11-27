@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2
-
+;modules\core\AppConfig.ahk
 ; AppConfig - 程序级配置（独立于 Profile）
 global gAppCfg := Map()
 

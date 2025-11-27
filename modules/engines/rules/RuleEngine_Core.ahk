@@ -31,19 +31,23 @@ RuleEngine_Tick() {
     now := A_TickCount
 
     TryEvalRule(rIdx) {
+        try Logger_Info("Diag","RE.try", Map("rIdx", rIdx))
         r := prof.Rules[rIdx]
-        if !r.Enabled
+        if !r.Enabled {
+            try Logger_Info("Diag","RE.skip", Map("rIdx", rIdx, "why","disabled"))
             return false
-
+        }
         ; 冷却
         last := HasProp(r, "LastFire") ? r.LastFire : 0
-        if (r.CooldownMs - (now - last) > 0)
+        if (r.CooldownMs - (now - last) > 0){
+            try Logger_Info("Diag","RE.skip", Map("rIdx", rIdx, "why","cooldown"))
             return false
-
+        }
         ; 过滤（若外部仍开启）
         if (RE_Filter.Enabled) {
             if (RE_Filter.AllowRuleIds) {
                 if !RE_Filter.AllowRuleIds.Has(rIdx)
+                    try Logger_Info("Diag","RE.skip", Map("rIdx", rIdx, "why","filtered(ruleIds)"))
                     return false
             } else if (RE_Filter.AllowSkills) {
                 if (r.Actions.Length = 0)
@@ -106,7 +110,10 @@ RuleEngine_Tick() {
         }
         return RuleEngine_SessionStep()
     }
-
+    try {
+        Logger_Info("Diag","RE.scanOrder", Map("len", (IsObject(RE_ScanOrder)?RE_ScanOrder.Length:0), "order", RE_List(RE_ScanOrder)))
+    } catch {
+    }
     ; 若注入了扫描顺序，仅按该顺序评估
     if (IsObject(RE_ScanOrder) && RE_ScanOrder.Length > 0) {
         for _, id in RE_ScanOrder {
@@ -168,6 +175,15 @@ RuleEngine_EvalRule(rule, prof) {
                     s := prof.Skills[refIdx]
                     rx := s.X, ry := s.Y, tgt := Pixel_HexToInt(s.Color), tol := s.Tol
                     cur := Pixel_FrameGet(rx, ry)
+                    Logger_Info("Diag", "Px", Map(
+                        "kind", "SKILL",
+                        "refIdx", refIdx,
+                        "x", rx, "y", ry,
+                        "cur", RE_ColorHex(cur),
+                        "tgt", RE_ColorHex(tgt),
+                        "tol", tol,
+                        "op", op
+                    ))
                     match := Pixel_ColorMatch(cur, tgt, tol)
                     res := (op = "EQ") ? match : !match
                 } else {
@@ -178,6 +194,15 @@ RuleEngine_EvalRule(rule, prof) {
                     p := prof.Points[refIdx]
                     rx := p.X, ry := p.Y, tgt := Pixel_HexToInt(p.Color), tol := p.Tol
                     cur := Pixel_FrameGet(rx, ry)
+                    Logger_Info("Diag", "Px", Map(
+                        "kind", "POINT",
+                        "refIdx", refIdx,
+                        "x", rx, "y", ry,
+                        "cur", RE_ColorHex(cur),
+                        "tgt", RE_ColorHex(tgt),
+                        "tol", tol,
+                        "op", op
+                    ))
                     match := Pixel_ColorMatch(cur, tgt, tol)
                     res := (op = "EQ") ? match : !match
                 } else {

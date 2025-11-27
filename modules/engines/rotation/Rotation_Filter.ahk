@@ -1,6 +1,12 @@
 ; Rotation_Filter.ahk - 规则过滤/调用
 
 Rotation_RunRules_ForCurrentTrack() {
+    try {
+        tr := Rotation_CurrentTrackCfg()
+        rr := (tr && HasProp(tr,"RuleRefs")) ? tr.RuleRefs : []
+        Logger_Info("Diag", "RunRulesForTrack.enter", Map("trackId", gRot["RT"].TrackId, "ruleRefs", RE_List(rr)))
+    } catch { 
+    }
     global gRot
     cfg := gRot["Cfg"], rt := gRot["RT"]
     tr := Rotation_CurrentTrackCfg()

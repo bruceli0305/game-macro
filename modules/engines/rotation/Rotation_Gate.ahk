@@ -115,39 +115,43 @@ Rotation_GateFindMatch() {
         return 0
     if !HasProp(cfg, "Gates") || cfg.Gates.Length = 0
         return 0
-
     curId := gRot["RT"].TrackId
     if (curId <= 0)
         return 0
 
-    ; 复制并按 Priority 升序
-    gates := []
-    for _, g in cfg.Gates
-        gates.Push(g)
-    gates.Sort((a, b, *) => ((HasProp(a,"Priority")?a.Priority:0) - (HasProp(b,"Priority")?b.Priority:0)))
-
-    for _, g in gates {
+    ; 逐一评估，选择“命中且 Priority 最小”的 Gate（避免使用 Array.Sort）
+    bestTo := 0
+    bestPr := 0x7FFFFFFF
+    for _, g in cfg.Gates {
         fromId := HasProp(g, "FromTrackId") ? Integer(g.FromTrackId) : 0
-        toId   := HasProp(g, "ToTrackId")   ? Integer(g.ToTrackId)   : 0
+        toId := HasProp(g, "ToTrackId") ? Integer(g.ToTrackId) : 0
         if (fromId <= 0 || toId <= 0)
             continue
         if (fromId != curId)
             continue
 
-        ok := Rotation_GateEval(g)
+        ok := false
+        try {
+            ok := Rotation_GateEval(g)
+        } catch {
+            ok := false
+        }
+
         if (ok) {
-            if (Rotation_GetTrackById(toId)) {
-                try {
-                    Logger_Info("Rotation", "Gate hit", Map("from", fromId, "to", toId))
-                } catch {
-                }
-                return toId
+            pr := HasProp(g, "Priority") ? Integer(g.Priority) : 0
+            if (pr < bestPr) {
+                bestPr := pr
+                bestTo := toId
             }
         }
     }
+
+    if (bestTo > 0 && Rotation_GetTrackById(bestTo)) {
+        try Logger_Info("Rotation", "Gate hit", Map("from", curId, "to", bestTo))
+        return bestTo
+    }
     return 0
 }
-
 Rotation_TryEnterTrackWithSwap(trackId) {
     global gRot
     cfg := gRot["Cfg"]

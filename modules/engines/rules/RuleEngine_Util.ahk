@@ -26,12 +26,14 @@ RuleEngine_HasCounterCond(rule) {
 
 ; 帧缓存就绪：技能像素等于目标色
 RuleEngine_CheckSkillReady(prof, idx) {
+    try Logger_Info("Diag","Px", Map("idx", idx, "profLength", prof.Skills.Length))
     if (idx < 1 || idx > prof.Skills.Length) {
         return false
     }
     s := prof.Skills[idx]
     cur := Pixel_FrameGet(s.X, s.Y)
     tgt := Pixel_HexToInt(s.Color)
+    try Logger_Info("Diag","Px", Map("idx", idx, "cur", RE_ColorHex(cur), "tgt", RE_ColorHex(Pixel_HexToInt(s.Color)), "tol", s.Tol))
     ok := Pixel_ColorMatch(cur, tgt, s.Tol)
     return ok
 }
