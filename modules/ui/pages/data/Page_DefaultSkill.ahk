@@ -138,7 +138,7 @@ DefaultSkill_Refresh_Strong() {
             }
         } else {
             try {
-                UI.DS_DdSkill.Add(["（无技能）"])
+                UI.DS_DdSkill.Add([T("ds.no_skill", "（无技能）")])
                 UI.DS_DdSkill.Value := 1
             } catch {
             }
@@ -204,7 +204,7 @@ DefaultSkill_Refresh_Strong() {
             }
         } else {
             try {
-                UI.DS_DdThread.Add(["（无线程）"])
+                UI.DS_DdThread.Add([T("ds.no_thread", "（无线程）")])
                 UI.DS_DdThread.Value := 1
             } catch {
             }
