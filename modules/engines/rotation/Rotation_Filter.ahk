@@ -1,5 +1,5 @@
 ; Rotation_Filter.ahk - 规则过滤/调用
-
+;modules\engines\rotation\Rotation_Filter.ahk
 Rotation_RunRules_ForCurrentTrack() {
     global gRot
     cfg := gRot["Cfg"], rt := gRot["RT"]

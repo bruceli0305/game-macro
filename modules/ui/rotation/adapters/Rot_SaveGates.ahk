@@ -1,4 +1,6 @@
 #Requires AutoHotkey v2
+;modules\ui\rotation\adapters\Rot_SaveGates.ahk
+
 ; 保存 Gates：索引→稳定 Id，写盘→重载→重建
 
 Rot_SaveGates(profileName, cfg) {

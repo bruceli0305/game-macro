@@ -1,5 +1,5 @@
 ; Rotation_Opener.ahk - 起手 Step 引擎（Skill/Wait/Swap）
-
+;modules\engines\rotation\Rotation_Opener.ahk
 Rotation_OpenerHasSteps() {
     global gRot
     try {

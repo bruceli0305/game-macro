@@ -1,5 +1,5 @@
 ; Rotation_Gate.ahk - 跳轨（From->To + 多条件）
-
+;modules\engines\rotation\Rotation_Gate.ahk
 Rotation_ResolveRef(refType, refIndex) {
     global App
     if (refType="Skill" && refIndex>=1 && refIndex<=App["ProfileData"].Skills.Length) {

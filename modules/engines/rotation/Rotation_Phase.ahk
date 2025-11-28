@@ -1,5 +1,5 @@
 ; Rotation_Phase.ahk - 初始化/阶段进入/PhaseState 构建
-
+;modules\engines\rotation\Rotation_Phase.ahk
 Rotation_InitFromProfile() {
     global App, gRot, gRotInitBusy, gRotInitialized
     if (gRotInitBusy)

@@ -1,5 +1,5 @@
 ; Rotation_Watch.ahk - Watch 列表判定
-
+;modules\engines\rotation\Rotation_Watch.ahk
 Rotation_WatchEval() {
     global App, gRot
     cfg := gRot["Cfg"], st := gRot["RT"].PhaseState
