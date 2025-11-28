@@ -10,51 +10,51 @@ Page_ToolsQuick_Build(page) {
     page.Controls := []
 
     ; ========= 一次性发键 =========
-    UI.TQ_GB_Send := UI.Main.Add("GroupBox", Format("x{} y{} w{} h150", rc.X, rc.Y, rc.W), "发键测试（一次性 Fire&Forget）")
+    UI.TQ_GB_Send := UI.Main.Add("GroupBox", Format("x{} y{} w{} h150", rc.X, rc.Y, rc.W), T("tools.quick.send.title","发键测试（一次性 Fire&Forget）"))
     page.Controls.Push(UI.TQ_GB_Send)
 
     x0 := rc.X + 12
     y0 := rc.Y + 26
 
-    UI.TQ_L_Key := UI.Main.Add("Text", Format("x{} y{} w90 Right", x0, y0 + 4), "键序列：")
+    UI.TQ_L_Key := UI.Main.Add("Text", Format("x{} y{} w90 Right", x0, y0 + 4), T("tools.quick.key","键序列："))
     page.Controls.Push(UI.TQ_L_Key)
     UI.TQ_EdKey := UI.Main.Add("Edit", "x+6 w120")
     page.Controls.Push(UI.TQ_EdKey)
 
-    UI.TQ_L_Delay := UI.Main.Add("Text", "x+16 w90 Right", "延时(ms)：")
+    UI.TQ_L_Delay := UI.Main.Add("Text", "x+16 w90 Right", T("tools.quick.delay","延时(ms)："))
     page.Controls.Push(UI.TQ_L_Delay)
     UI.TQ_EdDelay := UI.Main.Add("Edit", "x+6 w120 Number")
     page.Controls.Push(UI.TQ_EdDelay)
 
-    UI.TQ_L_Hold := UI.Main.Add("Text", "x+16 w90 Right", "按住(ms)：")
+    UI.TQ_L_Hold := UI.Main.Add("Text", "x+16 w90 Right", T("tools.quick.hold","按住(ms)："))
     page.Controls.Push(UI.TQ_L_Hold)
     UI.TQ_EdHold := UI.Main.Add("Edit", "x+6 w120 Number")
     page.Controls.Push(UI.TQ_EdHold)
 
     y1 := y0 + 34
-    tip := "说明：可直接输入 a、F1、LButton，或使用 {Ctrl down}a{Ctrl up} 形式。"
+    tip := T("tools.quick.tip","说明：可直接输入 a、F1、LButton，或使用 {Ctrl down}a{Ctrl up} 形式。")
     UI.TQ_Tip := UI.Main.Add("Text", Format("x{} y{} w{}", x0, y1, rc.W - 24), tip)
     page.Controls.Push(UI.TQ_Tip)
 
     y2 := y1 + 30
-    UI.TQ_BtnSend := UI.Main.Add("Button", Format("x{} y{} w120 h28", x0, y2), "发送")
+    UI.TQ_BtnSend := UI.Main.Add("Button", Format("x{} y{} w120 h28", x0, y2), T("tools.quick.btn.send","发送"))
     page.Controls.Push(UI.TQ_BtnSend)
 
     ; ========= 拾色与计数 =========
     ry := rc.Y + 150 + 10
-    UI.TQ_GB_Pick := UI.Main.Add("GroupBox", Format("x{} y{} w{} h140", rc.X, ry, rc.W), "拾色与计数")
+    UI.TQ_GB_Pick := UI.Main.Add("GroupBox", Format("x{} y{} w{} h140", rc.X, ry, rc.W), T("tools.quick.pick.title","拾色与计数"))
     page.Controls.Push(UI.TQ_GB_Pick)
 
-    UI.TQ_BtnPick := UI.Main.Add("Button", Format("x{} y{} w120 h28", x0, ry + 26), "拾取像素")
+    UI.TQ_BtnPick := UI.Main.Add("Button", Format("x{} y{} w120 h28", x0, ry + 26), T("tools.quick.btn.pick","拾取像素"))
     page.Controls.Push(UI.TQ_BtnPick)
 
-    UI.TQ_L_Pick := UI.Main.Add("Text", "x+10 w420", "X=-  Y=-  Hex=-")
+    UI.TQ_L_Pick := UI.Main.Add("Text", "x+10 w420", T("tools.quick.pick.result","X=-  Y=-  Hex=-"))
     page.Controls.Push(UI.TQ_L_Pick)
 
-    UI.TQ_BtnClrCnt := UI.Main.Add("Button", Format("x{} y{} w120 h28", x0, ry + 26 + 40), "清零计数")
+    UI.TQ_BtnClrCnt := UI.Main.Add("Button", Format("x{} y{} w120 h28", x0, ry + 26 + 40), T("tools.quick.btn.clear","清零计数"))
     page.Controls.Push(UI.TQ_BtnClrCnt)
 
-    UI.TQ_BtnOpenLogs := UI.Main.Add("Button", "x+10 w120 h28", "打开日志目录")
+    UI.TQ_BtnOpenLogs := UI.Main.Add("Button", "x+10 w120 h28", T("tools.quick.btn.openLogs","打开日志目录"))
     page.Controls.Push(UI.TQ_BtnOpenLogs)
 
     ; 事件
@@ -93,7 +93,7 @@ ToolsQuick_OnSend(*) {
         key := ""
     }
     if (key = "") {
-        MsgBox "请先输入键序列。"
+        MsgBox T("msg.quick.noKey","请先输入键序列。")
         return
     }
 
@@ -133,9 +133,9 @@ ToolsQuick_OnSend(*) {
     }
 
     if (ok) {
-        Notify("已发送：" key)
+        Notify(T("msg.quick.sent","已发送：") key)
     } else {
-        Notify("发送失败：" key)
+        Notify(T("msg.quick.sendFail","发送失败：") key)
     }
 }
 
@@ -182,9 +182,9 @@ ToolsQuick_OnPick(*) {
 ToolsQuick_OnClearCounters(*) {
     try {
         Counters_Init()
-        Notify("计数已清零")
+        Notify(T("msg.quick.countersCleared","计数已清零"))
     } catch {
-        Notify("计数清零失败")
+        Notify(T("msg.quick.clearFail","计数清零失败"))
     }
 }
 
@@ -197,6 +197,6 @@ ToolsQuick_OnOpenLogs(*) {
     try {
         Run dir
     } catch {
-        MsgBox "无法打开目录：" dir
+        MsgBox T("msg.quick.failOpenDir","无法打开目录：") dir
     }
 }

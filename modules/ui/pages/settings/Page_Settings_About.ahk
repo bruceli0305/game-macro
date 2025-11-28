@@ -202,18 +202,18 @@ SettingsAbout_BuildSummary() {
         hostShown := "(未找到)"
     }
 
-    sum .= "版本: " ver "`r`n"
-    sum .= "架构: " arch "    权限: " admin "    OS: " os "`r`n"
-    sum .= "脚本目录: " root "`r`n"
-    sum .= "Profiles: " profiles "`r`n"
-    sum .= "Exports:  " exports  "`r`n"
-    sum .= "Logs:     " logs     "`r`n"
-    sum .= "Languages:" langs    "`r`n"
-    sum .= "GitHub:   https://github.com/bruceli0305/game-macro" "`r`n"
+    sum .= T("about.version","版本:") " " ver "`r`n"
+    sum .= T("about.arch","架构:") " " arch "    " T("about.perm","权限:") " " admin "    " T("about.os","OS:") " " os "`r`n"
+    sum .= T("about.scriptDir","脚本目录:") " " root "`r`n"
+    sum .= T("about.profiles","Profiles:") " " profiles "`r`n"
+    sum .= T("about.exports","Exports:") "  " exports  "`r`n"
+    sum .= T("about.logs","Logs:") "     " logs     "`r`n"
+    sum .= T("about.languages","Languages:") "" langs    "`r`n"
+    sum .= T("about.github","GitHub:") "   https://github.com/bruceli0305/game-macro" "`r`n"
     sum .= "`r`n"
-    sum .= "DXGI: Enabled=" dx_en " Ready=" dx_ready " FPS=" fps "`r`n"
-    sum .= "OutIdx: " outIdx "  Name: " monName "  Rect: " rect "`r`n"
-    sum .= "WorkerHost: " hostShown "`r`n"
+    sum .= T("about.dxgi","DXGI:") " Enabled=" dx_en " Ready=" dx_ready " FPS=" fps "`r`n"
+    sum .= T("about.outIdx","OutIdx:") " " outIdx "  " T("about.name","Name:") " " monName "  " T("about.rect","Rect:") " " rect "`r`n"
+    sum .= T("about.workerHost","WorkerHost:") " " hostShown "`r`n"
 
     return sum
 }
@@ -367,7 +367,7 @@ SettingsAbout_OnOpenNativeLog(*) {
 SettingsAbout_OnOpenWorkerHost(*) {
     path := SettingsAbout_FindWorkerHost()
     if (path = "") {
-        MsgBox "未找到 WorkerHost（请确认 modules\\workers\\WorkerHost.exe 是否存在）。"
+        MsgBox T("about.notFoundWorkerHost","未找到 WorkerHost（请确认 modules\\workers\\WorkerHost.exe 是否存在）。")
         return
     }
     dir := ""
@@ -388,6 +388,6 @@ SettingsAbout_OnOpenGitHub(*) {
     try {
         Run githubUrl
     } catch {
-        MsgBox "无法打开浏览器访问GitHub项目页面：" githubUrl
+        MsgBox T("about.failOpenGitHub","无法打开浏览器访问GitHub项目页面：") githubUrl
     }
 }
