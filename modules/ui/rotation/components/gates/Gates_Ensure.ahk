@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+;modules\ui\rotation\components\gates\Gates_Ensure.ahk
 #Include "..\..\RE_UI_Common.ahk"
 
 REUI_Gates_Ensure(cfg) {

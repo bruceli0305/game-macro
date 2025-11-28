@@ -1,5 +1,5 @@
 ; Rotation_Config.ahk - 配置读入/轨道辅助（纯 Tracks[] 版本）
-
+;modules\engines\rotation\Rotation_Config.ahk
 Rotation_ReadCfg(prof) {
     cfg := HasProp(prof, "Rotation") ? prof.Rotation : {}
     if !HasProp(cfg, "Enabled")         cfg.Enabled := 0

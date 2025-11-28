@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+;modules\ui\rotation\components\common\REUI_Tools.ahk
 ; 通用工具（供 Tracks/Gates/Opener 复用）
 ; 严格块结构，禁止单行 if/try/catch，禁止 ByRef
 
@@ -286,4 +287,48 @@ REUI_SkillNameById(id) {
         return REUI_SkillName(idx)
     }
     return "技能#" id
+}
+; 通过 Id 取轨道名称；找不到时回退“轨道#id”
+REUI_TrackNameById(cfg, id) {
+    if (!IsObject(cfg)) {
+        return "轨道#" id
+    }
+    try {
+        if (HasProp(cfg, "Tracks") && IsObject(cfg.Tracks)) {
+            for _, t in cfg.Tracks {
+                tid := 0
+                try {
+                    tid := HasProp(t, "Id") ? Integer(t.Id) : 0
+                } catch {
+                    tid := 0
+                }
+                if (tid = Integer(id)) {
+                    nm := ""
+                    try {
+                        nm := HasProp(t, "Name") ? t.Name : ""
+                    } catch {
+                        nm := ""
+                    }
+                    if (nm != "") {
+                        return nm
+                    } else {
+                        return "轨道#" id
+                    }
+                }
+            }
+        }
+    } catch {
+    }
+    return "轨道#" id
+}
+
+; 用于下拉框显示的标签：[id] 名称
+REUI_TrackLabelById(cfg, id) {
+    nm := ""
+    try {
+        nm := REUI_TrackNameById(cfg, id)
+    } catch {
+        nm := "轨道#" id
+    }
+    return "[" id "] " nm
 }

@@ -1,5 +1,5 @@
 ; Rotation_Tick.ahk - 主 Tick / OnSkillSent / SwapAndEnter
-
+;modules\engines\rotation\Rotation_Tick.ahk
 Rotation_Tick() {
     global gRot
     if !Rotation_IsEnabled()

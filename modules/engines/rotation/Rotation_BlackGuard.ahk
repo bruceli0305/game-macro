@@ -1,5 +1,5 @@
 ; Rotation_BlackGuard.ahk - 黑屏防抖/时间窗
-
+;modules\engines\rotation\Rotation_BlackGuard.ahk
 Rotation_IsBlack(c, tol := 16) {
     r := (c>>16) & 0xFF, g := (c>>8) & 0xFF, b := c & 0xFF
     return (r<=tol && g<=tol && b<=tol)

@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+;modules\ui\rotation\components\tracks\WatchEditor_Dialog.ahk
 #Include "..\..\RE_UI_Common.ahk"
 
 REUI_WatchEditor_Open(owner, w, idx := 0, onSaved := 0) {

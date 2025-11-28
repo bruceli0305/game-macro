@@ -1,4 +1,6 @@
 #Requires AutoHotkey v2
+;modules\ui\rotation\adapters\Rot_MapIndexId.ahk
+
 ; 从完整 Profile 构建 运行时索引 → 稳定 Id 的映射表
 ; 返回 Map("SkByIdx", Map, "PtByIdx", Map, "RlByIdx", Map)
 

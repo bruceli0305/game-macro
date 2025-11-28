@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+;modules\ui\rotation\components\tracks\Tracks_Ensure.ahk
 #Include "..\..\RE_UI_Common.ahk"
 
 REUI_Tracks_Ensure(cfg) {

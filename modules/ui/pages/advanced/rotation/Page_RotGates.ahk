@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+;modules\ui\pages\advanced\rotation\Page_RotGates.ahk
 #Include "..\..\..\rotation\RE_UI_Common.ahk"
 #Include "..\..\..\rotation\RE_UI_Page_Gates.ahk"
 

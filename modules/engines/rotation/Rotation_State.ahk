@@ -1,5 +1,5 @@
 ; Rotation_State.ahk - 全局状态/日志/基础开关
-
+;modules\engines\rotation\Rotation_State.ahk
 global gRot := IsSet(gRot) ? gRot : Map()   ; { Cfg, RT }
 global gRotInitBusy := IsSet(gRotInitBusy) ? gRotInitBusy : false
 global gRotInitialized := IsSet(gRotInitialized) ? gRotInitialized : false
