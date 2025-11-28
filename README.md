@@ -37,7 +37,7 @@ Game Macro is a professional game automation tool designed for games requiring p
 
 1. **Download Project**
    ```bash
-   git clone https://github.com/your-repo/game-macro.git
+   git clone https://github.com/bruceli0305/game-macro.git
    cd game-macro
    ```
 

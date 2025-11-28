@@ -37,7 +37,7 @@ Game Macro是一个专业的游戏自动化工具，专为需要精确像素检�
 
 1. **下载项目**
    ```bash
-   git clone https://github.com/your-repo/game-macro.git
+   git clone https://github.com/bruceli0305/game-macro.git
    cd game-macro
    ```
 
