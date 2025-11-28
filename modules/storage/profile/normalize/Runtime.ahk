@@ -568,7 +568,6 @@ PM_ToRuntime(profile) {
                         op    := OM_Get(c0, "Op", "NEQ")
                         col   := OM_Get(c0, "Color", "0x000000")
                         tol   := OM_Get(c0, "Tol", 16)
-                        rId   := OM_Get(c0, "RuleId", 0)
                         q     := OM_Get(c0, "QuietMs", 0)
                         cmp   := OM_Get(c0, "Cmp", "GE")
                         val   := OM_Get(c0, "Value", 0)
@@ -598,16 +597,16 @@ PM_ToRuntime(profile) {
 
                         ruleIdx := 0
                         try {
-                            ruleIdx := (rId>0 ? PM_RuleIndexById(profile, rId) : 0)
+                            ruleIdx := (rid>0 ? PM_RuleIndexById(profile, rid) : 0)
                         } catch {
                             ruleIdx := 0
                         }
                         if (dbgRt) {
-                            if (rId > 0) {
+                            if (rid > 0) {
                                 if (ruleIdx = 0) {
                                     f6 := Map()
                                     try {
-                                        f6["RuleId"] := rId
+                                        f6["RuleId"] := rid
                                         f6["GateRow"] := i
                                         f6["CondIdx"] := j
                                         Logger_Warn("Runtime", "Gate RuleId→Index failed", f6)
