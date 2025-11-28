@@ -11,16 +11,16 @@ Page_Skills_Build(page) {
 
     ; 列表
     UI.SkillLV := UI.Main.Add("ListView", Format("x{} y{} w{} h{}", rc.X, rc.Y, rc.W, rc.H - 40 - 8)
-        , ["ID","技能名","键位","X","Y","颜色","容差","锁定","超时ms"])
+        , [T("col.skill.id","ID"), T("col.skill.name","技能名"), T("col.skill.key","键位"), T("col.skill.x","X"), T("col.skill.y","Y"), T("col.skill.color","颜色"), T("col.skill.tol","容差"), T("col.skill.lock","锁定"), T("col.skill.timeout","超时ms")])
     page.Controls.Push(UI.SkillLV)
 
     ; 按钮行
     yBtn := rc.Y + rc.H - 30
-    UI.BtnAddSkill  := UI.Main.Add("Button", Format("x{} y{} w96 h28", rc.X, yBtn), "新增")
-    UI.BtnEditSkill := UI.Main.Add("Button", "x+8 w96 h28", "编辑")
-    UI.BtnDelSkill  := UI.Main.Add("Button", "x+8 w96 h28", "删除")
-    UI.BtnTestSkill := UI.Main.Add("Button", "x+8 w96 h28", "测试检测")
-    UI.BtnSaveSkill := UI.Main.Add("Button", "x+8 w96 h28", "保存")
+    UI.BtnAddSkill  := UI.Main.Add("Button", Format("x{} y{} w96 h28", rc.X, yBtn), T("btn.add","新增"))
+    UI.BtnEditSkill := UI.Main.Add("Button", "x+8 w96 h28", T("btn.edit","编辑"))
+    UI.BtnDelSkill  := UI.Main.Add("Button", "x+8 w96 h28", T("btn.delete","删除"))
+    UI.BtnTestSkill := UI.Main.Add("Button", "x+8 w96 h28", T("btn.test","测试检测"))
+    UI.BtnSaveSkill := UI.Main.Add("Button", "x+8 w96 h28", T("btn.save","保存"))
     page.Controls.Push(UI.BtnAddSkill)
     page.Controls.Push(UI.BtnEditSkill)
     page.Controls.Push(UI.BtnDelSkill)
@@ -144,7 +144,7 @@ Skills_GetSelectedId() {
         row := 0
     }
     if (row = 0) {
-        MsgBox "请先选中一个技能行。"
+        MsgBox T("msg.skill.select", "请先选中一个技能行。")
         return 0
     }
     id := 0
@@ -184,7 +184,7 @@ Skills_OnAdd(*) {
     try {
         SkillEditor_Open({}, 0, Skills_OnSaved_New)
     } catch {
-        MsgBox "无法打开技能编辑器。"
+        MsgBox T("msg.skill.editor_fail", "无法打开技能编辑器。")
     }
 }
 
@@ -219,7 +219,7 @@ Skills_OnEditSelected(*) {
     }
     idx := Skills_IndexById(id)
     if (idx = 0) {
-        MsgBox "索引异常，列表与配置不同步。"
+        MsgBox T("msg.skill.index_error", "索引异常，列表与配置不同步。")
         return
     }
     cur := 0
@@ -231,7 +231,7 @@ Skills_OnEditSelected(*) {
     try {
         SkillEditor_Open(cur, idx, Skills_OnSaved_Edit)
     } catch {
-        MsgBox "无法打开技能编辑器。"
+        MsgBox T("msg.skill.editor_fail", "无法打开技能编辑器。")
     }
 }
 
@@ -274,20 +274,20 @@ Skills_OnDelete(*) {
     }
     idx := Skills_IndexById(id)
     if (idx = 0) {
-        MsgBox "索引异常，列表与配置不同步。"
-        return
-    }
+            MsgBox T("msg.skill.index_error", "索引异常，列表与配置不同步。")
+            return
+        }
     try {
         if !(IsSet(App) && App.Has("ProfileData") && HasProp(App["ProfileData"], "Skills")) {
             return
         }
         if (idx < 1 || idx > App["ProfileData"].Skills.Length) {
-            MsgBox "索引异常，列表与配置不同步。"
+            MsgBox T("msg.skill.index_error", "索引异常，列表与配置不同步。")
             return
         }
         App["ProfileData"].Skills.RemoveAt(idx)
         Skills_RefreshList()
-        Notify("已删除技能")
+        Notify(T("msg.skill.deleted", "已删除技能"))
     } catch {
     }
     try {
@@ -366,11 +366,13 @@ Skills_OnTest(*) {
     }
 
     try {
-        MsgBox "检测点: X=" x " Y=" y "`n"
-            . "当前颜色: " Pixel_ColorToHex(c) "`n"
-            . "目标颜色: " col "`n"
-            . "容差: " tol "`n"
-            . "结果: " (match ? "匹配" : "不匹配")
+        resultText := match ? T("dlg.skill.test_match", "匹配") : T("dlg.skill.test_mismatch", "不匹配")
+        msg := T("dlg.skill.test_point", "检测点: X=") . x . " Y=" . y . "`n"
+            . T("dlg.skill.test_current", "当前颜色: ") . Pixel_ColorToHex(c) . "`n"
+            . T("dlg.skill.test_target", "目标颜色: ") . col . "`n"
+            . T("dlg.skill.test_tol", "容差: ") . tol . "`n"
+            . T("dlg.skill.test_result", "结果: ") . resultText
+        MsgBox msg
     } catch {
     }
 }
@@ -380,7 +382,7 @@ Skills_OnSaveProfile(*) {
     global App
 
     if !(IsSet(App) && App.Has("CurrentProfile") && App.Has("ProfileData")) {
-        MsgBox "未选择配置或配置未加载。"
+        MsgBox T("msg.skill.no_profile", "未选择配置或配置未加载。")
         return
     }
 
@@ -391,7 +393,7 @@ Skills_OnSaveProfile(*) {
         name := ""
     }
     if (name = "") {
-        MsgBox "未选择配置。"
+        MsgBox T("msg.skill.no_config", "未选择配置。")
         return
     }
 
@@ -404,7 +406,7 @@ Skills_OnSaveProfile(*) {
             Logger_Exception("Skills", e1, Map("where", "LoadFull", "profile", name))
         } catch {
         }
-        MsgBox "加载配置失败。"
+        MsgBox T("msg.skill.load_fail", "加载配置失败。")
         return
     }
 
@@ -507,7 +509,7 @@ Skills_OnSaveProfile(*) {
         }
     }
     if (!ok) {
-        MsgBox "保存失败。"
+        MsgBox T("msg.skill.save_fail", "保存失败。")
         return
     }
 
@@ -521,7 +523,7 @@ Skills_OnSaveProfile(*) {
             Logger_Exception("Skills", e3, Map("where","ReloadNormalize", "profile", name))
         } catch {
         }
-        MsgBox "保存成功，但重新加载失败，请切换配置后重试。"
+        MsgBox T("msg.skill.reload_fail", "保存成功，但重新加载失败，请切换配置后重试。")
         return
     }
 
@@ -534,5 +536,5 @@ Skills_OnSaveProfile(*) {
     } catch {
     }
 
-    Notify("配置已保存")
+    Notify(T("msg.skill.saved", "配置已保存"))
 }

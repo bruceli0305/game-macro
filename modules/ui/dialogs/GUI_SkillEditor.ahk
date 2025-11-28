@@ -28,54 +28,54 @@ SkillEditor_Open(skill, idx := 0, onSaved := 0) {
         }
     }
 
-    dlg := Gui("+Owner" UI.Main.Hwnd, isNew ? "新增技能" : "编辑技能")
+    dlg := Gui("+Owner" UI.Main.Hwnd, isNew ? T("dlg.skill.new", "新增技能") : T("dlg.skill.edit", "编辑技能"))
     dlg.MarginX := 14
     dlg.MarginY := 12
     dlg.SetFont("s10", "Segoe UI")
 
     ; 行1：技能名
-    dlg.Add("Text", "w70 Right", "技能名：")
+    dlg.Add("Text", "w70 Right", T("label.skill.name", "技能名："))
     tbName := dlg.Add("Edit", "x+10 w336", skill.Name)
 
     ; 行2：键位 + 捕获鼠标
-    dlg.Add("Text", "xm w70 Right", "键位：")
+    dlg.Add("Text", "xm w70 Right", T("label.skill.key", "键位："))
     hkKey := dlg.Add("Hotkey", "x+10 w336", skill.Key)
-    btnMouseKey := dlg.Add("Button", "x+8 w110 h28", "捕获鼠标键")
+    btnMouseKey := dlg.Add("Button", "x+8 w110 h28", T("dlg.skill.btn.mouse", "捕获鼠标键"))
 
     ; 行3：坐标 + 拾取像素
-    dlg.Add("Text", "xm w70 Right", "坐标X：")
+    dlg.Add("Text", "xm w70 Right", T("label.skill.x", "坐标X："))
     tbX := dlg.Add("Edit", "x+10 w120 Number", skill.X)
-    dlg.Add("Text", "x+16 w70 Right", "坐标Y：")
+    dlg.Add("Text", "x+16 w70 Right", T("label.skill.y", "坐标Y："))
     tbY := dlg.Add("Edit", "x+10 w120 Number", skill.Y)
-    btnPick := dlg.Add("Button", "x+8 w110 h28", "拾取像素")
+    btnPick := dlg.Add("Button", "x+8 w110 h28", T("dlg.skill.btn.pick", "拾取像素"))
 
     ; 行4：颜色 + 容差
-    dlg.Add("Text", "xm w70 Right", "颜色：")
+    dlg.Add("Text", "xm w70 Right", T("label.skill.color", "颜色："))
     tbColor := dlg.Add("Edit", "x+10 w120", skill.Color)
-    dlg.Add("Text", "x+16 w70 Right", "容差：")
+    dlg.Add("Text", "x+16 w70 Right", T("label.skill.tol", "容差："))
     tbTol := dlg.Add("Edit", "x+10 w120 Number", skill.Tol)
 
     ; 行5：读条 + 施放锁定
-    dlg.Add("Text", "xm w70 Right", "读条：")
+    dlg.Add("Text", "xm w70 Right", T("label.skill.cast", "读条："))
     tbCast := dlg.Add("Edit", "x+10 w120 Number", (HasProp(skill,"CastMs") ? skill.CastMs : 0))
 
-    dlg.Add("Text", "x+16 w80 Right", "施放锁定：")
+    dlg.Add("Text", "x+16 w80 Right", T("label.skill.lock", "施放锁定："))
     ; 1=锁定（施放期间阻止后续技能），0=不锁定
-    tbLock := dlg.Add("CheckBox", "x+6 w120", "施放期间禁止后续技能")
+    tbLock := dlg.Add("CheckBox", "x+6 w120", T("chk.skill.lock", "施放期间禁止后续技能"))
     try {
         tbLock.Value := (HasProp(skill, "LockDuringCast") && skill.LockDuringCast) ? 1 : 0
     } catch {
         tbLock.Value := 1
     }
-
+    
     ; 行6：超时(ms)
-    dlg.Add("Text", "xm w70 Right", "超时(ms)：")
+    dlg.Add("Text", "xm w70 Right", T("label.skill.timeout", "超时(ms)："))
     tbTimeout := dlg.Add("Edit", "x+10 w120 Number"
         , (HasProp(skill, "CastTimeoutMs") ? skill.CastTimeoutMs : 0))
 
     ; 行7：按钮
-    btnSave := dlg.Add("Button", "xm w96 h30", "保存")
-    btnCancel := dlg.Add("Button", "x+8 w96 h30", "取消")
+    btnSave := dlg.Add("Button", "xm w96 h30", T("dlg.skill.btn.save", "保存"))
+    btnCancel := dlg.Add("Button", "x+8 w96 h30", T("dlg.skill.btn.cancel", "取消"))
 
     ; 事件绑定
     btnPick.OnEvent("Click", OnPick)
