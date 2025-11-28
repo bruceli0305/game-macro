@@ -13,26 +13,26 @@ PointEditor_Open(point, idx := 0, onSaved := 0) {
         if !HasProp(point, k)
             point.%k% := v
 
-    dlg := Gui("+Owner" UI.Main.Hwnd, isNew ? "新增点位" : "编辑点位")
+    dlg := Gui("+Owner" UI.Main.Hwnd, isNew ? T("dlg.point.new", "新增点位") : T("dlg.point.edit", "编辑点位"))
     dlg.MarginX := 14, dlg.MarginY := 12
     dlg.SetFont("s10", "Segoe UI")
 
-    dlg.Add("Text", "w70 Right", "名称：")
+    dlg.Add("Text", "w70 Right", T("label.point.name", "名称："))
     tbName := dlg.Add("Edit", "x+10 w336", point.Name)
 
-    dlg.Add("Text", "xm w70 Right", "坐标X：")
+    dlg.Add("Text", "xm w70 Right", T("label.point.x", "坐标X："))
     tbX := dlg.Add("Edit", "x+10 w120 Number", point.X)
-    dlg.Add("Text", "x+16 w70 Right", "坐标Y：")
+    dlg.Add("Text", "x+16 w70 Right", T("label.point.y", "坐标Y："))
     tbY := dlg.Add("Edit", "x+10 w120 Number", point.Y)
-    btnPick := dlg.Add("Button", "x+16 w110 h28", "拾取像素")
+    btnPick := dlg.Add("Button", "x+16 w110 h28", T("dlg.point.btn.pick", "拾取像素"))
 
-    dlg.Add("Text", "xm w70 Right", "颜色：")
+    dlg.Add("Text", "xm w70 Right", T("label.point.color", "颜色："))
     tbColor := dlg.Add("Edit", "x+10 w120", point.Color)
-    dlg.Add("Text", "x+16 w70 Right", "容差：")
+    dlg.Add("Text", "x+16 w70 Right", T("label.point.tol", "容差："))
     tbTol := dlg.Add("Edit", "x+10 w120 Number", point.Tol)
 
-    btnSave := dlg.Add("Button", "xm w96 h30", "保存")
-    btnCancel := dlg.Add("Button", "x+8 w96 h30", "取消")
+    btnSave := dlg.Add("Button", "xm w96 h30", T("dlg.point.btn.save", "保存"))
+    btnCancel := dlg.Add("Button", "x+8 w96 h30", T("dlg.point.btn.cancel", "取消"))
 
     btnPick.OnEvent("Click", OnPick)
     btnSave.OnEvent("Click", OnSave)
@@ -60,11 +60,11 @@ PointEditor_Open(point, idx := 0, onSaved := 0) {
         tol := (tbTol.Value != "") ? Integer(tbTol.Value) : 10
 
         if (name = "") {
-            MsgBox "名称不可为空"
+            MsgBox T("msg.point.name_empty", "名称不可为空")
             return
         }
         if (col = "") {
-            MsgBox "请设置颜色"
+            MsgBox T("msg.point.color_empty", "请设置颜色")
             return
         }
 
@@ -76,6 +76,6 @@ PointEditor_Open(point, idx := 0, onSaved := 0) {
 
         dlg.Destroy()
         UI_ActivateMain()                 ; 新增：回到主窗
-        Notify(isNew ? "已新增点位" : "已保存点位")
+        Notify(isNew ? T("notify.point.added", "已新增点位") : T("notify.point.saved", "已保存点位"))
     }
 }

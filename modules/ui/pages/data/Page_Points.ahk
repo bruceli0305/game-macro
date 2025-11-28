@@ -11,16 +11,16 @@ Page_Points_Build(page) {
 
     ; 列表
     UI.PointLV := UI.Main.Add("ListView", Format("x{} y{} w{} h{}", rc.X, rc.Y, rc.W, rc.H - 40 - 8)
-        , ["ID","名称","X","Y","颜色","容差"])
+        , [T("col.point.id","ID"), T("col.point.name","名称"), T("col.point.x","X"), T("col.point.y","Y"), T("col.point.color","颜色"), T("col.point.tol","容差")])
     page.Controls.Push(UI.PointLV)
 
     ; 按钮行
     yBtn := rc.Y + rc.H - 30
-    UI.BtnAddPoint  := UI.Main.Add("Button", Format("x{} y{} w96 h28", rc.X, yBtn), "新增")
-    UI.BtnEditPoint := UI.Main.Add("Button", "x+8 w96 h28", "编辑")
-    UI.BtnDelPoint  := UI.Main.Add("Button", "x+8 w96 h28", "删除")
-    UI.BtnTestPoint := UI.Main.Add("Button", "x+8 w96 h28", "测试点位")
-    UI.BtnSavePoint := UI.Main.Add("Button", "x+8 w96 h28", "保存")
+    UI.BtnAddPoint  := UI.Main.Add("Button", Format("x{} y{} w96 h28", rc.X, yBtn), T("btn.add","新增"))
+    UI.BtnEditPoint := UI.Main.Add("Button", "x+8 w96 h28", T("btn.edit","编辑"))
+    UI.BtnDelPoint  := UI.Main.Add("Button", "x+8 w96 h28", T("btn.delete","删除"))
+    UI.BtnTestPoint := UI.Main.Add("Button", "x+8 w96 h28", T("btn.test","测试点位"))
+    UI.BtnSavePoint := UI.Main.Add("Button", "x+8 w96 h28", T("btn.save","保存"))
     page.Controls.Push(UI.BtnAddPoint)
     page.Controls.Push(UI.BtnEditPoint)
     page.Controls.Push(UI.BtnDelPoint)
@@ -124,7 +124,7 @@ Points_GetSelectedId() {
         row := 0
     }
     if (row = 0) {
-        MsgBox "请先选中一个点位。"
+        MsgBox T("msg.point.select", "请先选中一个点位。")
         return 0
     }
     id := 0
@@ -164,7 +164,7 @@ Points_OnAdd(*) {
     try {
         PointEditor_Open({}, 0, Points_OnSaved_New)
     } catch {
-        MsgBox "无法打开点位编辑器。"
+        MsgBox T("msg.point.editor_fail", "无法打开点位编辑器。")
     }
 }
 
@@ -195,7 +195,7 @@ Points_OnEditSelected(*) {
     }
     idx := Points_IndexById(id)
     if (idx = 0) {
-        MsgBox "索引异常，列表与配置不同步。"
+        MsgBox T("msg.point.index_error", "索引异常，列表与配置不同步。")
         return
     }
 
@@ -208,7 +208,7 @@ Points_OnEditSelected(*) {
     try {
         PointEditor_Open(cur, idx, Points_OnSaved_Edit)
     } catch {
-        MsgBox "无法打开点位编辑器。"
+        MsgBox T("msg.point.editor_fail", "无法打开点位编辑器。")
     }
 }
 
@@ -247,7 +247,7 @@ Points_OnDelete(*) {
     }
     idx := Points_IndexById(id)
     if (idx = 0) {
-        MsgBox "索引异常，列表与配置不同步。"
+        MsgBox T("msg.point.index_error", "索引异常，列表与配置不同步。")
         return
     }
     try {
@@ -255,12 +255,12 @@ Points_OnDelete(*) {
             return
         }
         if (idx < 1 || idx > App["ProfileData"].Points.Length) {
-            MsgBox "索引异常，列表与配置不同步。"
+            MsgBox T("msg.point.index_error", "索引异常，列表与配置不同步。")
             return
         }
         App["ProfileData"].Points.RemoveAt(idx)
         Points_RefreshList()
-        Notify("已删除点位")
+        Notify(T("msg.point.deleted", "已删除点位"))
     } catch {
     }
 }
@@ -274,7 +274,7 @@ Points_OnTest(*) {
     }
     idx := Points_IndexById(id)
     if (idx = 0) {
-        MsgBox "索引异常，列表与配置不同步。"
+        MsgBox T("msg.point.index_error", "索引异常，列表与配置不同步。")
         return
     }
 
@@ -285,7 +285,7 @@ Points_OnTest(*) {
         p := 0
     }
     if (!p) {
-        MsgBox "索引异常，列表与配置不同步。"
+        MsgBox T("msg.point.index_error", "索引异常，列表与配置不同步。")
         return
     }
 
@@ -335,11 +335,12 @@ Points_OnTest(*) {
     }
 
     try {
-        MsgBox "检测点: X=" x " Y=" y "`n"
-            . "当前颜色: " Pixel_ColorToHex(c) "`n"
-            . "目标颜色: " col "`n"
-            . "容差: " tol "`n"
-            . "结果: " (match ? "匹配" : "不匹配")
+        resultText := match ? T("dlg.point.test_match", "匹配") : T("dlg.point.test_mismatch", "不匹配")
+        MsgBox T("dlg.point.test_point", "检测点: X=") . x . " Y=" . y . "`n"
+            . T("dlg.point.test_current", "当前颜色: ") . Pixel_ColorToHex(c) . "`n"
+            . T("dlg.point.test_target", "目标颜色: ") . col . "`n"
+            . T("dlg.point.test_tol", "容差: ") . tol . "`n"
+            . T("dlg.point.test_result", "结果: ") . resultText
     } catch {
     }
 }
@@ -349,7 +350,7 @@ Points_OnSaveProfile(*) {
     global App
 
     if !(IsSet(App) && App.Has("CurrentProfile") && App.Has("ProfileData")) {
-        MsgBox "未选择配置或配置未加载。"
+        MsgBox T("msg.point.no_profile", "未选择配置或配置未加载。")
         return
     }
 
@@ -360,7 +361,7 @@ Points_OnSaveProfile(*) {
         name := ""
     }
     if (name = "") {
-        MsgBox "未选择配置。"
+        MsgBox T("msg.point.no_config", "未选择配置。")
         return
     }
 
@@ -373,7 +374,7 @@ Points_OnSaveProfile(*) {
             Logger_Exception("Points", e1, Map("where", "LoadFull", "profile", name))
         } catch {
         }
-        MsgBox "加载配置失败。"
+        MsgBox T("msg.point.load_fail", "加载配置失败。")
         return
     }
 
@@ -424,7 +425,7 @@ Points_OnSaveProfile(*) {
         }
     }
     if (!ok) {
-        MsgBox "保存失败。"
+        MsgBox T("msg.point.save_fail", "保存失败。")
         return
     }
 
@@ -438,7 +439,7 @@ Points_OnSaveProfile(*) {
             Logger_Exception("Points", e3, Map("where","ReloadNormalize", "profile", name))
         } catch {
         }
-        MsgBox "保存成功，但重新加载失败，请切换配置后重试。"
+        MsgBox T("msg.point.reload_fail", "保存成功，但重新加载失败，请切换配置后重试。")
         return
     }
 
@@ -447,5 +448,5 @@ Points_OnSaveProfile(*) {
     } catch {
     }
 
-    Notify("配置已保存")
+    Notify(T("msg.point.saved", "配置已保存"))
 }
