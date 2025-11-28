@@ -703,7 +703,7 @@ Profile_OnCaptureStartMouse(*) {
         } catch {
         }
         try {
-            UI.LblStartEcho.Text := "鼠标: " key
+            UI.LblStartEcho.Text := T("label.mouse", "鼠标: ") key
         } catch {
         }
         try {
@@ -934,7 +934,7 @@ Profile_UI_SetStartHotkeyEcho(hk) {
             } catch {
             }
             try {
-                UI.LblStartEcho.Text := "鼠标: " hk
+                UI.LblStartEcho.Text := T("label.mouse", "鼠标: ") hk
             } catch {
             }
         } else {
