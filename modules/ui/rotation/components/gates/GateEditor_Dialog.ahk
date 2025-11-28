@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+;modules\ui\rotation\components\gates\GateEditor_Dialog.ahk
 #Include "..\..\RE_UI_Common.ahk"
 
 REUI_GateEditor_Open(owner, cfg, g, idx := 0, onSaved := 0) {

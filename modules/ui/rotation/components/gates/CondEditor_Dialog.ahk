@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2
+;modules\ui\rotation\components\gates\CondEditor_Dialog.ahk
 #Include "..\..\RE_UI_Common.ahk"
 
 REUI_GateCond_Summary(c) {
