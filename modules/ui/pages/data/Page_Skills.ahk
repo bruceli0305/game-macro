@@ -20,11 +20,13 @@ Page_Skills_Build(page) {
     UI.BtnEditSkill := UI.Main.Add("Button", "x+8 w96 h28", "编辑")
     UI.BtnDelSkill  := UI.Main.Add("Button", "x+8 w96 h28", "删除")
     UI.BtnTestSkill := UI.Main.Add("Button", "x+8 w96 h28", "测试检测")
+    UI.BtnBatchSkill := UI.Main.Add("Button", "x+8 w96 h28", "批量取色")
     UI.BtnSaveSkill := UI.Main.Add("Button", "x+8 w96 h28", "保存")
     page.Controls.Push(UI.BtnAddSkill)
     page.Controls.Push(UI.BtnEditSkill)
     page.Controls.Push(UI.BtnDelSkill)
     page.Controls.Push(UI.BtnTestSkill)
+    page.Controls.Push(UI.BtnBatchSkill)
     page.Controls.Push(UI.BtnSaveSkill)
 
     ; 事件绑定（全部为本页回调）
@@ -33,6 +35,7 @@ Page_Skills_Build(page) {
     UI.BtnEditSkill.OnEvent("Click", Skills_OnEditSelected)
     UI.BtnDelSkill.OnEvent("Click", Skills_OnDelete)
     UI.BtnTestSkill.OnEvent("Click", Skills_OnTest)
+    UI.BtnBatchSkill.OnEvent("Click", Skills_OnBatchRecolor)
     UI.BtnSaveSkill.OnEvent("Click", Skills_OnSaveProfile)
 
     ; 首次填充
@@ -60,6 +63,7 @@ Page_Skills_Layout(rc) {
         UI.BtnEditSkill.Move(,    yBtn)
         UI.BtnDelSkill.Move(,     yBtn)
         UI.BtnTestSkill.Move(,    yBtn)
+        UI.BtnBatchSkill.Move(,   yBtn)
         UI.BtnSaveSkill.Move(,    yBtn)
 
         loop 9 {
@@ -535,4 +539,15 @@ Skills_OnSaveProfile(*) {
     }
 
     Notify("配置已保存")
+}
+Skills_OnBatchRecolor(*) {
+    try {
+        SkillBatchRecolor_Open()
+    } catch as e {
+        try {
+            Logger_Exception("BatchRecolor", e, Map("where", "Skills_OnBatchRecolor"))
+        } catch {
+        }
+        MsgBox "无法打开技能批量取色对话框。"
+    }
 }

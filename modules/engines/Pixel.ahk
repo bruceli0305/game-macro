@@ -1,4 +1,4 @@
-; Pixel.ahk - 颜色/拾色工具 + 帧级取色缓存 + ROI 快照加速
+;modules\engines\Pixel.ahk - 颜色/拾色工具 + 帧级取色缓存 + ROI 快照加速
 
 Pixel_ColorToHex(colorInt) {
     return Format("0x{:06X}", colorInt & 0xFFFFFF)

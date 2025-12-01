@@ -20,11 +20,13 @@ Page_Points_Build(page) {
     UI.BtnEditPoint := UI.Main.Add("Button", "x+8 w96 h28", "编辑")
     UI.BtnDelPoint  := UI.Main.Add("Button", "x+8 w96 h28", "删除")
     UI.BtnTestPoint := UI.Main.Add("Button", "x+8 w96 h28", "测试点位")
+    UI.BtnBatchPoint := UI.Main.Add("Button", "x+8 w96 h28", "批量取色")
     UI.BtnSavePoint := UI.Main.Add("Button", "x+8 w96 h28", "保存")
     page.Controls.Push(UI.BtnAddPoint)
     page.Controls.Push(UI.BtnEditPoint)
     page.Controls.Push(UI.BtnDelPoint)
     page.Controls.Push(UI.BtnTestPoint)
+    page.Controls.Push(UI.BtnBatchPoint)
     page.Controls.Push(UI.BtnSavePoint)
 
     ; 事件绑定
@@ -33,6 +35,7 @@ Page_Points_Build(page) {
     UI.BtnEditPoint.OnEvent("Click", Points_OnEditSelected)
     UI.BtnDelPoint.OnEvent("Click", Points_OnDelete)
     UI.BtnTestPoint.OnEvent("Click", Points_OnTest)
+    UI.BtnBatchPoint.OnEvent("Click", Points_OnBatchRecolor)
     UI.BtnSavePoint.OnEvent("Click", Points_OnSaveProfile)
 
     Points_RefreshList()
@@ -59,6 +62,7 @@ Page_Points_Layout(rc) {
         UI.BtnEditPoint.Move(,     yBtn)
         UI.BtnDelPoint.Move(,      yBtn)
         UI.BtnTestPoint.Move(,     yBtn)
+        UI.BtnBatchPoint.Move(,    yBtn)
         UI.BtnSavePoint.Move(,     yBtn)
 
         loop 6 {
@@ -448,4 +452,15 @@ Points_OnSaveProfile(*) {
     }
 
     Notify("配置已保存")
+}
+Points_OnBatchRecolor(*) {
+    try {
+        PointBatchRecolor_Open()
+    } catch as e {
+        try {
+            Logger_Exception("BatchRecolor", e, Map("where", "Points_OnBatchRecolor"))
+        } catch {
+        }
+        MsgBox "无法打开点位批量取色对话框。"
+    }
 }
