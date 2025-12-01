@@ -1,200 +1,360 @@
+; ==================== modules\ui\pages\tools\Page_Tools_IO.ahk ====================
 #Requires AutoHotkey v2
-;Page_Tools_IO.ahk
-; 工具 → 导入/导出
-; 严格块结构的 if/try/catch，不使用单行形式
-; 控件前缀：TIO_
+
+; 依赖：Exporter_ExportProfile / Exporter_UnpackToTemp
+; 以及后续将实现的 ImportWizard_Begin(tempDir, manifest)
 
 Page_ToolsIO_Build(page) {
     global UI
     rc := UI_GetPageRect()
     page.Controls := []
 
-    ; 分组：导入/导出
-    UI.TIO_GB := UI.Main.Add("GroupBox", Format("x{} y{} w{} h200", rc.X, rc.Y, rc.W), "导入 / 导出")
-    page.Controls.Push(UI.TIO_GB)
+    margin := 8
+    halfH := rc.H // 2 - margin * 2
 
-    ; 说明
-    msg := ""
-    msg .= "说明：" . "`r`n"
-    msg .= "• 导出当前配置为可分发包（包含脚本与配置、WorkerHost 可执行文件 视部署而定）。" . "`r`n"
-    msg .= "• 导入可将 .ini 复制到 Profiles 目录后生效；导入后可在“概览与配置”页选择该新配置。" . "`r`n"
-    UI.TIO_Tip := UI.Main.Add("Text", Format("x{} y{} w{}", rc.X + 12, rc.Y + 26, rc.W - 24), msg)
-    page.Controls.Push(UI.TIO_Tip)
+    ; 导出区域 GroupBox
+    UI.GB_Export := UI.Main.Add("GroupBox"
+        , Format("x{} y{} w{} h{}", rc.X, rc.Y, rc.W, halfH)
+        , "导出配置")
+    page.Controls.Push(UI.GB_Export)
 
-    ; 行：按钮
-    yb := rc.Y + 26 + 80
-    UI.TIO_BtnExport := UI.Main.Add("Button", Format("x{} y{} w150 h28", rc.X + 12, yb), "导出当前配置")
-    page.Controls.Push(UI.TIO_BtnExport)
+    xLabel := rc.X + 16
+    yCur   := rc.Y + 32
+    labelW := 100
+    editW  := 260
 
-    UI.TIO_BtnOpenExports := UI.Main.Add("Button", "x+8 w120 h28", "打开导出目录")
-    page.Controls.Push(UI.TIO_BtnOpenExports)
+    ; 当前配置
+    UI.TxtCurProfile := UI.Main.Add("Text"
+        , Format("x{} y{} w{}", xLabel, yCur + 3, labelW + 80)
+        , "")
+    page.Controls.Push(UI.TxtCurProfile)
 
-    UI.TIO_BtnOpenProfiles := UI.Main.Add("Button", "x+8 w120 h28", "打开配置目录")
-    page.Controls.Push(UI.TIO_BtnOpenProfiles)
+    yCur += 32
+    UI.LblGameName := UI.Main.Add("Text"
+        , Format("x{} y{} w{} Right", xLabel, yCur + 3, labelW)
+        , "游戏名称：")
+    page.Controls.Push(UI.LblGameName)
 
-    UI.TIO_BtnImport := UI.Main.Add("Button", "x+8 w170 h28", "从 .ini 导入为新配置")
-    page.Controls.Push(UI.TIO_BtnImport)
+    UI.EdGameName := UI.Main.Add("Edit"
+        , Format("x{} y{} w{}", xLabel + labelW + 8, yCur, editW)
+        , "")
+    page.Controls.Push(UI.EdGameName)
+
+    yCur += 32
+    UI.LblGameScale := UI.Main.Add("Text"
+        , Format("x{} y{} w{} Right", xLabel, yCur + 3, labelW)
+        , "游戏内缩放：")
+    page.Controls.Push(UI.LblGameScale)
+
+    UI.ChkGameScale := UI.Main.Add("CheckBox"
+        , Format("x{} y{} w{}", xLabel + labelW + 8, yCur, editW)
+        , "开启")
+    page.Controls.Push(UI.ChkGameScale)
+
+    yCur += 32
+    UI.LblHudScale := UI.Main.Add("Text"
+        , Format("x{} y{} w{} Right", xLabel, yCur + 3, labelW)
+        , "HUD 缩放：")
+    page.Controls.Push(UI.LblHudScale)
+
+    UI.EdHudScale := UI.Main.Add("Edit"
+        , Format("x{} y{} w{} Number", xLabel + labelW + 8, yCur, editW)
+        , "1.0")
+    page.Controls.Push(UI.EdHudScale)
+
+    yCur += 32
+    UI.LblZipPwd := UI.Main.Add("Text"
+        , Format("x{} y{} w{} Right", xLabel, yCur + 3, labelW)
+        , "ZIP 密码：")
+    page.Controls.Push(UI.LblZipPwd)
+
+    UI.EdZipPwd := UI.Main.Add("Edit"
+        , Format("x{} y{} w{} Password", xLabel + labelW + 8, yCur, editW)
+        , "")
+    page.Controls.Push(UI.EdZipPwd)
+
+    yCur += 32
+    UI.LblExportPath := UI.Main.Add("Text"
+        , Format("x{} y{} w{} Right", xLabel, yCur + 3, labelW)
+        , "导出路径：")
+    page.Controls.Push(UI.LblExportPath)
+
+    UI.EdExportPath := UI.Main.Add("Edit"
+        , Format("x{} y{} w{}",
+            xLabel + labelW + 8, yCur, editW + 160)
+        , "")
+    page.Controls.Push(UI.EdExportPath)
+
+    UI.BtnBrowseExport := UI.Main.Add("Button"
+        , "x+8 w80 h24"
+        , "浏览...")
+    page.Controls.Push(UI.BtnBrowseExport)
+
+    yCur += 40
+    UI.BtnDoExport := UI.Main.Add("Button"
+        , Format("x{} y{} w120 h30", xLabel + labelW + 8, yCur)
+        , "开始导出")
+    page.Controls.Push(UI.BtnDoExport)
+
+    ; 导入区域 GroupBox
+    gy2 := rc.Y + halfH + margin * 2
+    UI.GB_Import := UI.Main.Add("GroupBox"
+        , Format("x{} y{} w{} h{}", rc.X, gy2, rc.W, halfH)
+        , "导入配置")
+    page.Controls.Push(UI.GB_Import)
+
+    x2 := rc.X + 16
+    y2 := gy2 + 32
+
+    UI.LblZipPath := UI.Main.Add("Text"
+        , Format("x{} y{} w{} Right", x2, y2 + 3, labelW)
+        , "Zip 文件：")
+    page.Controls.Push(UI.LblZipPath)
+
+    UI.EdZipPath := UI.Main.Add("Edit"
+        , Format("x{} y{} w{}",
+            x2 + labelW + 8, y2, editW + 160)
+        , "")
+    page.Controls.Push(UI.EdZipPath)
+
+    UI.BtnBrowseZip := UI.Main.Add("Button"
+        , "x+8 w80 h24"
+        , "浏览...")
+    page.Controls.Push(UI.BtnBrowseZip)
+
+    y2 += 40
+    UI.BtnDoImport := UI.Main.Add("Button"
+        , Format("x{} y{} w120 h30", x2 + labelW + 8, y2)
+        , "开始导入")
+    page.Controls.Push(UI.BtnDoImport)
 
     ; 事件
-    UI.TIO_BtnExport.OnEvent("Click", ToolsIO_OnExport)
-    UI.TIO_BtnOpenExports.OnEvent("Click", ToolsIO_OnOpenExports)
-    UI.TIO_BtnOpenProfiles.OnEvent("Click", ToolsIO_OnOpenProfiles)
-    UI.TIO_BtnImport.OnEvent("Click", ToolsIO_OnImportIni)
+    try {
+        UI.BtnBrowseExport.OnEvent("Click", ToolsIO_OnBrowseExport)
+        UI.BtnDoExport.OnEvent("Click", ToolsIO_OnExport)
+        UI.BtnBrowseZip.OnEvent("Click", ToolsIO_OnBrowseZip)
+        UI.BtnDoImport.OnEvent("Click", ToolsIO_OnImport)
+    } catch {
+    }
+
+    ; 初始化导出路径与当前配置显示
+    ToolsIO_UpdateCurrentProfile()
+    ToolsIO_InitExportPath()
 }
 
 Page_ToolsIO_Layout(rc) {
+    ; 简单使用 Build 中的布局，不做复杂自适应
+    ToolsIO_UpdateCurrentProfile()
+}
+
+Page_ToolsIO_OnEnter(*) {
+    ToolsIO_UpdateCurrentProfile()
+    ToolsIO_InitExportPath()
+}
+
+ToolsIO_UpdateCurrentProfile() {
+    global App, UI
+    name := ""
     try {
-        UI.TIO_GB.Move(rc.X, rc.Y, rc.W)
-        UI.TIO_Tip.Move(rc.X + 12, rc.Y + 26, rc.W - 24)
-        ; 按钮横向布局，保持初始创建的相对位置
+        name := App["CurrentProfile"]
+    } catch {
+        name := ""
+    }
+    txt := "当前配置：" (name != "" ? name : "（未选择）")
+    try {
+        UI.TxtCurProfile.Text := txt
     } catch {
     }
 }
 
-; ============== 事件实现 ==============
-
-ToolsIO_OnExport(*) {
-    global App
-    cur := ""
+ToolsIO_InitExportPath() {
+    global App, UI
+    name := ""
     try {
-        if (IsSet(App) && App.Has("CurrentProfile")) {
-            cur := App["CurrentProfile"]
-        }
+        name := App["CurrentProfile"]
     } catch {
-        cur := ""
+        name := ""
     }
-    if (cur = "") {
-        MsgBox "未选择配置，无法导出。请先在“概览与配置”页选择或创建一个配置。"
-        return
-    }
-    try {
-        Exporter_ExportProfile(cur)
-    } catch as e {
-        MsgBox "导出失败：" e.Message
-    }
-}
-
-ToolsIO_OnOpenExports(*) {
-    dir := A_ScriptDir "\Exports"
-    try {
-        DirCreate(dir)
-    } catch {
-    }
-    try {
-        Run dir
-    } catch {
-        MsgBox "无法打开目录：" dir
-    }
-}
-
-ToolsIO_OnOpenProfiles(*) {
-    global App
-    dir := ""
-    try {
-        if !(IsSet(App) && App.Has("ProfilesDir")) {
-            App := IsSet(App) ? App : Map()
-            App["ProfilesDir"] := A_ScriptDir "\Profiles"
-        }
-        dir := App["ProfilesDir"]
-        DirCreate(dir)
-    } catch {
-        dir := A_ScriptDir "\Profiles"
-    }
-    try {
-        Run dir
-    } catch {
-        MsgBox "无法打开目录：" dir
-    }
-}
-
-ToolsIO_OnImportIni(*) {
-    global App
-
-    ; 选择 .ini 文件
-    path := ""
-    try {
-        ; v2 签名：FileSelect(Options?, RootDir?, Prompt?, Filter?)
-        path := FileSelect("", A_ScriptDir, "选择 .ini 文件", "Ini (*.ini)")
-    } catch {
-        path := ""
-    }
-    if (path = "") {
+    if (name = "") {
         return
     }
 
-    ; 建议的新名称：基于文件名（不含扩展名）
     base := ""
     try {
-        base := RegExReplace(path, "i)^.*\\", "")
-        base := RegExReplace(base, "\.ini$", "")
+        base := App["ExportDir"]
     } catch {
-        base := "NewProfile"
+        base := A_ScriptDir "\Exports"
+    }
+    try {
+        DirCreate(base)
+    } catch {
     }
 
-    ; 询问名称
-    newName := ""
+    ts := ""
     try {
-        ib := InputBox("导入为新配置名称：", "导入 .ini 为配置", base)
-        if (ib.Result = "Cancel") {
-            return
-        }
-        newName := Trim(ib.Value)
+        ts := FormatTime(, "yyyyMMdd_HHmmss")
     } catch {
-        newName := base
+        ts := ""
     }
-    if (newName = "") {
-        MsgBox "名称不可为空。"
+
+    path := base "\" name "_" ts ".zip"
+    try {
+        UI.EdExportPath.Value := path
+    } catch {
+    }
+}
+
+ToolsIO_OnBrowseExport(*) {
+    global UI
+    sel := FileSelect("S16", UI.EdExportPath.Value, "选择导出位置", "Zip 文件 (*.zip)")
+    if (sel = "") {
+        return
+    }
+    try {
+        UI.EdExportPath.Value := sel
+    } catch {
+    }
+}
+
+ToolsIO_OnExport(*) {
+    global App, UI
+
+    name := ""
+    try {
+        name := App["CurrentProfile"]
+    } catch {
+        name := ""
+    }
+    if (name = "") {
+        MsgBox "未选择配置，无法导出。"
         return
     }
 
-    ; 复制到 Profiles 目录
-    profDir := ""
+    target := ""
     try {
-        if !(IsSet(App) && App.Has("ProfilesDir")) {
-            App := IsSet(App) ? App : Map()
-            App["ProfilesDir"] := A_ScriptDir "\Profiles"
-        }
-        profDir := App["ProfilesDir"]
-        DirCreate(profDir)
+        target := UI.EdExportPath.Value
     } catch {
-        profDir := A_ScriptDir "\Profiles"
+        target := ""
+    }
+    if (target = "") {
+        MsgBox "请先指定导出路径。"
+        return
     }
 
-    dest := profDir "\" newName ".ini"
-    if FileExist(dest) {
-        ans := MsgBox("目标已存在，是否覆盖？`r`n" dest, , "YesNo")
-        if (ans != "Yes") {
-            return
-        }
-    }
-    ok := true
+    gname := ""
     try {
-        FileCopy path, dest, true
-    } catch as e {
-        ok := false
-        MsgBox "导入失败：" e.Message
+        gname := UI.EdGameName.Value
+    } catch {
+        gname := ""
     }
+
+    scaleOn := 0
+    try {
+        scaleOn := (UI.ChkGameScale.Value ? 1 : 0)
+    } catch {
+        scaleOn := 0
+    }
+
+    hud := 1.0
+    try {
+        if (UI.EdHudScale.Value != "") {
+            hud := UI.EdHudScale.Value + 0  ; 简单转数值
+        }
+    } catch {
+        hud := 1.0
+    }
+
+    pwd := ""
+    try {
+        pwd := UI.EdZipPwd.Value
+    } catch {
+        pwd := ""
+    }
+
+    opts := Map()
+    opts["TargetZip"] := target
+    opts["GameName"] := gname
+    opts["GameScaleEnabled"] := scaleOn
+    opts["HudScale"] := hud
+    opts["Password"] := pwd
+
+    ok := Exporter_ExportProfile(name, opts)
     if (!ok) {
-        return
-    }
-
-    ; 优先尝试：若“概览与配置”页的强力刷新函数存在则调用
-    did := 0
-    try {
-        Profile_RefreshAll_Strong()
-        did := 1
-    } catch {
-        did := 0
-    }
-
-    ; 若页面尚未构建或函数不可用，则回退：只更新 App 状态
-    if (did = 0) {
         try {
-            App["CurrentProfile"] := newName
-            App["ProfileData"] := Storage_LoadProfile(newName)
+            Logger_Warn("Exporter", "ExportProfile failed", Map("name", name, "zip", target))
         } catch {
         }
     }
+}
 
-    Notify("已导入为配置：" newName)
+ToolsIO_OnBrowseZip(*) {
+    global UI
+    sel := FileSelect("1", UI.EdZipPath.Value, "选择导入 Zip 文件", "Zip 文件 (*.zip)")
+    if (sel = "") {
+        return
+    }
+    try {
+        UI.EdZipPath.Value := sel
+    } catch {
+    }
+}
+
+ToolsIO_OnImport(*) {
+    global UI
+
+    zipPath := ""
+    try {
+        zipPath := UI.EdZipPath.Value
+    } catch {
+        zipPath := ""
+    }
+    if (zipPath = "") {
+        MsgBox "请先选择要导入的 Zip 文件。"
+        return
+    }
+    if !FileExist(zipPath) {
+        MsgBox "指定的 Zip 文件不存在。"
+        return
+    }
+
+    ; 先尝试无密码解包
+    res := Exporter_UnpackToTemp(zipPath, "")
+    if (res.Has("Ok")) {
+        if (res["Ok"]) {
+            ; 无密码或无需密码，直接进入导入向导
+            ToolsIO_StartImportWizard(res["TempDir"], res["Manifest"])
+            return
+        }
+    }
+
+    ; 需要密码的情况：弹出一次输入框
+    ib := InputBox("请输入 Zip 密码（留空取消）：", "导入配置 - 需要密码")
+    if (ib.Result = "Cancel") {
+        return
+    }
+    pwd := Trim(ib.Value)
+    if (pwd = "") {
+        return
+    }
+
+    res2 := Exporter_UnpackToTemp(zipPath, pwd)
+    if !(res2.Has("Ok") && res2["Ok"]) {
+        MsgBox "解压失败，密码可能不正确或压缩包已损坏。"
+        return
+    }
+
+    ToolsIO_StartImportWizard(res2["TempDir"], res2["Manifest"])
+}
+
+; 调用导入向导的入口（后续我们会实现 GUI_ImportWizard.ahk 中的 ImportWizard_Begin）
+ToolsIO_StartImportWizard(tempDir, manifest) {
+    try {
+        ImportWizard_Begin(tempDir, manifest)
+    } catch as e {
+        try {
+            Logger_Exception("Importer", e, Map("where", "ToolsIO_StartImportWizard", "tempDir", tempDir))
+        } catch {
+        }
+        MsgBox "导入向导启动失败，请查看日志。"
+    }
 }
