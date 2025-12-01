@@ -90,8 +90,8 @@ UI_ShowMain() {
     UI_NavMap[nodeSettingsAbout]:= "settings_about"
 
     UI_RegisterPage("profile",        "概览与配置", Page_Profile_Build,        Page_Profile_Layout, Page_Profile_OnEnter)
-    UI_RegisterPage("skills",         "技能",       Page_Skills_Build,         Page_Skills_Layout)
-    UI_RegisterPage("points",         "点位",       Page_Points_Build,         Page_Points_Layout)
+    UI_RegisterPage("skills",         "技能",       Page_Skills_Build,         Page_Skills_Layout, Page_Skills_OnEnter)
+    UI_RegisterPage("points",         "点位",       Page_Points_Build,         Page_Points_Layout, Page_Points_OnEnter)
     UI_RegisterPage("default_skill",  "默认技能",   Page_DefaultSkill_Build,   Page_DefaultSkill_Layout,  Page_DefaultSkill_OnEnter)
 
     UI_RegisterPage("rules",          "循环规则",   Page_Rules_Build,          Page_Rules_Layout,         Page_Rules_OnEnter)
@@ -107,8 +107,8 @@ UI_ShowMain() {
     UI_RegisterPage("adv_rotation_tracks",  "轮换-轨道", Page_RotTracks_Build,Page_RotTracks_Layout,Page_RotTracks_OnEnter)
     UI_RegisterPage("adv_rotation_gates",   "轮换-跳轨",  Page_RotGates_Build,       Page_RotGates_Layout,      Page_RotGates_OnEnter)
     UI_RegisterPage("adv_rotation_opener",  "轮换-起手",  Page_RotOpener_Build,      Page_RotOpener_Layout,     Page_RotOpener_OnEnter)
-    UI_RegisterPage("tools_io",       "导入导出",   Page_ToolsIO_Build,        Page_ToolsIO_Layout)
-    UI_RegisterPage("tools_quick",    "快捷测试",   Page_ToolsQuick_Build,     Page_ToolsQuick_Layout)
+    UI_RegisterPage("tools_io",       "导入导出",   Page_ToolsIO_Build,        Page_ToolsIO_Layout, Page_ToolsIO_OnEnter)
+    UI_RegisterPage("tools_quick",    "快捷测试",   Page_ToolsQuick_Build,     Page_ToolsQuick_Layout, Page_ToolsQuick_Layout)
 
     UI_RegisterPage("settings_lang",  "界面语言",   Page_Settings_Lang_Build,  Page_Settings_Lang_Layout, Page_Settings_Lang_OnEnter)
     UI_RegisterPage("settings_about", "关于",       Page_Settings_About_Build, Page_Settings_About_Layout,Page_Settings_About_OnEnter)
