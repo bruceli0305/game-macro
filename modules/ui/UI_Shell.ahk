@@ -16,7 +16,7 @@ UI_ShowMain() {
         Lang_Init("zh-CN")
     }
 
-    UI.Main := Gui("+Resize +OwnDialogs", T("app.title", "输出取色宏 - 左侧菜单"))
+    UI.Main := Gui("+Resize +OwnDialogs", T("app.title", "Game Macro - v0.2.4"))
     UI.Main.MarginX := 12
     UI.Main.MarginY := 10
     UI.Main.SetFont("s10", "Segoe UI")
