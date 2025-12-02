@@ -1,0 +1,229 @@
+[
+  {
+    "id": 4,
+    "name": "Strength",
+    "profession": "Warrior",
+    "elite": false,
+    "minor_traits": [
+      1446,
+      1448,
+      1453
+    ],
+    "major_traits": [
+      1447,
+      1451,
+      1444,
+      2000,
+      1338,
+      1449,
+      1437,
+      1454,
+      1440
+    ],
+    "icon": "https://render.guildwars2.com/file/0D48C40A1C042B0BC6DAA4B91AB272E5E90C934C/1012032.png",
+    "background": "https://render.guildwars2.com/file/09160450B40ED777650F632F2CE82504B90F5644/1012109.png"
+  },
+  {
+    "id": 36,
+    "name": "Arms",
+    "profession": "Warrior",
+    "elite": false,
+    "minor_traits": [
+      1342,
+      1343,
+      1337
+    ],
+    "major_traits": [
+      1455,
+      1344,
+      1334,
+      1315,
+      1316,
+      1333,
+      1336,
+      1346,
+      1707
+    ],
+    "icon": "https://render.guildwars2.com/file/03754E10970D0C68D76A1955245D7CB39AA21E59/1012029.png",
+    "background": "https://render.guildwars2.com/file/0A08B2DC35C8D22CC07B9F4C9023F7E9734C1B27/1012105.png"
+  },
+  {
+    "id": 22,
+    "name": "Defense",
+    "profession": "Warrior",
+    "elite": false,
+    "minor_traits": [
+      1350,
+      1348,
+      1380
+    ],
+    "major_traits": [
+      1376,
+      1488,
+      1372,
+      1368,
+      1379,
+      1367,
+      1375,
+      1649,
+      1708
+    ],
+    "icon": "https://render.guildwars2.com/file/5F0B793A5479007078067CD71D0E01B30602189B/1012030.png",
+    "background": "https://render.guildwars2.com/file/E0190E3B3745AA61D32CFF92C1FEFFFB56A90D4C/1012107.png"
+  },
+  {
+    "id": 11,
+    "name": "Tactics",
+    "profession": "Warrior",
+    "elite": false,
+    "minor_traits": [
+      1480,
+      1485,
+      1481
+    ],
+    "major_traits": [
+      1469,
+      1474,
+      1471,
+      1486,
+      1479,
+      1482,
+      1667,
+      1470,
+      1711
+    ],
+    "icon": "https://render.guildwars2.com/file/373162E8DED2793801194E622FEDEF2DBBDA6F10/1012033.png",
+    "background": "https://render.guildwars2.com/file/6FCF0E0E0C0E539290A8245F0DA49D0556D71E62/1012110.png"
+  },
+  {
+    "id": 51,
+    "name": "Discipline",
+    "profession": "Warrior",
+    "elite": false,
+    "minor_traits": [
+      1415,
+      1416,
+      1417
+    ],
+    "major_traits": [
+      1329,
+      1413,
+      1381,
+      1484,
+      1489,
+      1709,
+      1369,
+      1317,
+      1657
+    ],
+    "icon": "https://render.guildwars2.com/file/D10B771D01C85DA404472EE90F35EF15B0B36240/1012031.png",
+    "background": "https://render.guildwars2.com/file/2B80CF6504DA1B0DC8470D45ED5BE9992BEEC2B7/1012108.png"
+  },
+  {
+    "id": 18,
+    "name": "Berserker",
+    "profession": "Warrior",
+    "elite": true,
+    "minor_traits": [
+      1831,
+      1993,
+      2046
+    ],
+    "major_traits": [
+      2049,
+      2039,
+      1977,
+      2011,
+      2042,
+      2002,
+      1928,
+      2038,
+      2307
+    ],
+    "weapon_trait": 1829,
+    "icon": "https://render.guildwars2.com/file/B706475993F16D0BD7DFDF3BB30AA144051CDC94/1029935.png",
+    "background": "https://render.guildwars2.com/file/665548439B5F7AB8CA63F46906A0630DAAF6069F/1012106.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/E39819140FF49CB5C800B064E17EA221C909DFD5/1128566.png",
+    "profession_icon": "https://render.guildwars2.com/file/3111C4ACA223F8B654B3453A42F7539D64EE953A/1128567.png"
+  },
+  {
+    "id": 61,
+    "name": "Spellbreaker",
+    "profession": "Warrior",
+    "elite": true,
+    "minor_traits": [
+      2175,
+      2162,
+      2130
+    ],
+    "major_traits": [
+      2107,
+      2153,
+      2140,
+      2126,
+      2097,
+      2095,
+      2163,
+      2168,
+      2060
+    ],
+    "weapon_trait": 2124,
+    "icon": "https://render.guildwars2.com/file/06DFB7E3F267ADD0BB43C7383251343858371D02/1769896.png",
+    "background": "https://render.guildwars2.com/file/C0D57D3B17CC0408A2EE17FE2BA0C80A4E1838FA/1769905.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/342C1C032B5513EF1CC5082592A8D8A6EEC33197/1770222.png",
+    "profession_icon": "https://render.guildwars2.com/file/C105F67C30BBD0FE0A26CB97E90B481419927D50/1770223.png"
+  },
+  {
+    "id": 68,
+    "name": "Bladesworn",
+    "profession": "Warrior",
+    "elite": true,
+    "minor_traits": [
+      2226,
+      2242,
+      2236
+    ],
+    "major_traits": [
+      2237,
+      2260,
+      2225,
+      2253,
+      2302,
+      2303,
+      2261,
+      2239,
+      2245
+    ],
+    "weapon_trait": 2256,
+    "icon": "https://render.guildwars2.com/file/9D0ADEDFDEACCCD2B27103A944B1E7F6C21DCBE2/2491509.png",
+    "background": "https://render.guildwars2.com/file/0E061BA341496AF47752A5A22578BCD67BF42D77/2491512.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/713A5A366FB6A25F1C973C067202DA1B46E3CDAC/2491563.png",
+    "profession_icon": "https://render.guildwars2.com/file/F73D52559DEA5FC92CD4FAF2557E050BC1516A7C/2491565.png"
+  },
+  {
+    "id": 74,
+    "name": "Paragon",
+    "profession": "Warrior",
+    "elite": true,
+    "minor_traits": [
+      2373,
+      2418,
+      2340
+    ],
+    "major_traits": [
+      2345,
+      2433,
+      2357,
+      2385,
+      2426,
+      2399,
+      2369,
+      2375,
+      2428
+    ],
+    "icon": "https://render.guildwars2.com/file/B915D599CB40733130F7121B5CDE0BE42ED9E06C/3679904.png",
+    "background": "https://render.guildwars2.com/file/F879AC0997C964DE562D98A5BC4EA60BC7C22849/3679913.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/41790FF97C08349151F9B813030FA7F4E06D0E78/3680091.png",
+    "profession_icon": "https://render.guildwars2.com/file/C9CB4FD2DA9B7B3DA3A706C4B991E15E9D6B0CB8/3680093.png"
+  }
+]

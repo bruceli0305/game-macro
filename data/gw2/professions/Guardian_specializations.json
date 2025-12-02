@@ -1,0 +1,229 @@
+[
+  {
+    "id": 42,
+    "name": "Zeal",
+    "profession": "Guardian",
+    "elite": false,
+    "minor_traits": [
+      648,
+      646,
+      649
+    ],
+    "major_traits": [
+      563,
+      634,
+      1925,
+      628,
+      653,
+      1556,
+      635,
+      637,
+      2017
+    ],
+    "icon": "https://render.guildwars2.com/file/479676FC6349C7A12D429B685F0D4205ABFF2F94/1011999.png",
+    "background": "https://render.guildwars2.com/file/9244C9726D2AD30F9D7E22CF5C7A49601BFAFCC0/1012050.png"
+  },
+  {
+    "id": 16,
+    "name": "Radiance",
+    "profession": "Guardian",
+    "elite": false,
+    "minor_traits": [
+      572,
+      571,
+      568
+    ],
+    "major_traits": [
+      577,
+      566,
+      574,
+      578,
+      567,
+      565,
+      1686,
+      579,
+      1683
+    ],
+    "icon": "https://render.guildwars2.com/file/16A05D047DFC0828D0E496F46FD8B20F97B42EB3/1011996.png",
+    "background": "https://render.guildwars2.com/file/9BE9604B0378D103EB2F551730BF802F2B1F3AA0/1012047.png"
+  },
+  {
+    "id": 13,
+    "name": "Valor",
+    "profession": "Guardian",
+    "elite": false,
+    "minor_traits": [
+      582,
+      594,
+      583
+    ],
+    "major_traits": [
+      588,
+      581,
+      633,
+      580,
+      584,
+      1684,
+      585,
+      586,
+      589
+    ],
+    "icon": "https://render.guildwars2.com/file/F8A95D6D3904A1F6430CF2D33A02FDF2A6132037/1011997.png",
+    "background": "https://render.guildwars2.com/file/12B4C72ADCE4EF2890606111B400630F3832F83D/1012048.png"
+  },
+  {
+    "id": 49,
+    "name": "Honor",
+    "profession": "Guardian",
+    "elite": false,
+    "minor_traits": [
+      564,
+      551,
+      1685
+    ],
+    "major_traits": [
+      1899,
+      559,
+      654,
+      557,
+      549,
+      562,
+      553,
+      558,
+      1682
+    ],
+    "icon": "https://render.guildwars2.com/file/A4C0E39152B005EE226DA56D010DEEABB1ADBF2B/1011995.png",
+    "background": "https://render.guildwars2.com/file/98C3AB64254E61E59D03D3AF29D75314730E9E72/1012046.png"
+  },
+  {
+    "id": 46,
+    "name": "Virtues",
+    "profession": "Guardian",
+    "elite": false,
+    "minor_traits": [
+      621,
+      604,
+      620
+    ],
+    "major_traits": [
+      624,
+      625,
+      617,
+      603,
+      610,
+      587,
+      622,
+      554,
+      612
+    ],
+    "icon": "https://render.guildwars2.com/file/E165042F92999B3BEFA91E280CB807F62EF30218/1011998.png",
+    "background": "https://render.guildwars2.com/file/08FE79184543F8314648D3104268789B484AB0BF/1012049.png"
+  },
+  {
+    "id": 27,
+    "name": "Dragonhunter",
+    "profession": "Guardian",
+    "elite": true,
+    "minor_traits": [
+      1848,
+      1896,
+      1926
+    ],
+    "major_traits": [
+      1898,
+      1983,
+      1911,
+      2037,
+      1835,
+      1943,
+      1908,
+      1963,
+      1955
+    ],
+    "weapon_trait": 1826,
+    "icon": "https://render.guildwars2.com/file/736DB02E6DA2ACFAD3B9B0F4655113AD214FFA40/1011994.png",
+    "background": "https://render.guildwars2.com/file/6BD5F59A7A0EF4F20C1B1D216AFE2B084CC19FF4/1012045.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/1B3B15431B002C09BDABEB7C0E28FCF764FDDB23/1128572.png",
+    "profession_icon": "https://render.guildwars2.com/file/4161C630AA50667FDCBF01042D07021CE44451C9/1128573.png"
+  },
+  {
+    "id": 62,
+    "name": "Firebrand",
+    "profession": "Guardian",
+    "elite": true,
+    "minor_traits": [
+      2089,
+      2062,
+      2148
+    ],
+    "major_traits": [
+      2075,
+      2101,
+      2086,
+      2063,
+      2076,
+      2116,
+      2105,
+      2179,
+      2159
+    ],
+    "weapon_trait": 2073,
+    "icon": "https://render.guildwars2.com/file/6D18B2D3EE0BFA0E4BC851A7D3C39D4330250916/1769890.png",
+    "background": "https://render.guildwars2.com/file/7E6454FF9A13DBE93873AF72E192A74622990171/1769899.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/AA12C93CBF5D25E40409060D5CD69E27F72B0892/1770210.png",
+    "profession_icon": "https://render.guildwars2.com/file/A1287D0FD1159CAC3A58C212C94A4BD0AB32A8D3/1770211.png"
+  },
+  {
+    "id": 65,
+    "name": "Willbender",
+    "profession": "Guardian",
+    "elite": true,
+    "minor_traits": [
+      2200,
+      2222,
+      2189
+    ],
+    "major_traits": [
+      2191,
+      2190,
+      2187,
+      2197,
+      2210,
+      2199,
+      2195,
+      2201,
+      2198
+    ],
+    "weapon_trait": 2196,
+    "icon": "https://render.guildwars2.com/file/117F4659C3AD0AF6625D51013F03D541BEF2E8A6/2479302.png",
+    "background": "https://render.guildwars2.com/file/D90821BEE9EC0D7BBE3B462A6D44D4625BAFF198/2479305.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/5BC4A4805DCBACAE47E7F9F7DEDE41A9AC25B10A/2479351.png",
+    "profession_icon": "https://render.guildwars2.com/file/0AF79DC205A1E14422720079BBAC05E35BCDB07E/2479353.png"
+  },
+  {
+    "id": 81,
+    "name": "Luminary",
+    "profession": "Guardian",
+    "elite": true,
+    "minor_traits": [
+      2381,
+      2394,
+      2435
+    ],
+    "major_traits": [
+      2410,
+      2417,
+      2329,
+      2330,
+      2401,
+      2419,
+      2368,
+      2328,
+      2388
+    ],
+    "icon": "https://render.guildwars2.com/file/034C203DBD60CFF19D3D5CE9E71B27CA0103F50D/3679898.png",
+    "background": "https://render.guildwars2.com/file/AF9E19ADE842E1661324EDC6AAAEF7B2933CF132/3679907.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/19D81DA43ACDC671E9695DD21BD944382855CF08/3680067.png",
+    "profession_icon": "https://render.guildwars2.com/file/F6BDFD499FD0DAE1A436AAC36E5A970A3A782509/3680069.png"
+  }
+]

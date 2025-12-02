@@ -41,6 +41,25 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 #Include "modules\storage\Exporter.ahk"
 #Include "modules\ui\UI_Layout.ahk"
 #Include "modules\ui\UI_Shell.ahk"
+#Include "modules\gw2\GW2_DB.ahk"
+
+GW2_DB_EnsureLoaded()
+
+pros := GW2_GetProfessions()
+for idx, p in pros {
+    MsgBox "职业: " p.Id " / " p.Name
+    break
+}
+
+specs := GW2_GetSpecsByProf("Guardian")
+for idx, s in specs {
+    MsgBox "Guardian 特性: " s.Id " / " s.Name
+    break
+}
+
+skills := GW2_QuerySkills("Guardian", 0, "Weapon")
+MsgBox "Guardian 基础职业武器技能数量: " skills.Length
+
 ; ========= Bootstrap =========
 AppConfig_Init()
 Lang_Init(AppConfig_Get("Language", "zh-CN"))

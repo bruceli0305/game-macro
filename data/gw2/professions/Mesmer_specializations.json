@@ -1,0 +1,229 @@
+[
+  {
+    "id": 10,
+    "name": "Domination",
+    "profession": "Mesmer",
+    "elite": false,
+    "minor_traits": [
+      685,
+      694,
+      1941
+    ],
+    "major_traits": [
+      686,
+      682,
+      687,
+      693,
+      713,
+      712,
+      681,
+      680,
+      1688
+    ],
+    "icon": "https://render.guildwars2.com/file/4B61EA5997709A5DC1E46FF50CEDF2A13C1F0C3D/1012002.png",
+    "background": "https://render.guildwars2.com/file/2C436DDDC3244409EEBF470A0AE3ED7CED1F99C0/1012055.png"
+  },
+  {
+    "id": 1,
+    "name": "Dueling",
+    "profession": "Mesmer",
+    "elite": false,
+    "minor_traits": [
+      706,
+      710,
+      707
+    ],
+    "major_traits": [
+      701,
+      705,
+      700,
+      1889,
+      1960,
+      708,
+      692,
+      1950,
+      704
+    ],
+    "icon": "https://render.guildwars2.com/file/43C5400906A104C60F30DFE0A145D1E767353573/1012003.png",
+    "background": "https://render.guildwars2.com/file/992D53319C5FCD4AE841C592DC2AE91D5906AECF/1012057.png"
+  },
+  {
+    "id": 45,
+    "name": "Chaos",
+    "profession": "Mesmer",
+    "elite": false,
+    "minor_traits": [
+      666,
+      667,
+      1865
+    ],
+    "major_traits": [
+      670,
+      675,
+      677,
+      673,
+      668,
+      669,
+      671,
+      674,
+      1687
+    ],
+    "icon": "https://render.guildwars2.com/file/7FD4DF076AFB31793EFA07220B35B427B3D406C3/1012000.png",
+    "background": "https://render.guildwars2.com/file/B20B7C6DDC30F72207D9BE4FB87C2FDCDC292E90/1012051.png"
+  },
+  {
+    "id": 23,
+    "name": "Inspiration",
+    "profession": "Mesmer",
+    "elite": false,
+    "minor_traits": [
+      757,
+      1852,
+      1915
+    ],
+    "major_traits": [
+      756,
+      738,
+      744,
+      751,
+      740,
+      1980,
+      2005,
+      1866,
+      752
+    ],
+    "icon": "https://render.guildwars2.com/file/BCC2C316C4FC2823679E0FD062C5A87E96E460CC/1012004.png",
+    "background": "https://render.guildwars2.com/file/DC30B4FF5377E80F21F4E912E8D548B004C95042/1012059.png"
+  },
+  {
+    "id": 24,
+    "name": "Illusions",
+    "profession": "Mesmer",
+    "elite": false,
+    "minor_traits": [
+      734,
+      723,
+      731
+    ],
+    "major_traits": [
+      721,
+      1869,
+      691,
+      722,
+      729,
+      1690,
+      733,
+      2035,
+      753
+    ],
+    "icon": "https://render.guildwars2.com/file/A6D57C63D9EFB3FE75C9DAF8CBE603D8F45A635F/1012005.png",
+    "background": "https://render.guildwars2.com/file/B00D98B31B13416811B8484FC146C49B1E055BAC/1012061.png"
+  },
+  {
+    "id": 40,
+    "name": "Chronomancer",
+    "profession": "Mesmer",
+    "elite": true,
+    "minor_traits": [
+      2030,
+      1927,
+      1859
+    ],
+    "major_traits": [
+      1838,
+      1995,
+      1987,
+      2009,
+      1913,
+      1978,
+      1942,
+      2022,
+      1890
+    ],
+    "weapon_trait": 1910,
+    "icon": "https://render.guildwars2.com/file/D9C960059A69F4DB6604DAD6AF06D0F940E76754/1012001.png",
+    "background": "https://render.guildwars2.com/file/9D9F0DA395FDB21423981FAC2CABC850CF7E0A62/1012053.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/4C919A74282939EC004333292A93A4073CCDFFFD/1128568.png",
+    "profession_icon": "https://render.guildwars2.com/file/B0A3C5B4097705AE21E9CB78E53045E327F1C7C9/1128569.png"
+  },
+  {
+    "id": 59,
+    "name": "Mirage",
+    "profession": "Mesmer",
+    "elite": true,
+    "minor_traits": [
+      2150,
+      2069,
+      2117
+    ],
+    "major_traits": [
+      2141,
+      2082,
+      2110,
+      2178,
+      2174,
+      2098,
+      2070,
+      2113,
+      2169
+    ],
+    "weapon_trait": 2087,
+    "icon": "https://render.guildwars2.com/file/6403ECA8E6C1683E2C9D075A39C154ED3A7C04A1/1769891.png",
+    "background": "https://render.guildwars2.com/file/BB67F76B46052E6E291AFE75807AFC7DD33563E4/1769900.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/A879752D07B7E8A154A952AC99D01EDC9FBC60A9/1770216.png",
+    "profession_icon": "https://render.guildwars2.com/file/52285431289AE4FE39E8A21D4333E137A5EF0921/1770217.png"
+  },
+  {
+    "id": 66,
+    "name": "Virtuoso",
+    "profession": "Mesmer",
+    "elite": true,
+    "minor_traits": [
+      2216,
+      2204,
+      2193
+    ],
+    "major_traits": [
+      2212,
+      2208,
+      2202,
+      2215,
+      2205,
+      2207,
+      2211,
+      2206,
+      2223
+    ],
+    "weapon_trait": 2214,
+    "icon": "https://render.guildwars2.com/file/7B0F5E48320F35C0C6A2013ACF63F4C17B1105A5/2479303.png",
+    "background": "https://render.guildwars2.com/file/97632575F6E89EB62A0AC8AF1DE7DFB060312317/2479306.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/67EC28331F55782A7FFC386E455F5EE6913A126E/2479355.png",
+    "profession_icon": "https://render.guildwars2.com/file/C6480FD498E66EE5AEFBAF01EDF944631947DBA5/2479357.png"
+  },
+  {
+    "id": 73,
+    "name": "Troubadour",
+    "profession": "Mesmer",
+    "elite": true,
+    "minor_traits": [
+      2386,
+      2424,
+      2374
+    ],
+    "major_traits": [
+      2427,
+      2326,
+      2432,
+      2343,
+      2367,
+      2422,
+      2353,
+      2414,
+      2441
+    ],
+    "icon": "https://render.guildwars2.com/file/0FDD99E8B7A7FB4B06186C0756E02C0515520F75/3679899.png",
+    "background": "https://render.guildwars2.com/file/A9AF4BB7BC18AB4871B7D69EBEDEB344CD59D3DE/3679908.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/0DF49BF0BFCCB7DEC6B4C29657E0CE09C990E84D/3680071.png",
+    "profession_icon": "https://render.guildwars2.com/file/1ACAEDF680C0FAF9081780D8F925B5E854DFA9F4/3680073.png"
+  }
+]

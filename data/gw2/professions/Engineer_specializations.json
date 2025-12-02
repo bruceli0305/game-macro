@@ -1,0 +1,229 @@
+[
+  {
+    "id": 6,
+    "name": "Explosives",
+    "profession": "Engineer",
+    "elite": false,
+    "minor_traits": [
+      432,
+      517,
+      429
+    ],
+    "major_traits": [
+      514,
+      525,
+      1882,
+      482,
+      1892,
+      1944,
+      1541,
+      505,
+      1947
+    ],
+    "icon": "https://render.guildwars2.com/file/7DCC0CC4CE0E550C36F37F65469FF3103E2F2DA5/1011989.png",
+    "background": "https://render.guildwars2.com/file/159455B54672DF9C9BEEC2EB13E05DB07E757E02/1012041.png"
+  },
+  {
+    "id": 38,
+    "name": "Firearms",
+    "profession": "Engineer",
+    "elite": false,
+    "minor_traits": [
+      515,
+      536,
+      516
+    ],
+    "major_traits": [
+      1878,
+      1930,
+      1914,
+      1984,
+      2006,
+      1923,
+      510,
+      526,
+      433
+    ],
+    "icon": "https://render.guildwars2.com/file/67A2C92B59BC94EDD3D857C2DD18E1A02A631F98/1011990.png",
+    "background": "https://render.guildwars2.com/file/2A37FAA50318E4BAE2B193D7A1DF30AAFCE7B139/1012042.png"
+  },
+  {
+    "id": 47,
+    "name": "Inventions",
+    "profession": "Engineer",
+    "elite": false,
+    "minor_traits": [
+      518,
+      508,
+      519
+    ],
+    "major_traits": [
+      394,
+      1901,
+      507,
+      1678,
+      1834,
+      445,
+      472,
+      1680,
+      1916
+    ],
+    "icon": "https://render.guildwars2.com/file/91F9AF48FA1DDEB66A449095A4E1A6E901AE203D/1011992.png",
+    "background": "https://render.guildwars2.com/file/807C3D97D8B6A25E47B49C905B081419A779201D/1012043.png"
+  },
+  {
+    "id": 29,
+    "name": "Alchemy",
+    "profession": "Engineer",
+    "elite": false,
+    "minor_traits": [
+      468,
+      487,
+      413
+    ],
+    "major_traits": [
+      396,
+      509,
+      521,
+      520,
+      469,
+      470,
+      473,
+      1871,
+      1854
+    ],
+    "icon": "https://render.guildwars2.com/file/2AD4CD9B66F349A6CBC006A14848CF531E97396D/1011988.png",
+    "background": "https://render.guildwars2.com/file/A89F18BA0F9A53E662BAE3F39C705559A97B407F/1012040.png"
+  },
+  {
+    "id": 21,
+    "name": "Tools",
+    "profession": "Engineer",
+    "elite": false,
+    "minor_traits": [
+      1979,
+      1872,
+      1936
+    ],
+    "major_traits": [
+      532,
+      1997,
+      531,
+      512,
+      1946,
+      1832,
+      1856,
+      523,
+      1679
+    ],
+    "icon": "https://render.guildwars2.com/file/2CBB5AE626A47DF79C9294ECA61D77922A123600/1011993.png",
+    "background": "https://render.guildwars2.com/file/4E906A6B625209A213085FD65DB9A4457726759D/1012044.png"
+  },
+  {
+    "id": 43,
+    "name": "Scrapper",
+    "profession": "Engineer",
+    "elite": true,
+    "minor_traits": [
+      1959,
+      2014,
+      1877
+    ],
+    "major_traits": [
+      1917,
+      1971,
+      1867,
+      1954,
+      1999,
+      1860,
+      1981,
+      2052,
+      1849
+    ],
+    "weapon_trait": 1951,
+    "icon": "https://render.guildwars2.com/file/FEB1B8C559DDB5A04F9C0579F741080259FEF841/1011991.png",
+    "background": "https://render.guildwars2.com/file/011D6BF69FF9A9F6E3DCBA1197BAA9281067FF01/1128516.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/21C007BE69070E099BF05B4ED04A2D2B90B8FB1F/1128580.png",
+    "profession_icon": "https://render.guildwars2.com/file/5749382E61E622D8E9E00FA60D4CEAADA3E12715/1128581.png"
+  },
+  {
+    "id": 57,
+    "name": "Holosmith",
+    "profession": "Engineer",
+    "elite": true,
+    "minor_traits": [
+      2158,
+      2135,
+      2122
+    ],
+    "major_traits": [
+      2114,
+      2157,
+      2106,
+      2103,
+      2152,
+      2091,
+      2066,
+      2137,
+      2064
+    ],
+    "weapon_trait": 2125,
+    "icon": "https://render.guildwars2.com/file/F41CDEE4603FC0741669A7F2A7E977D36123DF7C/1769889.png",
+    "background": "https://render.guildwars2.com/file/FF0814C6EFA56F9ADA0B3EA7986BADF120F7D11D/1769898.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/A84BD2D74D3239451E3FF4EFC0F6A146F3F6653E/1770224.png",
+    "profession_icon": "https://render.guildwars2.com/file/5DCFFC66A63466DFEBD29ACFA605CF00C708CBF3/1770225.png"
+  },
+  {
+    "id": 70,
+    "name": "Mechanist",
+    "profession": "Engineer",
+    "elite": true,
+    "minor_traits": [
+      2291,
+      2266,
+      2267
+    ],
+    "major_traits": [
+      2282,
+      2296,
+      2279,
+      2270,
+      2276,
+      2294,
+      2292,
+      2281,
+      2298
+    ],
+    "weapon_trait": 2265,
+    "icon": "https://render.guildwars2.com/file/F86CDF34404C0B5A01CD0CBB9D7D0DC1D8CC48CF/2503608.png",
+    "background": "https://render.guildwars2.com/file/19C21A9C04620227042E483758962301EFC030D4/2503611.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/0C1E094E7708207A9AC6BE46C3CD39B46AEDE77A/2503656.png",
+    "profession_icon": "https://render.guildwars2.com/file/CA303ADC0BBE9F9591C5C4A2C4740FD59E6EEE55/2503658.png"
+  },
+  {
+    "id": 75,
+    "name": "Amalgam",
+    "profession": "Engineer",
+    "elite": true,
+    "minor_traits": [
+      2377,
+      2389,
+      2356
+    ],
+    "major_traits": [
+      2366,
+      2395,
+      2434,
+      2383,
+      2420,
+      2349,
+      2406,
+      2387,
+      2334
+    ],
+    "icon": "https://render.guildwars2.com/file/67AA599996662C5BA8427FA7BA6FF8B4ED221B0D/3679897.png",
+    "background": "https://render.guildwars2.com/file/094F0711ADF50A3F013F2963C5B03215626C96A8/3679906.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/53CA9852D74F9543E2F772E9B475A5E9CA64F2AE/3680063.png",
+    "profession_icon": "https://render.guildwars2.com/file/0AF363EC11D1A4B6E507F8D92FA116619B1B3B0E/3680065.png"
+  }
+]
