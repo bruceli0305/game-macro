@@ -1,0 +1,229 @@
+[
+  {
+    "id": 8,
+    "name": "Marksmanship",
+    "profession": "Ranger",
+    "elite": false,
+    "minor_traits": [
+      1010,
+      1009,
+      1011
+    ],
+    "major_traits": [
+      1021,
+      1014,
+      986,
+      1001,
+      1000,
+      1070,
+      996,
+      1015,
+      1698
+    ],
+    "icon": "https://render.guildwars2.com/file/80FEB75663DAE60BAC59495671261C206C0BAFC3/1012014.png",
+    "background": "https://render.guildwars2.com/file/100CE796CC2318DA62D2189A02BAAD2AE91BCE1F/1012079.png"
+  },
+  {
+    "id": 30,
+    "name": "Skirmishing",
+    "profession": "Ranger",
+    "elite": false,
+    "minor_traits": [
+      1080,
+      1083,
+      1068
+    ],
+    "major_traits": [
+      1069,
+      1067,
+      1075,
+      1016,
+      1700,
+      1846,
+      1064,
+      1912,
+      1888
+    ],
+    "icon": "https://render.guildwars2.com/file/A026F49FF905C0F8AFAC6EDFDE281AABE1912459/1012016.png",
+    "background": "https://render.guildwars2.com/file/08D1BEEC43F45C02DE59AE9010B9391F1FCA2966/1012083.png"
+  },
+  {
+    "id": 33,
+    "name": "Wilderness Survival",
+    "profession": "Ranger",
+    "elite": false,
+    "minor_traits": [
+      1096,
+      1090,
+      1089
+    ],
+    "major_traits": [
+      1098,
+      1086,
+      1099,
+      1101,
+      2032,
+      1100,
+      1094,
+      1699,
+      1701
+    ],
+    "icon": "https://render.guildwars2.com/file/BEDA4B0CCD2E6F5F5C64509D67D3454E47D019F3/1012017.png",
+    "background": "https://render.guildwars2.com/file/417DC1B29EF0EADBD9CBE15B462B2D5B6AF328DA/1012085.png"
+  },
+  {
+    "id": 25,
+    "name": "Nature Magic",
+    "profession": "Ranger",
+    "elite": false,
+    "minor_traits": [
+      1055,
+      1056,
+      1059
+    ],
+    "major_traits": [
+      1062,
+      978,
+      1060,
+      1054,
+      965,
+      964,
+      1038,
+      1988,
+      1697
+    ],
+    "icon": "https://render.guildwars2.com/file/DC7A387D9AB3EACCDA35AEA872E4EA1007139612/1012015.png",
+    "background": "https://render.guildwars2.com/file/01B5C3050EAFB0C47065C333C8AA2B4255374DA7/1012081.png"
+  },
+  {
+    "id": 32,
+    "name": "Beastmastery",
+    "profession": "Ranger",
+    "elite": false,
+    "minor_traits": [
+      1900,
+      974,
+      1065
+    ],
+    "major_traits": [
+      1861,
+      1072,
+      1606,
+      975,
+      1047,
+      970,
+      1945,
+      968,
+      1066
+    ],
+    "icon": "https://render.guildwars2.com/file/02D851E1D7186112786D0F67910B58FACB5CCCF6/1012012.png",
+    "background": "https://render.guildwars2.com/file/4727784BBF467241CA9F29E4FEDE487FD33E2809/1012075.png"
+  },
+  {
+    "id": 5,
+    "name": "Druid",
+    "profession": "Ranger",
+    "elite": true,
+    "minor_traits": [
+      1874,
+      1862,
+      1992
+    ],
+    "major_traits": [
+      1868,
+      2016,
+      1935,
+      2053,
+      2001,
+      2056,
+      2057,
+      2058,
+      2055
+    ],
+    "weapon_trait": 1965,
+    "icon": "https://render.guildwars2.com/file/BE10CB10D8446208729934F3F1BD3A54BEED9AD6/1012013.png",
+    "background": "https://render.guildwars2.com/file/306D6ED9D3F09FF5552609EC7DA2046ECD114F90/1012077.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/F910F8BBCAF80355FFDB264160C899594300D7B2/1128574.png",
+    "profession_icon": "https://render.guildwars2.com/file/033CFD3270277F38215AE60574BCC2000873BDFF/1128575.png"
+  },
+  {
+    "id": 55,
+    "name": "Soulbeast",
+    "profession": "Ranger",
+    "elite": true,
+    "minor_traits": [
+      2151,
+      2156,
+      2127
+    ],
+    "major_traits": [
+      2134,
+      2071,
+      2072,
+      2119,
+      2085,
+      2161,
+      2155,
+      2128,
+      2143
+    ],
+    "weapon_trait": 2088,
+    "icon": "https://render.guildwars2.com/file/0AA4A2C62C4F2D0E0D59DBEE9C63EB4AF472F0C5/1769893.png",
+    "background": "https://render.guildwars2.com/file/D624537D6B50C90B2A329EB16CF8911BDD4C0107/1769902.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/7257FBD9A35002DC5155062773D305353AF45E2F/1770214.png",
+    "profession_icon": "https://render.guildwars2.com/file/F80AC2AFAAF55C0F7F012C7EBECC90FD01F27FE9/1770215.png"
+  },
+  {
+    "id": 72,
+    "name": "Untamed",
+    "profession": "Ranger",
+    "elite": true,
+    "minor_traits": [
+      2268,
+      2286,
+      2269
+    ],
+    "major_traits": [
+      2297,
+      2277,
+      2301,
+      2263,
+      2287,
+      2278,
+      2271,
+      2283,
+      2274
+    ],
+    "weapon_trait": 2273,
+    "icon": "https://render.guildwars2.com/file/D219A813B5312BA9D1D10A74C10E9E5F3F54936B/2503609.png",
+    "background": "https://render.guildwars2.com/file/ED44DB9901D82D760DC5B8A918BB603DA06B3257/2503612.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/AAAB98C6F974A456B5EA09EBC93DC47FCC40521F/2503660.png",
+    "profession_icon": "https://render.guildwars2.com/file/E208D91FD7A1D1035364D252F24D75F9FCC706C6/2503662.png"
+  },
+  {
+    "id": 78,
+    "name": "Galeshot",
+    "profession": "Ranger",
+    "elite": true,
+    "minor_traits": [
+      2359,
+      2363,
+      2341
+    ],
+    "major_traits": [
+      2402,
+      2370,
+      2360,
+      2408,
+      2413,
+      2396,
+      2425,
+      2336,
+      2372
+    ],
+    "icon": "https://render.guildwars2.com/file/1E0DE9DF219380B3DD15AD35466461C935930515/3679901.png",
+    "background": "https://render.guildwars2.com/file/4BC6740C765896B9EE6E38671BD204B7A82535F9/3679910.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/DF66F479DE7C1E4C0557CD9F2DA3D7EB74E0C73D/3680079.png",
+    "profession_icon": "https://render.guildwars2.com/file/229C6E937EEDFF36AACF360F37059FC1D401D7F6/3680081.png"
+  }
+]

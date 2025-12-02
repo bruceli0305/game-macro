@@ -10,13 +10,13 @@ Page_CastDebug_Build(page) {
     page.Controls := []
 
     ; ==== 施法条配置 ====
-    gbH := 210
+    gbH := 230
     UI.CD_GB_Cast := UI.Main.Add("GroupBox", Format("x{} y{} w{} h{}", rc.X, rc.Y, rc.W, gbH), "施法条配置")
     page.Controls.Push(UI.CD_GB_Cast)
 
-    xLabel := rc.X + 16
-    rowH   := 26
-    yLine  := rc.Y + 26
+    xLabel := rc.X + 32
+    rowH   := 32
+    yLine  := rc.Y + 32
 
     ; 启用
     UI.CD_ChkEnable := UI.Main.Add("CheckBox", Format("x{} y{} w260", xLabel, yLine), "启用施法条检测")
@@ -24,14 +24,14 @@ Page_CastDebug_Build(page) {
 
     ; 坐标 X/Y（独立一行）
     y2 := yLine + rowH
-    UI.CD_LblX := UI.Main.Add("Text", Format("x{} y{} w70 Right", xLabel, y2 + 4), "坐标X：")
+    UI.CD_LblX := UI.Main.Add("Text", Format("x{} y{} w70 Right", xLabel, y2 + 8), "坐标X：")
     page.Controls.Push(UI.CD_LblX)
-    UI.CD_EdX := UI.Main.Add("Edit", "x+6 w80 Number")
+    UI.CD_EdX := UI.Main.Add("Edit", "x+6 w120 Number")
     page.Controls.Push(UI.CD_EdX)
 
-    UI.CD_LblY := UI.Main.Add("Text", "x+12 w40 Right", "Y：")
+    UI.CD_LblY := UI.Main.Add("Text", "x+12 w70 Right", "坐标Y：")
     page.Controls.Push(UI.CD_LblY)
-    UI.CD_EdY := UI.Main.Add("Edit", "x+6 w80 Number")
+    UI.CD_EdY := UI.Main.Add("Edit", "x+6 w120 Number")
     page.Controls.Push(UI.CD_EdY)
 
     ; 颜色 + 容差（独立一行）
@@ -41,14 +41,14 @@ Page_CastDebug_Build(page) {
     UI.CD_EdColor := UI.Main.Add("Edit", "x+6 w120")
     page.Controls.Push(UI.CD_EdColor)
 
-    UI.CD_LblTol := UI.Main.Add("Text", "x+12 w60 Right", "容差：")
+    UI.CD_LblTol := UI.Main.Add("Text", "x+12 w70 Right", "容差：")
     page.Controls.Push(UI.CD_LblTol)
-    UI.CD_EdTol := UI.Main.Add("Edit", "x+6 w60 Number")
+    UI.CD_EdTol := UI.Main.Add("Edit", "x+6 w120 Number")
     page.Controls.Push(UI.CD_EdTol)
 
     ; 拾取按钮单独一行
     y4 := y3 + rowH
-    UI.CD_BtnPick := UI.Main.Add("Button", Format("x{} y{} w140 h24", xLabel + 70 + 6, y4), "拾取施法条像素")
+    UI.CD_BtnPick := UI.Main.Add("Button", Format("x{} y{} w140 h24", xLabel + 90 + 6, y4), "拾取施法条像素")
     page.Controls.Push(UI.CD_BtnPick)
 
     ; 忽略延时 / 调试日志，各自一行，避免右侧挤压
@@ -64,7 +64,7 @@ Page_CastDebug_Build(page) {
 
     ; ==== 调试窗口配置 ====
     gy2 := rc.Y + gbH + 10
-    gb2H := 160
+    gb2H := 140
     UI.CD_GB_Debug := UI.Main.Add("GroupBox", Format("x{} y{} w{} h{}", rc.X, gy2, rc.W, gb2H), "调试窗口配置")
     page.Controls.Push(UI.CD_GB_Debug)
 
@@ -89,13 +89,14 @@ Page_CastDebug_Build(page) {
     UI.CD_EdAlpha := UI.Main.Add("Edit", "x+6 w80 Number")
     page.Controls.Push(UI.CD_EdAlpha)
 
-    ; 最后一行：三个按钮
-    yD4 := yD3 + rowH
-    UI.CD_BtnApply := UI.Main.Add("Button", Format("x{} y{} w100 h28", x2Label, yD4), "应用配置")
+    ; 三个按钮放在分组框外部，位于分组框下方，左对齐
+    btnY := gy2 + gb2H + 10
+    xButton := x2Label ; 与调试窗口配置分组内控件左对齐
+    UI.CD_BtnApply := UI.Main.Add("Button", Format("x{} y{} w120 h28", xButton, btnY), "应用配置")
     page.Controls.Push(UI.CD_BtnApply)
-    UI.CD_BtnShow := UI.Main.Add("Button", "x+8 w100 h28", "打开调试窗口")
+    UI.CD_BtnShow := UI.Main.Add("Button", Format("x{} y{} w120 h28", xButton + 120 + 8, btnY), "打开调试窗口")
     page.Controls.Push(UI.CD_BtnShow)
-    UI.CD_BtnHide := UI.Main.Add("Button", "x+8 w100 h28", "关闭调试窗口")
+    UI.CD_BtnHide := UI.Main.Add("Button", Format("x{} y{} w120 h28", xButton + (120 + 8) * 2, btnY), "关闭调试窗口")
     page.Controls.Push(UI.CD_BtnHide)
 
     ; 事件
@@ -110,17 +111,17 @@ Page_CastDebug_Build(page) {
 
 Page_CastDebug_Layout(rc) {
     try {
-        gbH := 210
+        gbH := 230
         UI.CD_GB_Cast.Move(rc.X, rc.Y, rc.W, gbH)
 
-        xLabel := rc.X + 16
-        rowH   := 26
-        yLine  := rc.Y + 26
+        xLabel := rc.X + 32
+        rowH   := 32
+        yLine  := rc.Y + 32
 
         UI.CD_ChkEnable.Move(xLabel, yLine, 260)
 
         y2 := yLine + rowH
-        UI.CD_LblX.Move(xLabel, y2 + 4, 70)
+        UI.CD_LblX.Move(xLabel, y2 + 8, 70)
         UI.CD_EdX.Move(UI.CD_LblX.Pos.X + UI.CD_LblX.Pos.W + 6, y2, 80)
         UI.CD_LblY.Move(UI.CD_EdX.Pos.X + UI.CD_EdX.Pos.W + 12, y2 + 4, 40)
         UI.CD_EdY.Move(UI.CD_LblY.Pos.X + UI.CD_LblY.Pos.W + 6, y2, 80)
@@ -132,7 +133,7 @@ Page_CastDebug_Layout(rc) {
         UI.CD_EdTol.Move(UI.CD_LblTol.Pos.X + UI.CD_LblTol.Pos.W + 6, y3, 60)
 
         y4 := y3 + rowH
-        UI.CD_BtnPick.Move(UI.CD_LblColor.Pos.X + UI.CD_LblColor.Pos.W + 6, y4, 140, 24)
+        UI.CD_BtnPick.Move(UI.CD_LblColor.Pos.X + UI.CD_LblColor.Pos.W + 6, y4, 90, 24)
 
         y5 := y4 + rowH
         UI.CD_ChkIgnore.Move(xLabel, y5, rc.W - 40)
@@ -141,7 +142,7 @@ Page_CastDebug_Layout(rc) {
         UI.CD_ChkDebugLog.Move(xLabel, y6, rc.W - 40)
 
         gy2 := rc.Y + gbH + 10
-        gb2H := 160
+        gb2H := 140
         UI.CD_GB_Debug.Move(rc.X, gy2, rc.W, gb2H)
 
         x2Label := rc.X + 16
@@ -157,10 +158,12 @@ Page_CastDebug_Layout(rc) {
         UI.CD_LblAlpha.Move(x2Label, yD3 + 4, 90)
         UI.CD_EdAlpha.Move(UI.CD_LblAlpha.Pos.X + UI.CD_LblAlpha.Pos.W + 6, yD3, 80)
 
-        yD4 := yD3 + rowH
-        UI.CD_BtnApply.Move(x2Label, yD4, 100, 28)
-        UI.CD_BtnShow.Move(UI.CD_BtnApply.Pos.X + UI.CD_BtnApply.Pos.W + 8, yD4, 100, 28)
-        UI.CD_BtnHide.Move(UI.CD_BtnShow.Pos.X + UI.CD_BtnShow.Pos.W + 8, yD4, 100, 28)
+        ; 三个按钮放在分组框外部，位于分组框下方，左对齐
+        btnY := gy2 + gb2H + 10
+        xButton := x2Label ; 与调试窗口配置分组内控件左对齐
+        UI.CD_BtnApply.Move(xButton, btnY, 120, 28)
+        UI.CD_BtnShow.Move(xButton + 120 + 8, btnY, 120, 28)
+        UI.CD_BtnHide.Move(xButton + (120 + 8) * 2, btnY, 120, 28)
     } catch {
     }
 }

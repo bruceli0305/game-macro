@@ -201,7 +201,13 @@ SettingsAbout_BuildSummary() {
     } else {
         hostShown := "(未找到)"
     }
-
+    zipPath := SettingsAbout_FindZIP()
+    zipShown := ""
+    if (zipPath != "") {
+        zipShown := zipPath
+    } else {
+        zipShown := "(未找到)"
+    }
     sum .= "版本: " ver "`r`n"
     sum .= "架构: " arch "    权限: " admin "    OS: " os "`r`n"
     sum .= "脚本目录: " root "`r`n"
@@ -214,6 +220,7 @@ SettingsAbout_BuildSummary() {
     sum .= "DXGI: Enabled=" dx_en " Ready=" dx_ready " FPS=" fps "`r`n"
     sum .= "OutIdx: " outIdx "  Name: " monName "  Rect: " rect "`r`n"
     sum .= "WorkerHost: " hostShown "`r`n"
+    sum .= "ZIP: " zipShown "`r`n"
 
     return sum
 }
@@ -231,7 +238,7 @@ SettingsAbout_GetVersion() {
         if (IsSet(App) && App.Has("Version")) {
             v0 := App["Version"]
             if (v0 != "") {
-                return v0
+                return 'v0.2.4'
             }
         }
     } catch {
@@ -265,7 +272,7 @@ SettingsAbout_GetVersion() {
         }
     } catch {
     }
-    return "v0"
+    return "v0.2.4"
 }
 
 SettingsAbout_FindWorkerHost() {
@@ -277,6 +284,18 @@ SettingsAbout_FindWorkerHost() {
       , A_ScriptDir "\modules\workers\WorkerHost.ahk"
       , A_ScriptDir "\modules\WorkerHost.ahk"
       , A_ScriptDir "\WorkerHost.ahk"
+    ]
+    for _, p in candidates {
+        if FileExist(p) {
+            return p
+        }
+    }
+    return ""
+}
+
+SettingsAbout_FindZIP() {
+    candidates := [
+        A_ScriptDir "\modules\lib\minizip.exe"
     ]
     for _, p in candidates {
         if FileExist(p) {

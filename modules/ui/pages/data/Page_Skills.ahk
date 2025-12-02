@@ -21,12 +21,14 @@ Page_Skills_Build(page) {
     UI.BtnDelSkill  := UI.Main.Add("Button", "x+8 w96 h28", "删除")
     UI.BtnTestSkill := UI.Main.Add("Button", "x+8 w96 h28", "测试检测")
     UI.BtnBatchSkill := UI.Main.Add("Button", "x+8 w96 h28", "批量取色")
+    UI.BtnImportPreset := UI.Main.Add("Button", "x+8 w110 h28", "从预设导入")
     UI.BtnSaveSkill := UI.Main.Add("Button", "x+8 w96 h28", "保存")
     page.Controls.Push(UI.BtnAddSkill)
     page.Controls.Push(UI.BtnEditSkill)
     page.Controls.Push(UI.BtnDelSkill)
     page.Controls.Push(UI.BtnTestSkill)
     page.Controls.Push(UI.BtnBatchSkill)
+    page.Controls.Push(UI.BtnImportPreset)
     page.Controls.Push(UI.BtnSaveSkill)
 
     ; 事件绑定（全部为本页回调）
@@ -36,6 +38,7 @@ Page_Skills_Build(page) {
     UI.BtnDelSkill.OnEvent("Click", Skills_OnDelete)
     UI.BtnTestSkill.OnEvent("Click", Skills_OnTest)
     UI.BtnBatchSkill.OnEvent("Click", Skills_OnBatchRecolor)
+    UI.BtnImportPreset.OnEvent("Click", Skills_OnImportPreset)
     UI.BtnSaveSkill.OnEvent("Click", Skills_OnSaveProfile)
 
     ; 首次填充
@@ -64,6 +67,7 @@ Page_Skills_Layout(rc) {
         UI.BtnDelSkill.Move(,     yBtn)
         UI.BtnTestSkill.Move(,    yBtn)
         UI.BtnBatchSkill.Move(,   yBtn)
+        UI.BtnImportPreset.Move(, yBtn)
         UI.BtnSaveSkill.Move(,    yBtn)
 
         loop 9 {
@@ -550,4 +554,89 @@ Skills_OnBatchRecolor(*) {
         }
         MsgBox "无法打开技能批量取色对话框。"
     }
+}
+; ============================================
+; 从 GW2 预设导入相关
+; ============================================
+
+Skills_OnImportPreset(*) {
+    SkillPresetImport_Open()
+}
+
+; candList: [{ Id, Name, Category, WeaponType, SpecName, Slot }, ...]
+Skills_ImportFromPreset(candList) {
+    global App
+
+    if !(IsSet(App) && App.Has("ProfileData") && HasProp(App["ProfileData"], "Skills")) {
+        MsgBox "当前没有加载中的配置，无法导入。"
+        return
+    }
+
+    count := 0
+    idx := 1
+    while (idx <= candList.Length) {
+        s := candList[idx]
+
+        sk := Map()
+        sk.Name := s.Name
+        sk.Key  := SkillPreset_GuessKeyFromSlot(s.Slot)
+
+        sk.X    := 0
+        sk.Y    := 0
+        sk.Color:= "0x000000"
+        sk.Tol  := 10
+        sk.LockDuringCast := 1
+        sk.CastTimeoutMs  := 0
+
+        ; 记录 GW2 技能 ID，方便以后追踪（不会影响现有逻辑）
+        sk.Gw2SkillId := s.Id
+
+        ; Id 暂给 0，保存时会重新分配稳定 Id
+        sk.Id := 0
+
+        App["ProfileData"].Skills.Push(sk)
+        count := count + 1
+
+        idx := idx + 1
+    }
+
+    Skills_RefreshList()
+
+    ; 同步 ROI
+    try {
+        Pixel_ROI_SetAutoFromProfile(App["ProfileData"], 8, false)
+    } catch {
+    }
+
+    Notify("已从预设导入 " count " 个技能，请记得批量取色。")
+}
+
+SkillPreset_GuessKeyFromSlot(slot) {
+    if (slot = "Weapon_1") {
+        return "1"
+    }
+    if (slot = "Weapon_2") {
+        return "2"
+    }
+    if (slot = "Weapon_3") {
+        return "3"
+    }
+    if (slot = "Weapon_4") {
+        return "4"
+    }
+    if (slot = "Weapon_5") {
+        return "5"
+    }
+    if (slot = "Heal") {
+        return "6"
+    }
+    if (slot = "Utility") {
+        ; 很难自动区分 7/8/9，留空给用户自己填
+        return ""
+    }
+    if (slot = "Elite") {
+        ; 看你键位习惯，这里示例用 0
+        return "0"
+    }
+    return ""
 }

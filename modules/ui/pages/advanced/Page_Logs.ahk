@@ -5,13 +5,16 @@ Page_Logs_Build(page) {
     rc := UI_GetPageRect()
     page.Controls := []
 
-    UI.LG_GB := UI.Main.Add("GroupBox", Format("x{} y{} w{} h142", rc.X, rc.Y, rc.W), "日志过滤与控制")
+    ; 增加分组框高度以避免第四行控件贴边
+    UI.LG_GB := UI.Main.Add("GroupBox", Format("x{} y{} w{} h180", rc.X, rc.Y, rc.W), "日志过滤与控制")
     page.Controls.Push(UI.LG_GB)
 
     x := rc.X + 12
-    y := rc.Y + 26
-
-    UI.LG_LvLab := UI.Main.Add("Text", Format("x{} y{} w80 Right", x, y + 4), "级别：")
+    rowH := 36
+    
+    ; 第一行：级别，分类，关键字
+    y1 := rc.Y + 26
+    UI.LG_LvLab := UI.Main.Add("Text", Format("x{} y{} w100 Right", x, y1 + 4), "级别：")
     page.Controls.Push(UI.LG_LvLab)
     UI.LG_DdLevel := UI.Main.Add("DropDownList", "x+6 w120")
     page.Controls.Push(UI.LG_DdLevel)
@@ -21,9 +24,9 @@ Page_Logs_Build(page) {
     } catch {
     }
 
-    UI.LG_CatLab := UI.Main.Add("Text", "x+16 w80 Right", "分类：")
+    UI.LG_CatLab := UI.Main.Add("Text", "x+16 w100 Right", "分类：")
     page.Controls.Push(UI.LG_CatLab)
-    UI.LG_DdCat := UI.Main.Add("DropDownList", "x+6 w160")
+    UI.LG_DdCat := UI.Main.Add("DropDownList", "x+6 w240")
     page.Controls.Push(UI.LG_DdCat)
     try {
         UI.LG_DdCat.Add(["ALL","Core","Storage","Poller","Rotation","RuleEngine","Buff","WorkerPool","WorkerHost","DXGI","Pixel","ROI","UI","Tools","Settings","Diag","Logger"])
@@ -31,26 +34,14 @@ Page_Logs_Build(page) {
     } catch {
     }
 
-    UI.LG_KeyLab := UI.Main.Add("Text", "x+16 w80 Right", "关键字：")
+    UI.LG_KeyLab := UI.Main.Add("Text", "x+16 w100 Right", "关键字：")
     page.Controls.Push(UI.LG_KeyLab)
-    UI.LG_EdKey := UI.Main.Add("Edit", "x+6 w220")
+    UI.LG_EdKey := UI.Main.Add("Edit", "x+6 w80")
     page.Controls.Push(UI.LG_EdKey)
 
-    y2 := y + 34
-    UI.LG_BtnRefresh := UI.Main.Add("Button", Format("x{} y{} w100 h26", x, y2), "刷新")
-    page.Controls.Push(UI.LG_BtnRefresh)
-    UI.LG_Auto := UI.Main.Add("CheckBox", "x+8 w120", "自动刷新")
-    page.Controls.Push(UI.LG_Auto)
-    UI.LG_BtnClear := UI.Main.Add("Button", "x+8 w100 h26", "清空缓冲")
-    page.Controls.Push(UI.LG_BtnClear)
-    UI.LG_BtnExport := UI.Main.Add("Button", "x+8 w120 h26", "导出当前")
-    page.Controls.Push(UI.LG_BtnExport)
-    UI.LG_BtnOpen := UI.Main.Add("Button", "x+8 w120 h26", "打开 Logs 目录")
-    page.Controls.Push(UI.LG_BtnOpen)
-
-    ; 设置区
-    y3 := y2 + 34
-    UI.LG_SetLab := UI.Main.Add("Text", Format("x{} y{} w80 Right", x, y3 + 4), "全局级别：")
+    ; 第二行：全局级别，按模块级别，节流每秒
+    y2 := y1 + rowH
+    UI.LG_SetLab := UI.Main.Add("Text", Format("x{} y{} w100 Right", x, y2 + 4), "全局级别：")
     page.Controls.Push(UI.LG_SetLab)
     UI.LG_DdSetLevel := UI.Main.Add("DropDownList", "x+6 w120")
     page.Controls.Push(UI.LG_DdSetLevel)
@@ -68,7 +59,7 @@ Page_Logs_Build(page) {
 
     UI.LG_ModLab := UI.Main.Add("Text", "x+16 w100 Right", "按模块级别：")
     page.Controls.Push(UI.LG_ModLab)
-    UI.LG_DdSetCat := UI.Main.Add("DropDownList", "x+6 w160")
+    UI.LG_DdSetCat := UI.Main.Add("DropDownList", "x+6 w120")
     page.Controls.Push(UI.LG_DdSetCat)
     try {
         UI.LG_DdSetCat.Add(["Core","Storage","Poller","Rotation","RuleEngine","Buff","WorkerPool","WorkerHost","DXGI","Pixel","ROI","UI","Tools","Settings","Diag","Logger"])
@@ -82,8 +73,9 @@ Page_Logs_Build(page) {
         UI.LG_DdSetCatLvl.Value := 3
     } catch {
     }
-
-    UI.LG_ThrLab := UI.Main.Add("Text", "x+16 w100 Right", "节流每秒：")
+    
+    ; 节流每秒移到第二行
+    UI.LG_ThrLab := UI.Main.Add("Text", "x+8 w100 Right", "节流每秒：")
     page.Controls.Push(UI.LG_ThrLab)
     UI.LG_EdThr := UI.Main.Add("Edit", "x+6 w80 Number Center")
     page.Controls.Push(UI.LG_EdThr)
@@ -92,13 +84,28 @@ Page_Logs_Build(page) {
     } catch {
     }
 
-    UI.LG_BtnApply := UI.Main.Add("Button", "x+16 w100 h26", "应用设置")
+    ; 第三行：清空缓冲，导出当前，打开logs目录，应用设置，清空模块覆盖
+    y3 := y2 + rowH
+    UI.LG_BtnClear := UI.Main.Add("Button", Format("x{} y{} w120 h26", x, y3), "清空缓冲")
+    page.Controls.Push(UI.LG_BtnClear)
+    UI.LG_BtnExport := UI.Main.Add("Button", "x+10 w120 h26", "导出当前")
+    page.Controls.Push(UI.LG_BtnExport)
+    UI.LG_BtnOpen := UI.Main.Add("Button", "x+10 w120 h26", "打开 Logs 目录")
+    page.Controls.Push(UI.LG_BtnOpen)
+    UI.LG_BtnApply := UI.Main.Add("Button", "x+10 w100 h26", "应用设置")
     page.Controls.Push(UI.LG_BtnApply)
     UI.LG_BtnReset := UI.Main.Add("Button", "x+8 w120 h26", "清空模块覆盖")
     page.Controls.Push(UI.LG_BtnReset)
 
-    ; 列表
-    ly := rc.Y + 142 + 10
+    ; 第四行：刷新，自动刷新
+    y4 := y3 + rowH
+    UI.LG_BtnRefresh := UI.Main.Add("Button", Format("x{} y{} w100 h26", x, y4), "刷新")
+    page.Controls.Push(UI.LG_BtnRefresh)
+    UI.LG_Auto := UI.Main.Add("CheckBox", Format("x+10 y{} w120", y4 + 4), "自动刷新")
+    page.Controls.Push(UI.LG_Auto)
+
+    ; 列表 - 根据新的分组框高度调整位置
+    ly := rc.Y + 180 + 10
     UI.LG_LV := UI.Main.Add("ListView", Format("x{} y{} w{} h{}", rc.X, ly, rc.W, rc.H - (ly - rc.Y) - 8)
         , ["行"])
     page.Controls.Push(UI.LG_LV)
@@ -118,9 +125,48 @@ Page_Logs_Build(page) {
 
 Page_Logs_Layout(rc) {
     try {
-        UI.LG_GB.Move(rc.X, rc.Y, rc.W, 142)
-        ly := rc.Y + 142 + 10
+        ; 增加分组框高度以避免第四行控件贴边
+        UI.LG_GB.Move(rc.X, rc.Y, rc.W, 180)
+        
+        ; 重新计算列表视图位置
+        ly := rc.Y + 180 + 10
         UI.LG_LV.Move(rc.X, ly, rc.W, rc.H - (ly - rc.Y) - 8)
+        
+        ; 调整控件位置以保持整齐
+        x := rc.X + 12
+        rowH := 36
+        
+        ; 第一行控件位置
+        y1 := rc.Y + 26
+        UI.LG_LvLab.Move(x, y1 + 4, 100)
+        UI.LG_DdLevel.Move(UI.LG_LvLab.Pos.X + UI.LG_LvLab.Pos.W + 6, y1, 120)
+        UI.LG_CatLab.Move(UI.LG_DdLevel.Pos.X + UI.LG_DdLevel.Pos.W + 16, y1 + 4, 100)
+        UI.LG_DdCat.Move(UI.LG_CatLab.Pos.X + UI.LG_CatLab.Pos.W + 6, y1, 240)
+        UI.LG_KeyLab.Move(UI.LG_DdCat.Pos.X + UI.LG_DdCat.Pos.W + 16, y1 + 4, 100)
+        UI.LG_EdKey.Move(UI.LG_KeyLab.Pos.X + UI.LG_KeyLab.Pos.W + 6, y1, 80)
+        
+        ; 第二行控件位置 - 包含节流每秒
+        y2 := y1 + rowH
+        UI.LG_SetLab.Move(x, y2 + 4, 100)
+        UI.LG_DdSetLevel.Move(UI.LG_SetLab.Pos.X + UI.LG_SetLab.Pos.W + 6, y2, 120)
+        UI.LG_ModLab.Move(UI.LG_DdSetLevel.Pos.X + UI.LG_DdSetLevel.Pos.W + 16, y2 + 4, 100)
+        UI.LG_DdSetCat.Move(UI.LG_ModLab.Pos.X + UI.LG_ModLab.Pos.W + 6, y2, 120)
+        UI.LG_DdSetCatLvl.Move(UI.LG_DdSetCat.Pos.X + UI.LG_DdSetCat.Pos.W + 6, y2, 120)
+        UI.LG_ThrLab.Move(UI.LG_DdSetCatLvl.Pos.X + UI.LG_DdSetCatLvl.Pos.W + 8, y2 + 4, 100)
+        UI.LG_EdThr.Move(UI.LG_ThrLab.Pos.X + UI.LG_ThrLab.Pos.W + 6, y2, 80)
+        
+        ; 第三行控件位置 - 包含应用设置和清空模块覆盖按钮
+        y3 := y2 + rowH
+        UI.LG_BtnClear.Move(x, y3, 120, 26)
+        UI.LG_BtnExport.Move(UI.LG_BtnClear.Pos.X + UI.LG_BtnClear.Pos.W + 10, y3, 120, 26)
+        UI.LG_BtnOpen.Move(UI.LG_BtnExport.Pos.X + UI.LG_BtnExport.Pos.W + 10, y3, 120, 26)
+        UI.LG_BtnApply.Move(UI.LG_BtnOpen.Pos.X + UI.LG_BtnOpen.Pos.W + 10, y3, 100, 26)
+        UI.LG_BtnReset.Move(UI.LG_BtnApply.Pos.X + UI.LG_BtnApply.Pos.W + 8, y3, 120, 26)
+        
+        ; 第四行控件位置 - 只有刷新和自动刷新
+        y4 := y3 + rowH
+        UI.LG_BtnRefresh.Move(x, y4, 100, 26)
+        UI.LG_Auto.Move(UI.LG_BtnRefresh.Pos.X + UI.LG_BtnRefresh.Pos.W + 10, y4 + 4, 120)
     } catch {
     }
 }

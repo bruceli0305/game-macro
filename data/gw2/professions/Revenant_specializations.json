@@ -1,0 +1,229 @@
+[
+  {
+    "id": 14,
+    "name": "Corruption",
+    "profession": "Revenant",
+    "elite": false,
+    "minor_traits": [
+      1799,
+      1801,
+      1744
+    ],
+    "major_traits": [
+      1793,
+      1789,
+      1741,
+      1727,
+      1726,
+      1714,
+      1795,
+      1720,
+      1721
+    ],
+    "icon": "https://render.guildwars2.com/file/FF4CBE97A807903DF3495E0ECC380E080291C698/1029931.png",
+    "background": "https://render.guildwars2.com/file/5AB700B8AE15619DDD3CAFD60D0203E5EB23C3BE/1012087.png"
+  },
+  {
+    "id": 9,
+    "name": "Retribution",
+    "profession": "Revenant",
+    "elite": false,
+    "minor_traits": [
+      1783,
+      1757,
+      1713
+    ],
+    "major_traits": [
+      1811,
+      1728,
+      1810,
+      1766,
+      1782,
+      1740,
+      1779,
+      1770,
+      1790
+    ],
+    "icon": "https://render.guildwars2.com/file/70B5F7E02769762D5FEE056D0136093BF3F580FF/1029933.png",
+    "background": "https://render.guildwars2.com/file/E6100E7B7704EEC632AD5B399C3BE8A84D7F7CED/1012095.png"
+  },
+  {
+    "id": 12,
+    "name": "Salvation",
+    "profession": "Revenant",
+    "elite": false,
+    "minor_traits": [
+      1816,
+      1821,
+      1814
+    ],
+    "major_traits": [
+      1823,
+      1824,
+      1822,
+      1819,
+      1817,
+      1818,
+      1815,
+      1825,
+      1820
+    ],
+    "icon": "https://render.guildwars2.com/file/0F0144B0E123163E0454B0C3D532282555BE7CE5/1029934.png",
+    "background": "https://render.guildwars2.com/file/1043F6D2CFECB77BC21C70B43F580611E5DAD7CD/1012097.png"
+  },
+  {
+    "id": 3,
+    "name": "Invocation",
+    "profession": "Revenant",
+    "elite": false,
+    "minor_traits": [
+      1778,
+      1758,
+      1769
+    ],
+    "major_traits": [
+      1732,
+      1761,
+      1784,
+      1774,
+      1760,
+      1781,
+      1749,
+      1791,
+      1719
+    ],
+    "icon": "https://render.guildwars2.com/file/2C4DCE5C0C255F32B51DCF9E4360106823EAF926/1012018.png",
+    "background": "https://render.guildwars2.com/file/B73FB47165CB20DE21B1FAE91FE22BDE29B6FB76/1012093.png"
+  },
+  {
+    "id": 15,
+    "name": "Devastation",
+    "profession": "Revenant",
+    "elite": false,
+    "minor_traits": [
+      1808,
+      1724,
+      1792
+    ],
+    "major_traits": [
+      1776,
+      1767,
+      1755,
+      1786,
+      1765,
+      1802,
+      1715,
+      1800,
+      1754
+    ],
+    "icon": "https://render.guildwars2.com/file/C95CAFC4DC0D2AF5DB0C66CB0E0B0FA699E45D6C/1029932.png",
+    "background": "https://render.guildwars2.com/file/0744C43591FB9C11A7554C9601215CA8022F4216/1012089.png"
+  },
+  {
+    "id": 52,
+    "name": "Herald",
+    "profession": "Revenant",
+    "elite": true,
+    "minor_traits": [
+      1777,
+      1737,
+      1788
+    ],
+    "major_traits": [
+      1813,
+      1806,
+      1716,
+      1738,
+      1743,
+      1730,
+      1746,
+      1772,
+      1803
+    ],
+    "weapon_trait": 2050,
+    "icon": "https://render.guildwars2.com/file/78496E9E95C46527F8E0B974530A07A017DC9B79/1058520.png",
+    "background": "https://render.guildwars2.com/file/F2EEC706430942BEC2D51565AECC13135DF304F8/1012091.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/513E3D33671326D32ABD070575017451AA229A08/1128576.png",
+    "profession_icon": "https://render.guildwars2.com/file/0D29C2DC29FFD156082572B41310D00914029E6C/1128577.png"
+  },
+  {
+    "id": 63,
+    "name": "Renegade",
+    "profession": "Revenant",
+    "elite": true,
+    "minor_traits": [
+      2181,
+      2154,
+      2142
+    ],
+    "major_traits": [
+      2166,
+      2079,
+      2120,
+      2133,
+      2092,
+      2108,
+      2094,
+      2100,
+      2182
+    ],
+    "weapon_trait": 2099,
+    "icon": "https://render.guildwars2.com/file/0152279F7DD0FCFA21F2D1CC17DE21B2BD58EFF3/1769894.png",
+    "background": "https://render.guildwars2.com/file/30377A5829605D7F1209B4064203A83F580548AD/1769903.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/132E53C7D89FB623402FE3A808EBF62B5C0A016F/1770218.png",
+    "profession_icon": "https://render.guildwars2.com/file/A347E09ED9C6537C7D13EC212229468078C0F0E9/1770219.png"
+  },
+  {
+    "id": 69,
+    "name": "Vindicator",
+    "profession": "Revenant",
+    "elite": true,
+    "minor_traits": [
+      2262,
+      2254,
+      2229
+    ],
+    "major_traits": [
+      2258,
+      2248,
+      2228,
+      2259,
+      2243,
+      2255,
+      2257,
+      2232,
+      2238
+    ],
+    "weapon_trait": 2235,
+    "icon": "https://render.guildwars2.com/file/4FE40FD1ECD6C4EC45A32A2A740AC2E2A147E04F/2491508.png",
+    "background": "https://render.guildwars2.com/file/4A16C39ED845A4062D8014E5A20135910B201BA4/2491511.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/DAA84AB8799206A5560B9FC4E42B15AEDA14DD0B/2491559.png",
+    "profession_icon": "https://render.guildwars2.com/file/D9549F115AF045C846E9EFC4D51BF527B1F7F2F7/2491561.png"
+  },
+  {
+    "id": 79,
+    "name": "Conduit",
+    "profession": "Revenant",
+    "elite": true,
+    "minor_traits": [
+      2364,
+      2331,
+      2440
+    ],
+    "major_traits": [
+      2390,
+      2355,
+      2407,
+      2411,
+      2358,
+      2416,
+      2429,
+      2379,
+      2352
+    ],
+    "icon": "https://render.guildwars2.com/file/63DD70A26845681B9B993A51987F60A2F7970C52/3679902.png",
+    "background": "https://render.guildwars2.com/file/24DCBA06ED23E55A54953996025B07E46FFBC4B9/3679911.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/044FF2E93DA71F57C3EB41A4695750FDE0C82908/3680083.png",
+    "profession_icon": "https://render.guildwars2.com/file/A0449B6C2253DB48E0B60E3AA9D55AF130ED2528/3680085.png"
+  }
+]

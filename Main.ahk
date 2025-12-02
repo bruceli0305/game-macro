@@ -39,17 +39,10 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 #Include "modules\runtime\Hotkeys.ahk"
 #Include "modules\workers\WorkerPool.ahk"
 #Include "modules\storage\Exporter.ahk"
-#Include "modules\ui\dialogs\GUI_ImportWizard.ahk"
-#Include "modules\ui\dialogs\GUI_SkillEditor.ahk"
-#Include "modules\ui\dialogs\GUI_PointEditor.ahk"
-#Include "modules\ui\dialogs\BatchRecolor_Core.ahk"
-#Include "modules\ui\dialogs\GUI_SkillBatchRecolor.ahk"
-#Include "modules\ui\dialogs\GUI_PointBatchRecolor.ahk"
-#Include "modules\ui\dialogs\GUI_RuleEditor.ahk"
-#Include "modules\ui\dialogs\GUI_BuffEditor.ahk"
-#Include "modules\ui\dialogs\GUI_CastDebug.ahk"
 #Include "modules\ui\UI_Layout.ahk"
 #Include "modules\ui\UI_Shell.ahk"
+#Include "modules\gw2\GW2_DB.ahk"
+
 ; ========= Bootstrap =========
 AppConfig_Init()
 Lang_Init(AppConfig_Get("Language", "zh-CN"))

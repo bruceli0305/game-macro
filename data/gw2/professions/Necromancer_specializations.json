@@ -1,0 +1,229 @@
+[
+  {
+    "id": 53,
+    "name": "Spite",
+    "profession": "Necromancer",
+    "elite": false,
+    "minor_traits": [
+      913,
+      915,
+      917
+    ],
+    "major_traits": [
+      914,
+      916,
+      1863,
+      899,
+      829,
+      909,
+      919,
+      853,
+      903
+    ],
+    "icon": "https://render.guildwars2.com/file/2D34377B04051FFDCDB553C7DCDABCD5DFBB68D7/1012011.png",
+    "background": "https://render.guildwars2.com/file/DDF39DBD61CCC1BCDD03B271080869251D097041/1012073.png"
+  },
+  {
+    "id": 39,
+    "name": "Curses",
+    "profession": "Necromancer",
+    "elite": false,
+    "minor_traits": [
+      802,
+      803,
+      810
+    ],
+    "major_traits": [
+      1883,
+      2013,
+      815,
+      816,
+      1693,
+      812,
+      813,
+      1696,
+      801
+    ],
+    "icon": "https://render.guildwars2.com/file/C8E1A81601C3D5AC10285505E9F730621C3357CD/1012007.png",
+    "background": "https://render.guildwars2.com/file/71E7075E1AC9460AA507A630B54D1395DA465B2D/1012065.png"
+  },
+  {
+    "id": 2,
+    "name": "Death Magic",
+    "profession": "Necromancer",
+    "elite": false,
+    "minor_traits": [
+      856,
+      839,
+      1929
+    ],
+    "major_traits": [
+      820,
+      857,
+      1922,
+      858,
+      860,
+      855,
+      842,
+      1940,
+      1694
+    ],
+    "icon": "https://render.guildwars2.com/file/16663C1CDF532AB0DCC0CB08951DD2F49351D5D4/1012008.png",
+    "background": "https://render.guildwars2.com/file/B3F92D581B0A036CABB51590E6E560B21708391F/1012067.png"
+  },
+  {
+    "id": 19,
+    "name": "Blood Magic",
+    "profession": "Necromancer",
+    "elite": false,
+    "minor_traits": [
+      792,
+      783,
+      1931
+    ],
+    "major_traits": [
+      780,
+      788,
+      1876,
+      789,
+      799,
+      1844,
+      782,
+      1692,
+      778
+    ],
+    "icon": "https://render.guildwars2.com/file/D1D9C63AD9CC05FC1B19970556B0C1E0ADD77905/1012006.png",
+    "background": "https://render.guildwars2.com/file/47F5CA90475E566650EF540BA82CA69C1C0332B1/1012063.png"
+  },
+  {
+    "id": 50,
+    "name": "Soul Reaping",
+    "profession": "Necromancer",
+    "elite": false,
+    "minor_traits": [
+      887,
+      891,
+      874
+    ],
+    "major_traits": [
+      875,
+      898,
+      888,
+      894,
+      861,
+      892,
+      889,
+      893,
+      905
+    ],
+    "icon": "https://render.guildwars2.com/file/A5A95CB5FADD99F59E07400907F0782B659574A9/1012010.png",
+    "background": "https://render.guildwars2.com/file/0956926B4A5109E07EFAB556E5DBEDCBC2B67C3B/1012071.png"
+  },
+  {
+    "id": 34,
+    "name": "Reaper",
+    "profession": "Necromancer",
+    "elite": true,
+    "minor_traits": [
+      1905,
+      1879,
+      2018
+    ],
+    "major_traits": [
+      1974,
+      2020,
+      2026,
+      1969,
+      2008,
+      2031,
+      1932,
+      1919,
+      2021
+    ],
+    "weapon_trait": 1985,
+    "icon": "https://render.guildwars2.com/file/530A582BD864B73AF5CC6C44F9C61954322D9A15/1012009.png",
+    "background": "https://render.guildwars2.com/file/3717FBED4FDCD060925205DD09B15C0598E062F4/1012069.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/C9A2C304CFBFA3CBBF41DA0EE756C519F5050D5F/1128578.png",
+    "profession_icon": "https://render.guildwars2.com/file/6E9C230241E83DFCAA0B0C11ED32ED0CB605C0EC/1128579.png"
+  },
+  {
+    "id": 60,
+    "name": "Scourge",
+    "profession": "Necromancer",
+    "elite": true,
+    "minor_traits": [
+      2147,
+      2121,
+      2096
+    ],
+    "major_traits": [
+      2167,
+      2074,
+      2102,
+      2059,
+      2067,
+      2123,
+      2112,
+      2164,
+      2080
+    ],
+    "weapon_trait": 2144,
+    "icon": "https://render.guildwars2.com/file/1407ADE7787A6BF6E457F5FA6DFA1062A5FA93FD/1769892.png",
+    "background": "https://render.guildwars2.com/file/DEE244AB7045EE31941E222AE4A06A94DCB4360E/1769901.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/1556059855E5624F269B049F3D08B7B122B43906/1770220.png",
+    "profession_icon": "https://render.guildwars2.com/file/B10D1AB5AA0B0CFE7D26A142E99414C26244359C/1770221.png"
+  },
+  {
+    "id": 64,
+    "name": "Harbinger",
+    "profession": "Necromancer",
+    "elite": true,
+    "minor_traits": [
+      2183,
+      2186,
+      2217
+    ],
+    "major_traits": [
+      2188,
+      2219,
+      2185,
+      2192,
+      2220,
+      2209,
+      2218,
+      2194,
+      2203
+    ],
+    "weapon_trait": 2213,
+    "icon": "https://render.guildwars2.com/file/75B05DF5ED51D0153838EC134CEFCFC80D97DA0E/2479304.png",
+    "background": "https://render.guildwars2.com/file/0B3EEFCC210D5A2C9D91F5F4D4D5AE965B4A6420/2479307.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/3C3DDB0868067A172907A03A25710890923FDD97/2479359.png",
+    "profession_icon": "https://render.guildwars2.com/file/14D0900962F99600047D73242F0AD0D3AC986EB7/2479361.png"
+  },
+  {
+    "id": 76,
+    "name": "Ritualist",
+    "profession": "Necromancer",
+    "elite": true,
+    "minor_traits": [
+      2338,
+      2371,
+      2398
+    ],
+    "major_traits": [
+      2327,
+      2378,
+      2339,
+      2384,
+      2405,
+      2421,
+      2376,
+      2333,
+      2392
+    ],
+    "icon": "https://render.guildwars2.com/file/9064C22D08E4A7686FFB0256DDF42B97055EB144/3679900.png",
+    "background": "https://render.guildwars2.com/file/B2050637E3F0091CB62E7EB5230F68CF35E8E2CD/3679909.png",
+    "profession_icon_big": "https://render.guildwars2.com/file/49677E53AAD2F1C2DD269739436A5E011DEEAB17/3680075.png",
+    "profession_icon": "https://render.guildwars2.com/file/0B54AE3EC9D45BA3010803A308F5B67F30BC34FF/3680077.png"
+  }
+]
