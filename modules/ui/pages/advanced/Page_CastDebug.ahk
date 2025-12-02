@@ -64,7 +64,7 @@ Page_CastDebug_Build(page) {
 
     ; ==== 调试窗口配置 ====
     gy2 := rc.Y + gbH + 10
-    gb2H := 160
+    gb2H := 140
     UI.CD_GB_Debug := UI.Main.Add("GroupBox", Format("x{} y{} w{} h{}", rc.X, gy2, rc.W, gb2H), "调试窗口配置")
     page.Controls.Push(UI.CD_GB_Debug)
 
@@ -89,13 +89,14 @@ Page_CastDebug_Build(page) {
     UI.CD_EdAlpha := UI.Main.Add("Edit", "x+6 w80 Number")
     page.Controls.Push(UI.CD_EdAlpha)
 
-    ; 最后一行：三个按钮
-    yD4 := yD3 + rowH
-    UI.CD_BtnApply := UI.Main.Add("Button", Format("x{} y{} w120 h28", x2Label, yD4), "应用配置")
+    ; 三个按钮放在分组框外部，位于分组框下方，左对齐
+    btnY := gy2 + gb2H + 10
+    xButton := x2Label ; 与调试窗口配置分组内控件左对齐
+    UI.CD_BtnApply := UI.Main.Add("Button", Format("x{} y{} w120 h28", xButton, btnY), "应用配置")
     page.Controls.Push(UI.CD_BtnApply)
-    UI.CD_BtnShow := UI.Main.Add("Button", "x+8 w120 h28", "打开调试窗口")
+    UI.CD_BtnShow := UI.Main.Add("Button", Format("x{} y{} w120 h28", xButton + 120 + 8, btnY), "打开调试窗口")
     page.Controls.Push(UI.CD_BtnShow)
-    UI.CD_BtnHide := UI.Main.Add("Button", "x+8 w120 h28", "关闭调试窗口")
+    UI.CD_BtnHide := UI.Main.Add("Button", Format("x{} y{} w120 h28", xButton + (120 + 8) * 2, btnY), "关闭调试窗口")
     page.Controls.Push(UI.CD_BtnHide)
 
     ; 事件
@@ -141,7 +142,7 @@ Page_CastDebug_Layout(rc) {
         UI.CD_ChkDebugLog.Move(xLabel, y6, rc.W - 40)
 
         gy2 := rc.Y + gbH + 10
-        gb2H := 160
+        gb2H := 140
         UI.CD_GB_Debug.Move(rc.X, gy2, rc.W, gb2H)
 
         x2Label := rc.X + 16
@@ -157,10 +158,12 @@ Page_CastDebug_Layout(rc) {
         UI.CD_LblAlpha.Move(x2Label, yD3 + 4, 90)
         UI.CD_EdAlpha.Move(UI.CD_LblAlpha.Pos.X + UI.CD_LblAlpha.Pos.W + 6, yD3, 80)
 
-        yD4 := yD3 + rowH
-        UI.CD_BtnApply.Move(x2Label, yD4, 120, 28)
-        UI.CD_BtnShow.Move(UI.CD_BtnApply.Pos.X + UI.CD_BtnApply.Pos.W + 8, yD4, 120, 28)
-        UI.CD_BtnHide.Move(UI.CD_BtnShow.Pos.X + UI.CD_BtnShow.Pos.W + 8, yD4, 120, 28)
+        ; 三个按钮放在分组框外部，位于分组框下方，左对齐
+        btnY := gy2 + gb2H + 10
+        xButton := x2Label ; 与调试窗口配置分组内控件左对齐
+        UI.CD_BtnApply.Move(xButton, btnY, 120, 28)
+        UI.CD_BtnShow.Move(xButton + 120 + 8, btnY, 120, 28)
+        UI.CD_BtnHide.Move(xButton + (120 + 8) * 2, btnY, 120, 28)
     } catch {
     }
 }
