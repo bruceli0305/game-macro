@@ -26,6 +26,7 @@
 #Include "..\dialogs\GUI_RuleEditor.ahk"
 #Include "..\dialogs\GUI_BuffEditor.ahk"
 #Include "..\dialogs\GUI_CastDebug.ahk"
+#Include "..\dialogs\GUI_SkillPresetImport.ahk"
 ; profile
 #Include "profile\Page_Profile.ahk"
 
