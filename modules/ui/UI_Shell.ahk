@@ -35,7 +35,7 @@ UI_ShowMain() {
 
     nodeProfile := UI.Nav.Add("概览与配置", rootProfile)
 
-    nodeSkills  := UI.Nav.Add("技能",       rootData)
+    nodeSkills  := UI.Nav.Add("技能配置",   rootData)
     nodePoints  := UI.Nav.Add("取色点位",   rootData)
     nodeDefault := UI.Nav.Add("默认技能",   rootData)
 
@@ -90,8 +90,8 @@ UI_ShowMain() {
     UI_NavMap[nodeSettingsAbout]:= "settings_about"
 
     UI_RegisterPage("profile",        "概览与配置", Page_Profile_Build,        Page_Profile_Layout, Page_Profile_OnEnter)
-    UI_RegisterPage("skills",         "技能",       Page_Skills_Build,         Page_Skills_Layout, Page_Skills_OnEnter)
-    UI_RegisterPage("points",         "点位",       Page_Points_Build,         Page_Points_Layout, Page_Points_OnEnter)
+    UI_RegisterPage("skills",         "技能配置",   Page_Skills_Build,         Page_Skills_Layout, Page_Skills_OnEnter)
+    UI_RegisterPage("points",         "点位",      Page_Points_Build,         Page_Points_Layout, Page_Points_OnEnter)
     UI_RegisterPage("default_skill",  "默认技能",   Page_DefaultSkill_Build,   Page_DefaultSkill_Layout,  Page_DefaultSkill_OnEnter)
 
     UI_RegisterPage("rules",          "循环规则",   Page_Rules_Build,          Page_Rules_Layout,         Page_Rules_OnEnter)
