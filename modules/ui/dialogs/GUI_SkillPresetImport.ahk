@@ -21,13 +21,14 @@ SkillPresetImport_Open() {
     Logger_Info("UI_SkillPreset", "SkillPresetImport_Open enter")
 
     ; 确保数据已加载
-    try {
-        GW2_DB_EnsureLoaded()
-    } catch {
-        Logger_Error("UI_SkillPreset", "GW2_DB_EnsureLoaded failed")
-        MsgBox "加载 GW2 数据失败，请查看日志。"
-        return
-    }
+    GW2_DB_EnsureLoaded()
+    ; try {
+    ;     GW2_DB_EnsureLoaded()
+    ; } catch {
+    ;     Logger_Error("UI_SkillPreset", "GW2_DB_EnsureLoaded failed")
+    ;     MsgBox "加载 GW2 数据失败，请查看日志。"
+    ;     return
+    ; }
 
     ; 已有 GUI 时直接显示
     if (SkillPresetGUI) {

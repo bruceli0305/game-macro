@@ -1,18 +1,20 @@
 ; ============================================
 ; modules\gw2\GW2_DB.ahk
 ; GW2 职业 / 专精 / 技能索引（AHK v2）
-; 依赖：modules\util\JsonWrapper.ahk（内部用 jsongo.Parse）
+; 依赖：modules\util\JsonWrapper.ahk （内部使用 jsongo.Parse）
 ; ============================================
 #Requires AutoHotkey v2
 #Include "..\util\JsonWrapper.ahk"
 
 global GW2_DB_Ready       := false
-global GW2_Professions    := Map()  ; "Guardian" => { Id, Name, SpecIds:[], SpecList:[] }
-global GW2_SpecById       := Map()  ; specId => specObj (原始 JSON Map)
-global GW2_SpecByProfName := Map()  ; "Guardian|Dragonhunter" => specObj
+
+global GW2_Professions    := Map()  ; "Guardian" => { Id, Name }
+global GW2_SpecById       := Map()  ; specId => specObj (specializations.json 每一条)
 global GW2_SkillIndex     := Map()  ; skillId => info Map
 global GW2_SkillsByProf   := Map()  ; "Guardian" => [ info, info, ... ]
 
+; 用于根据职业+专精名找到 specId
+global GW2_SpecByProfName := Map()  ; "Guardian|Zeal" => specObj
 
 ; ============================================
 ; 外部接口
@@ -43,7 +45,7 @@ GW2_DB_EnsureLoaded() {
     specStr := FileRead(specJsonFile, "UTF-8")
     skillStr:= FileRead(skillJsonFile, "UTF-8")
 
-    profObj := Json_Load(profStr)   ; 可能是 Map("Guardian"=>{...},...) 或数组
+    profObj := Json_Load(profStr)   ; Map("Guardian" => {...}, "Elementalist" => {...}, ...)
     specArr := Json_Load(specStr)  ; 专精数组
     skillArr:= Json_Load(skillStr) ; 技能数组
 
@@ -52,6 +54,9 @@ GW2_DB_EnsureLoaded() {
     GW2_BuildSkillIndex(profObj, skillArr)
 
     GW2_DB_Ready := true
+
+    ; 可选：打一个总 spec 数的日志，方便确认 JSON 是否全量
+    ;Logger_Info("GW2_DB", "EnsureLoaded", Map("specCount", GW2_SpecById.Count, "profCount", GW2_Professions.Count))
 }
 
 ; 返回：[{Id:"Guardian", Name:"Guardian"}, ...]
@@ -71,8 +76,9 @@ GW2_GetProfessions() {
 }
 
 ; 返回：[{Id:-1, Name:"全部"}, {Id:0, Name:"基础职业"}, {Id:xx, Name:"某特性"}, ...]
+; 完全基于 specializations.json 中的 profession 字段，不依赖 GW2_Professions.SpecList
 GW2_GetSpecsByProf(profId) {
-    global GW2_Professions
+    global GW2_SpecById
 
     GW2_DB_EnsureLoaded()
 
@@ -88,23 +94,47 @@ GW2_GetSpecsByProf(profId) {
     coreItem.Name := "基础职业"
     arr.Push(coreItem)
 
-    if !GW2_Professions.Has(profId) {
+    if (profId = "") {
+        Logger_Info("GW2_DB", "GetSpecsByProf empty profId", Map("prof", profId, "count", arr.Length))
         return arr
     }
 
-    p := GW2_Professions[profId]
-
-    for idx, s in p.SpecList {
-        item := Map()
-        item.Id := s.Id
-        if (s.Elite) {
-            item.Name := s.Name "（精英）"
-        } else {
-            item.Name := s.Name
+    for sid, spec in GW2_SpecById {
+        profName := ""
+        if spec.Has("profession") {
+            profName := spec["profession"]
         }
+        if (profName != profId) {
+            continue
+        }
+
+        item := Map()
+        item.Id := sid
+
+        nm := ""
+        if spec.Has("name") {
+            nm := spec["name"]
+        } else {
+            nm := "" sid
+        }
+
+        eliteFlag := 0
+        if spec.Has("elite") {
+            if (spec["elite"]) {
+                eliteFlag := 1
+            }
+        }
+
+        if (eliteFlag) {
+            item.Name := nm "（精英）"
+        } else {
+            item.Name := nm
+        }
+
         arr.Push(item)
     }
 
+    Logger_Info("GW2_DB", "GetSpecsByProf", Map("prof", profId, "count", arr.Length))
     return arr
 }
 
@@ -124,9 +154,13 @@ GW2_QuerySkills(profId, specIdFilter, bigCatKey) {
 
     list := GW2_SkillsByProf[profId]
 
-    for idx, info in list {
+    idx := 1
+    while (idx <= list.Length) {
+        info := list[idx]
+
         if (bigCatKey != "") {
             if (info.Category != bigCatKey) {
+                idx := idx + 1
                 continue
             }
         }
@@ -135,10 +169,12 @@ GW2_QuerySkills(profId, specIdFilter, bigCatKey) {
             ; 全部
         } else if (specIdFilter = 0) {
             if (info.SpecId != 0) {
+                idx := idx + 1
                 continue
             }
         } else {
             if (info.SpecId != specIdFilter) {
+                idx := idx + 1
                 continue
             }
         }
@@ -152,158 +188,118 @@ GW2_QuerySkills(profId, specIdFilter, bigCatKey) {
         item.Slot       := info.Slot
 
         result.Push(item)
+        idx := idx + 1
     }
 
     return result
 }
-
-
 ; ============================================
-; 内部构建：专精索引
+; 内部构建：专精索引（specializations.json）
 ; ============================================
 
-GW2_BuildSpecIndex(specArr) {
+GW2_BuildSpecIndex(specObj) {
     global GW2_SpecById
     global GW2_SpecByProfName
-
-    for idx, spec in specArr {
-        sid := 0
-        if spec.Has("id") {
-            sid := spec["id"]
-        }
-
-        if !IsInteger(sid) {
-            continue
-        }
-        if (sid = 0) {
+    GW2_SpecById.Clear()
+    GW2_SpecByProfName.Clear()
+    for profKey, arr in specObj {
+        ; 跳过非数组的值（防御）
+        if !(arr is Array) {
             continue
         }
 
-        GW2_SpecById[sid] := spec
+        idx := 1
+        while (idx <= arr.Length) {
+            spec := arr[idx]
 
-        prof := ""
-        name := ""
+            sid := 0
+            if spec.Has("id") {
+                sid := spec["id"]
+            }
+            if !IsInteger(sid) {
+                idx := idx + 1
+                continue
+            }
+            if (sid = 0) {
+                idx := idx + 1
+                continue
+            }
 
-        if spec.Has("profession") {
-            prof := spec["profession"]
-        }
-        if spec.Has("name") {
-            name := spec["name"]
-        }
+            ; 存入全局 Id -> spec 表
+            GW2_SpecById[sid] := spec
 
-        if (prof != "" && name != "") {
-            key := prof "|" name
+            ; profession 字段优先使用 JSON 里的，如果没有就用 profKey
+            profName := profKey
+            if spec.Has("profession") {
+                profName := spec["profession"]
+            }
+
+            specName := ""
+            if spec.Has("name") {
+                specName := spec["name"]
+            } else {
+                specName := "" sid
+            }
+
+            key := profName "|" specName
             GW2_SpecByProfName[key] := spec
+
+            idx := idx + 1
         }
     }
+
+    ; 调试日志：专精总数
+    Logger_Info("GW2_DB", "BuildSpecIndex", Map("specCount", GW2_SpecById.Count))
 }
-
-
 ; ============================================
-; 内部构建：职业索引（简要信息 + 专精列表）
+; 内部构建：职业索引（仅 Id / Name）
 ; ============================================
 
 GW2_BuildProfessionIndex(profObj) {
     global GW2_Professions
-    global GW2_SpecById
+
+    GW2_Professions.Clear()
 
     if (profObj is Array) {
-        ; 数组形式：[{id:"Guardian",...}, ...]
-        for idx, p in profObj {
+        idx := 1
+        while (idx <= profObj.Length) {
+            p := profObj[idx]
             profKey := ""
             if p.Has("id") {
                 profKey := p["id"]
             }
             if (profKey = "") {
+                idx := idx + 1
                 continue
             }
 
             info := Map()
             info.Id := profKey
-
             if p.Has("name") {
                 info.Name := p["name"]
             } else {
                 info.Name := profKey
             }
 
-            specIds := []
-            if p.Has("specializations") {
-                for j, sid in p["specializations"] {
-                    specIds.Push(sid)
-                }
-            }
-            info.SpecIds := specIds
-
-            specList := []
-            for j, sid in specIds {
-                if GW2_SpecById.Has(sid) {
-                    s := GW2_SpecById[sid]
-                    one := Map()
-                    one.Id   := sid
-                    one.Name := s["name"]
-                    if s.Has("elite") {
-                        if (s["elite"]) {
-                            one.Elite := 1
-                        } else {
-                            one.Elite := 0
-                        }
-                    } else {
-                        one.Elite := 0
-                    }
-                    specList.Push(one)
-                }
-            }
-            info.SpecList := specList
-
             GW2_Professions[profKey] := info
+            idx := idx + 1
         }
     } else {
         ; Map 形式："Guardian" => {...}
         for profKey, p in profObj {
             info := Map()
             info.Id := profKey
-
             if p.Has("name") {
                 info.Name := p["name"]
             } else {
                 info.Name := profKey
             }
-
-            specIds := []
-            if p.Has("specializations") {
-                for j, sid in p["specializations"] {
-                    specIds.Push(sid)
-                }
-            }
-            info.SpecIds := specIds
-
-            specList := []
-            for j, sid in specIds {
-                if GW2_SpecById.Has(sid) {
-                    s := GW2_SpecById[sid]
-                    one := Map()
-                    one.Id   := sid
-                    one.Name := s["name"]
-                    if s.Has("elite") {
-                        if (s["elite"]) {
-                            one.Elite := 1
-                        } else {
-                            one.Elite := 0
-                        }
-                    } else {
-                        one.Elite := 0
-                    }
-                    specList.Push(one)
-                }
-            }
-            info.SpecList := specList
-
             GW2_Professions[profKey] := info
         }
     }
-}
 
+    ;Logger_Info("GW2_DB", "BuildProfessionIndex", Map("profCount", GW2_Professions.Count))
+}
 
 ; ============================================
 ; 内部构建：技能索引（两遍）
@@ -312,34 +308,45 @@ GW2_BuildProfessionIndex(profObj) {
 GW2_BuildSkillIndex(profObj, skillArr) {
     global GW2_SkillIndex
     global GW2_SkillsByProf
+    global GW2_SpecByProfName
 
-    ; 1) id -> 完整技能
+    GW2_SkillIndex.Clear()
+    GW2_SkillsByProf.Clear()
+
+    ; 1) id->技能详细 Map
     skillById := Map()
-    for idx, s in skillArr {
+    idx := 1
+    while (idx <= skillArr.Length) {
+        s := skillArr[idx]
         sid := 0
         if s.Has("id") {
             sid := s["id"]
         }
         if !IsInteger(sid) {
+            idx := idx + 1
             continue
         }
         if (sid = 0) {
+            idx := idx + 1
             continue
         }
         skillById[sid] := s
+        idx := idx + 1
     }
 
-    ; 2) 第一遍：p.skills / p.weapons
+    ; 2) 第一遍：p.skills / p.weapons[*].skills
     if (profObj is Array) {
-        for idx, p in profObj {
+        idx := 1
+        while (idx <= profObj.Length) {
+            p := profObj[idx]
             profKey := ""
             if p.Has("id") {
                 profKey := p["id"]
             }
-            if (profKey = "") {
-                continue
+            if (profKey != "") {
+                GW2_BuildSkillIndex_ForProf(profKey, p, skillById)
             }
-            GW2_BuildSkillIndex_ForProf(profKey, p, skillById)
+            idx := idx + 1
         }
     } else {
         for profKey, p in profObj {
@@ -347,17 +354,19 @@ GW2_BuildSkillIndex(profObj, skillArr) {
         }
     }
 
-    ; 3) 第二遍：p.training -> SpecId
+    ; 3) 第二遍：通过 training 里的 Specializations/EliteSpecializations 给技能打 SpecId / SpecName
     if (profObj is Array) {
-        for idx, p in profObj {
+        idx := 1
+        while (idx <= profObj.Length) {
+            p := profObj[idx]
             profKey := ""
             if p.Has("id") {
                 profKey := p["id"]
             }
-            if (profKey = "") {
-                continue
+            if (profKey != "") {
+                GW2_BuildSkillIndex_AssignSpecs(profKey, p)
             }
-            GW2_BuildSkillIndex_AssignSpecs(profKey, p)
+            idx := idx + 1
         }
     } else {
         for profKey, p in profObj {
@@ -366,7 +375,6 @@ GW2_BuildSkillIndex(profObj, skillArr) {
     }
 }
 
-; 单个职业：p.skills / p.weapons[*].skills
 GW2_BuildSkillIndex_ForProf(profKey, p, skillById) {
     global GW2_SkillIndex
     global GW2_SkillsByProf
@@ -376,25 +384,29 @@ GW2_BuildSkillIndex_ForProf(profKey, p, skillById) {
     }
     list := GW2_SkillsByProf[profKey]
 
-    ; 2.1 职业技能
+    ; 职业技能：p.skills
     if p.Has("skills") {
-        for i, ps in p["skills"] {
+        i := 1
+        while (i <= p["skills"].Length) {
+            ps := p["skills"][i]
             sid := 0
             if ps.Has("id") {
                 sid := ps["id"]
             }
             if !IsInteger(sid) {
+                i := i + 1
                 continue
             }
             if (sid = 0) {
+                i := i + 1
                 continue
             }
             if !skillById.Has(sid) {
+                i := i + 1
                 continue
             }
 
             sfull := skillById[sid]
-
             stype := ""
             sslot := ""
             swt   := "None"
@@ -415,6 +427,7 @@ GW2_BuildSkillIndex_ForProf(profKey, p, skillById) {
             } else if (stype = "Utility" || stype = "Elite" || stype = "Profession") {
                 cat := "Utility"
             } else {
+                i := i + 1
                 continue
             }
 
@@ -432,10 +445,12 @@ GW2_BuildSkillIndex_ForProf(profKey, p, skillById) {
 
             GW2_SkillIndex[sid] := info
             list.Push(info)
+
+            i := i + 1
         }
     }
 
-    ; 2.2 武器技能
+    ; 武器技能：p.weapons[weaponName].skills[]
     if p.Has("weapons") {
         for weaponName, w in p["weapons"] {
             wSpecId := 0
@@ -444,18 +459,23 @@ GW2_BuildSkillIndex_ForProf(profKey, p, skillById) {
             }
 
             if w.Has("skills") {
-                for j, ws in w["skills"] {
+                j := 1
+                while (j <= w["skills"].Length) {
+                    ws := w["skills"][j]
                     sid := 0
                     if ws.Has("id") {
                         sid := ws["id"]
                     }
                     if !IsInteger(sid) {
+                        j := j + 1
                         continue
                     }
                     if (sid = 0) {
+                        j := j + 1
                         continue
                     }
                     if !skillById.Has(sid) {
+                        j := j + 1
                         continue
                     }
 
@@ -479,13 +499,14 @@ GW2_BuildSkillIndex_ForProf(profKey, p, skillById) {
 
                     GW2_SkillIndex[sid] := info
                     list.Push(info)
+
+                    j := j + 1
                 }
             }
         }
     }
 }
 
-; p.training 中的 (Specializations / EliteSpecializations) 用来把技能挂到对应 SpecId
 GW2_BuildSkillIndex_AssignSpecs(profKey, p) {
     global GW2_SkillIndex
     global GW2_SpecByProfName
@@ -494,22 +515,29 @@ GW2_BuildSkillIndex_AssignSpecs(profKey, p) {
         return
     }
 
-    for i, t in p["training"] {
+    i := 1
+    while (i <= p["training"].Length) {
+        t := p["training"][i]
+
         if !t.Has("category") {
+            i := i + 1
             continue
         }
         cat := t["category"]
         if (cat != "Specializations" && cat != "EliteSpecializations") {
+            i := i + 1
             continue
         }
 
         if !t.Has("name") {
+            i := i + 1
             continue
         }
         tname := t["name"]
 
         key := profKey "|" tname
         if !GW2_SpecByProfName.Has(key) {
+            i := i + 1
             continue
         }
 
@@ -525,15 +553,20 @@ GW2_BuildSkillIndex_AssignSpecs(profKey, p) {
         }
 
         if !t.Has("track") {
+            i := i + 1
             continue
         }
 
-        for j, step in t["track"] {
+        j := 1
+        while (j <= t["track"].Length) {
+            step := t["track"][j]
             if !step.Has("type") {
+                j := j + 1
                 continue
             }
             stype := step["type"]
             if (stype != "Skill") {
+                j := j + 1
                 continue
             }
 
@@ -542,18 +575,25 @@ GW2_BuildSkillIndex_AssignSpecs(profKey, p) {
                 sid := step["skill_id"]
             }
             if !IsInteger(sid) {
+                j := j + 1
                 continue
             }
             if (sid = 0) {
+                j := j + 1
                 continue
             }
             if !GW2_SkillIndex.Has(sid) {
+                j := j + 1
                 continue
             }
 
             info := GW2_SkillIndex[sid]
             info.SpecId   := specId
             info.SpecName := specName
+
+            j := j + 1
         }
+
+        i := i + 1
     }
 }
