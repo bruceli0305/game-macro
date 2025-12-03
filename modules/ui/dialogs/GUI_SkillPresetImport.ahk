@@ -21,14 +21,13 @@ SkillPresetImport_Open() {
     Logger_Info("UI_SkillPreset", "SkillPresetImport_Open enter")
 
     ; 确保数据已加载
-    GW2_DB_EnsureLoaded()
-    ; try {
-    ;     GW2_DB_EnsureLoaded()
-    ; } catch {
-    ;     Logger_Error("UI_SkillPreset", "GW2_DB_EnsureLoaded failed")
-    ;     MsgBox "加载 GW2 数据失败，请查看日志。"
-    ;     return
-    ; }
+    try {
+        GW2_DB_EnsureLoaded()
+    } catch {
+        Logger_Error("UI_SkillPreset", "GW2_DB_EnsureLoaded failed")
+        MsgBox "加载 GW2 数据失败，请查看日志。"
+        return
+    }
 
     ; 已有 GUI 时直接显示
     if (SkillPresetGUI) {
@@ -168,7 +167,7 @@ SkillPreset_LocalizeProfession(profId) {
 ; ============================================
 SkillPreset_FillCategories(ddlCat) {
     ddlCat.Delete()
-    ddlCat.Add(["武器","治疗","通用"])
+    ddlCat.Add(["武器","治疗","通用","职业","精英","工具包","工具带","怪物","宠物"])
     ddlCat.Choose(1)
 }
 
@@ -235,10 +234,10 @@ SkillPreset_LocalizeSpecNameByName(nameIn) {
     specNameMap["Valor"]         := "勇气"
     specNameMap["Honor"]         := "荣誉"
     specNameMap["Virtues"]       := "美德"
-    specNameMap["Dragonhunter"]  := "龙猎手（精英）"
+    specNameMap["Dragonhunter"]  := "猎龙手（精英）"
     specNameMap["Firebrand"]     := "燃火者（精英）"
-    specNameMap["Willbender"]    := "意志束缚者（精英）"
-    specNameMap["Luminary"]      := "星曜者（精英）"
+    specNameMap["Willbender"]    := "破锋者（精英）"
+    specNameMap["Luminary"]      := "圣辉者（精英）"
 
     ; ===== Warrior 战士 =====
     specNameMap["Strength"]      := "力量"
@@ -248,7 +247,8 @@ SkillPreset_LocalizeSpecNameByName(nameIn) {
     specNameMap["Discipline"]    := "纪律"
     specNameMap["Berserker"]     := "狂战士（精英）"
     specNameMap["Spellbreaker"]  := "破法者（精英）"
-    specNameMap["Bladesworn"]    := "刃誓者（精英）"
+    specNameMap["Bladesworn"]    := "誓剑士（精英）"
+    specNameMap["Paragon"]       := "圣言师（精英）"
 
     ; ===== Engineer 工程师 =====
     specNameMap["Explosives"]    := "爆破"
@@ -258,7 +258,8 @@ SkillPreset_LocalizeSpecNameByName(nameIn) {
     specNameMap["Tools"]         := "工具"
     specNameMap["Scrapper"]      := "机械师（精英）"
     specNameMap["Holosmith"]     := "全息师（精英）"
-    specNameMap["Mechanist"]     := "机甲师（精英）"
+    specNameMap["Mechanist"]     := "玉堰师（精英）"
+    specNameMap["Amalgam"]     := "鎏金师（精英）"
 
     ; ===== Ranger 游侠 =====
     specNameMap["Marksmanship"]       := "射术"
@@ -268,7 +269,8 @@ SkillPreset_LocalizeSpecNameByName(nameIn) {
     specNameMap["Beastmastery"]       := "驯兽"
     specNameMap["Druid"]              := "德鲁伊（精英）"
     specNameMap["Soulbeast"]          := "魂兽师（精英）"
-    specNameMap["Untamed"]            := "荒野魂兽（精英）"
+    specNameMap["Untamed"]            := "狂兽师（精英）"
+    specNameMap["Galeshot"]           := "风行者（精英）"
 
     ; ===== Thief 潜行者 =====
     specNameMap["Deadly Arts"]    := "致命技艺"
@@ -276,9 +278,10 @@ SkillPreset_LocalizeSpecNameByName(nameIn) {
     specNameMap["Shadow Arts"]    := "暗影技艺"
     specNameMap["Acrobatics"]     := "杂技"
     specNameMap["Trickery"]       := "诡计"
-    specNameMap["Daredevil"]      := "胆大妄为者（精英）"
-    specNameMap["Deadeye"]        := "死眼（精英）"
-    specNameMap["Specter"]        := "幽影（精英）"
+    specNameMap["Daredevil"]      := "独行侠（精英）"
+    specNameMap["Deadeye"]        := "神枪手（精英）"
+    specNameMap["Specter"]        := "缚影者（精英）"
+    specNameMap["Antiquary"]      := "彩戏师（精英）"
 
     ; ===== Elementalist 元素使 =====
     specNameMap["Fire"]           := "火焰"
@@ -287,9 +290,9 @@ SkillPreset_LocalizeSpecNameByName(nameIn) {
     specNameMap["Water"]          := "水系"
     specNameMap["Arcane"]         := "奥术"
     specNameMap["Tempest"]        := "风暴使（精英）"
-    specNameMap["Weaver"]         := "织法者（精英）"
-    specNameMap["Catalyst"]       := "催化者（精英）"
-    specNameMap["Evoker"]         := "召唤者（精英）"
+    specNameMap["Weaver"]         := "编织者（精英）"
+    specNameMap["Catalyst"]       := "元晶师（精英）"
+    specNameMap["Evoker"]         := "唤元师（精英）"
 
     ; ===== Mesmer 幻术师 =====
     specNameMap["Domination"]     := "支配"
@@ -298,8 +301,9 @@ SkillPreset_LocalizeSpecNameByName(nameIn) {
     specNameMap["Inspiration"]    := "灵感"
     specNameMap["Illusions"]      := "幻象"
     specNameMap["Chronomancer"]   := "时空术士（精英）"
-    specNameMap["Mirage"]         := "幻影（精英）"
-    specNameMap["Virtuoso"]       := "魔乐师（精英）"
+    specNameMap["Mirage"]         := "幻象术士（精英）"
+    specNameMap["Virtuoso"]       := "灵刃术士（精英）"
+    specNameMap["Troubadour"]     := "吟游诗人（精英）"
 
     ; ===== Necromancer 死灵法师 =====
     specNameMap["Spite"]          := "恶意"
@@ -307,9 +311,10 @@ SkillPreset_LocalizeSpecNameByName(nameIn) {
     specNameMap["Death Magic"]    := "死亡魔法"
     specNameMap["Blood Magic"]    := "血魔法"
     specNameMap["Soul Reaping"]   := "灵魂收割"
-    specNameMap["Reaper"]         := "收割者（精英）"
-    specNameMap["Scourge"]        := "灾厄（精英）"
-    specNameMap["Harbinger"]      := "预兆者（精英）"
+    specNameMap["Reaper"]         := "夺魂者（精英）"
+    specNameMap["Scourge"]        := "灾厄师（精英）"
+    specNameMap["Harbinger"]      := "先驱者（精英）"
+    specNameMap["Ritualist"]      := "祭祀者（精英）"
 
     ; ===== Revenant 魂武者 =====
     specNameMap["Corruption"]     := "腐化"
@@ -317,9 +322,10 @@ SkillPreset_LocalizeSpecNameByName(nameIn) {
     specNameMap["Salvation"]      := "拯救"
     specNameMap["Invocation"]     := "祈愿"
     specNameMap["Devastation"]    := "毁灭"
-    specNameMap["Herald"]         := "先驱者（精英）"
-    specNameMap["Renegade"]       := "叛逆者（精英）"
-    specNameMap["Vindicator"]     := "辩护者（精英）"
+    specNameMap["Herald"]         := "预告者（精英）"
+    specNameMap["Renegade"]       := "龙魂使（精英）"
+    specNameMap["Vindicator"]     := "裁决者（精英）"
+    specNameMap["Conduit"]        := "契灵使（精英）"
 
     if (specNameMap.Has(baseName)) {
         return specNameMap[baseName]
@@ -393,7 +399,7 @@ SkillPreset_LocalizeWeaponType(wt) {
     wtMap["Dagger"]    := "匕首"
     wtMap["Focus"]     := "聚能器"
     wtMap["Greatsword"]:= "巨剑"
-    wtMap["Hammer"]    := "战锤"
+    wtMap["Hammer"]    := "巨锤"
     wtMap["Longbow"]   := "长弓"
     wtMap["Mace"]      := "钉锤"
     wtMap["Pistol"]    := "手枪"
@@ -473,7 +479,24 @@ SkillPreset_GetSelectedCatKey() {
     if (txt = "通用") {
         return "Utility"
     }
-
+    if (txt = "职业") {
+        return "Profession"
+    }
+    if (txt = "精英") {
+        return "Elite"
+    }
+    if (txt = "工具包") {
+        return "Bundle"
+    }
+    if (txt = "工具带") {
+        return "Toolbelt"
+    }
+    if (txt = "怪物") {
+        return "Monster"
+    }
+    if (txt = "宠物") {
+        return "Pet"
+    }
     return ""
 }
 
