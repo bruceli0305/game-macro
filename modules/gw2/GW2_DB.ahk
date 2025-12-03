@@ -424,8 +424,20 @@ GW2_BuildSkillIndex_ForProf(profKey, p, skillById) {
             cat := ""
             if (stype = "Heal") {
                 cat := "Heal"
-            } else if (stype = "Utility" || stype = "Elite" || stype = "Profession") {
+            } else if (stype = "Utility") {
                 cat := "Utility"
+            } else if (stype = "Elite") {
+                cat := "Elite"
+            } else if (stype = "Profession") {
+                cat := "Profession"
+            } else if (stype = "Bundle") {
+                cat := "Bundle"
+            } else if (stype = "Toolbelt") {
+                cat := "Toolbelt"
+            } else if (stype = "Monster") {
+                cat := "Monster"
+            } else if (stype = "Pet") {
+                cat := "Pet"
             } else {
                 i := i + 1
                 continue

@@ -167,7 +167,7 @@ SkillPreset_LocalizeProfession(profId) {
 ; ============================================
 SkillPreset_FillCategories(ddlCat) {
     ddlCat.Delete()
-    ddlCat.Add(["武器","治疗","通用","职业","精英","工具包","工具带","怪物","宠物"])
+    ddlCat.Add(["全部","武器","治疗","通用","职业","精英","工具包","工具带","怪物","宠物"])
     ddlCat.Choose(1)
 }
 
