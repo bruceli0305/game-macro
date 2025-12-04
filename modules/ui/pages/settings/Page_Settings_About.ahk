@@ -237,8 +237,8 @@ SettingsAbout_GetVersion() {
     try {
         if (IsSet(App) && App.Has("Version")) {
             v0 := App["Version"]
-            if (v0 != "") {
-                return 'v0.2.4'
+            if (v0 == "") {
+                return 'v0.2.6'
             }
         }
     } catch {
@@ -272,7 +272,7 @@ SettingsAbout_GetVersion() {
         }
     } catch {
     }
-    return "v0.2.4"
+    return "v0.2.6"
 }
 
 SettingsAbout_FindWorkerHost() {
