@@ -11,7 +11,7 @@ Page_Skills_Build(page) {
 
     ; 列表
     UI.SkillLV := UI.Main.Add("ListView", Format("x{} y{} w{} h{}", rc.X, rc.Y, rc.W, rc.H - 40 - 8)
-        , ["ID","技能名","键位","X","Y","颜色","容差","锁定","超时ms"])
+        , ["ID","技能名","键位","X","Y","颜色","容差","读条ms","锁定","超时ms"])
     page.Controls.Push(UI.SkillLV)
 
     ; 按钮行
@@ -70,7 +70,7 @@ Page_Skills_Layout(rc) {
         UI.BtnImportPreset.Move(, yBtn)
         UI.BtnSaveSkill.Move(,    yBtn)
 
-        loop 9 {
+        loop 10 {
             try {
                 UI.SkillLV.ModifyCol(A_Index, "AutoHdr")
             } catch {
@@ -106,6 +106,7 @@ Skills_RefreshList() {
             y    := OM_Get(s, "Y", 0)
             col  := OM_Get(s, "Color", "0x000000")
             tol  := OM_Get(s, "Tol", 10)
+            cast := OM_Get(s, "CastMs", 0)
 
             lock := 1
             try {
@@ -125,9 +126,9 @@ Skills_RefreshList() {
                 lockText := "√"
             }
 
-            UI.SkillLV.Add("", id, name, key, x, y, col, tol, lockText, tmo)
+            UI.SkillLV.Add("", id, name, key, x, y, col, tol, cast, lockText, tmo)
         }
-        loop 9 {
+        loop 10 {
             try {
                 UI.SkillLV.ModifyCol(A_Index, "AutoHdr")
             } catch {
