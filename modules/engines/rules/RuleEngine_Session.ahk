@@ -73,17 +73,23 @@ RuleEngine_SessionBegin(prof, rIdx, rule) {
 }
 
 RuleEngine_SessionStep() {
-    global App, RE_Session, RE_LastFireTick, RE_Session_CastMarginMs
+    global App
+    global RE_Session
+    global RE_LastFireTick
+    global RE_Session_CastMarginMs
+
     if (!RE_Session.Active) {
         return false
     }
+
     prof := App["ProfileData"]
     rIdx := RE_Session.RuleId
     rule := prof.Rules[rIdx]
     acts := rule.Actions
-    now := A_TickCount
+    now  := A_TickCount
 
-    castUse := 0
+    ; CastBar 与 IgnoreActionDelay 标志
+    castUse     := 0
     ignoreDelay := 0
     try {
         if HasProp(prof, "CastBar") {
@@ -97,154 +103,316 @@ RuleEngine_SessionStep() {
             }
         }
     } catch {
-        castUse := 0
+        castUse     := 0
         ignoreDelay := 0
     }
-    ; 1) 会话超时/中止冷却
-    if (RE_Session.TimeoutAt > 0 && now >= RE_Session.TimeoutAt) {
-        abortCd := 0
-        try {
-            if (HasProp(rule, "AbortCooldownMs")) {
-                abortCd := Max(0, Integer(rule.AbortCooldownMs))
-            }
-        } catch {
+
+    ; 1) 会话整体超时 / 中止冷却
+    if (RE_Session.TimeoutAt > 0) {
+        if (now >= RE_Session.TimeoutAt) {
             abortCd := 0
-        }
-        if (abortCd > 0) {
             try {
-                rule.LastFire := now - rule.CooldownMs + abortCd
-                RE_LastFireTick[rIdx] := rule.LastFire
+                if HasProp(rule, "AbortCooldownMs") {
+                    abortCd := Max(0, Integer(rule.AbortCooldownMs))
+                }
+            } catch {
+                abortCd := 0
+            }
+
+            if (abortCd > 0) {
+                try {
+                    rule.LastFire := now - rule.CooldownMs + abortCd
+                    RE_LastFireTick[rIdx] := rule.LastFire
+                } catch {
+                }
+            }
+
+            ; 日志：Session timeout
+            try {
+                f := Map()
+                f["ruleId"]   := rIdx
+                f["threadId"] := RE_Session.ThreadId
+                f["timeoutAt"]:= RE_Session.TimeoutAt
+                f["elapsed"]  := now - RE_Session.StartedAt
+                Logger_Warn("RuleEngine", "Session timeout", f)
             } catch {
             }
+
+            ; Cast 引擎调试日志
+            try {
+                CastEngine_LogCurrentRuleIfNeeded("SessionTimeout")
+            } catch {
+            }
+
+            RE_Session.Active := false
+            return false
         }
-        ; 日志：Session timeout
-        try {
-            f := Map()
-            f["ruleId"] := rIdx
-            f["threadId"] := RE_Session.ThreadId
-            f["timeoutAt"] := RE_Session.TimeoutAt
-            f["elapsed"] := now - RE_Session.StartedAt
-            Logger_Warn("RuleEngine", "Session timeout", f)
-        } catch {
-        }
-        ; Cast 引擎调试日志
-        try {
-            CastEngine_LogCurrentRuleIfNeeded("SessionTimeout")
-        } catch {
-        }
-        RE_Session.Active := false
-        return false
     }
 
-    ; 2) 验证（跨帧）
+    ; 2) 验证阶段（跨帧）
     if (RE_Session.VerActive) {
+        ; 冻结窗（黑屏）保护
         if (RE_Session_FreezeActive()) {
             RE_Session.VerLastTick := now
             return false
         }
+
         if (RE_Session.VerLastTick = 0) {
             RE_Session.VerLastTick := now
             return false
         }
+
         dt := now - RE_Session.VerLastTick
         if (dt > 0) {
             RE_Session.VerElapsed := RE_Session.VerElapsed + dt
             RE_Session.VerLastTick := now
         }
-        si := RE_Session.VerSkillIndex
-        if (si >= 1 && si <= prof.Skills.Length) {
-            s := prof.Skills[si]
-            cur := Pixel_FrameGet(s.X, s.Y)
-            match := Pixel_ColorMatch(cur, RE_Session.VerTargetInt, s.Tol)
-            if (!match) {
-                ; 通过
-                RE_Session.VerActive := false
-                RE_Session.VerSkillIndex := 0
-                RE_Session.VerTargetInt := 0
-                RE_Session.VerTol := 0
-                RE_Session.Index := RE_Session.Index + 1
-                gap := 0
+
+        ; ========= CastBar 优先：快速失败 / 成功判定 =========
+        if (castUse) {
+            actIdx := RE_Session.Index
+            siCast := RE_Session.VerSkillIndex
+            ce := 0
+            try {
+                ce := CastEngine_GetEntry(rIdx, actIdx, siCast)
+            } catch {
+                ce := 0
+            }
+
+            if IsObject(ce) {
+                st := 0
                 try {
-                    gap := (HasProp(rule,"ActionGapMs") ? Max(0, Integer(rule.ActionGapMs)) : 0)
+                    st := ce.State
                 } catch {
-                    gap := 0
+                    st := 0
                 }
 
-                nextDelay := 0
-                if (RE_Session.Index <= acts.Length) {
-                    nextAct := acts[RE_Session.Index]
-                    try {
-                        nextDelay := (HasProp(nextAct,"DelayMs") ? Max(0, Integer(nextAct.DelayMs)) : 0)
-                    } catch {
-                        nextDelay := 0
+                ; CastEngine 认为本次尝试 FAILED（条未亮 / 接受窗口超时 / 读条卡死）
+                if (st = CAST_STATE_FAILED) {
+                    if (RE_Session.VerRetryLeft > 0) {
+                        RE_Session.VerRetryLeft := RE_Session.VerRetryLeft - 1
+                        RE_Session.VerElapsed   := 0
+                        RE_Session.VerLastTick  := now
+                        RE_Session.VerActive    := false
+                        RE_Session.NextAt       := now + RE_Session.VerRetryGapMs
+
+                        ; 日志：Verify retry scheduled (CastBar)
+                        try {
+                            fcb := Map()
+                            fcb["ruleId"]    := rIdx
+                            fcb["actIdx"]    := RE_Session.Index
+                            fcb["threadId"]  := RE_Session.ThreadId
+                            fcb["retryLeft"] := RE_Session.VerRetryLeft
+                            fcb["gapMs"]     := RE_Session.VerRetryGapMs
+                            Logger_Info("RuleEngine", "Verify retry scheduled (CastBar)", fcb)
+                        } catch {
+                        }
+
+                        return false
+                    } else {
+                        ; 无剩余重试 -> 视为验证失败，中止本次会话
+                        abortCd2 := 0
+                        try {
+                            if HasProp(rule, "AbortCooldownMs") {
+                                abortCd2 := Max(0, Integer(rule.AbortCooldownMs))
+                            }
+                        } catch {
+                            abortCd2 := 0
+                        }
+
+                        if (abortCd2 > 0) {
+                            try {
+                                rule.LastFire := now - rule.CooldownMs + abortCd2
+                                RE_LastFireTick[rIdx] := rule.LastFire
+                            } catch {
+                            }
+                        }
+
+                        ; 日志：Verify timeout abort (CastBar)
+                        try {
+                            f2 := Map()
+                            f2["ruleId"]    := rIdx
+                            f2["actIdx"]    := RE_Session.Index
+                            f2["threadId"]  := RE_Session.ThreadId
+                            f2["skillIdx"]  := RE_Session.VerSkillIndex
+                            f2["elapsed"]   := RE_Session.VerElapsed
+                            f2["timeoutMs"] := RE_Session.VerTimeoutMs
+                            Logger_Warn("RuleEngine", "Verify timeout abort (CastBar)", f2)
+                        } catch {
+                        }
+
+                        ; Cast 引擎调试日志
+                        try {
+                            CastEngine_LogCurrentRuleIfNeeded("VerifyTimeoutAbort")
+                        } catch {
+                        }
+
+                        RE_Session.Active := false
+                        return false
                     }
                 }
 
-                if (ignoreDelay) {
-                    gap := 0
-                    nextDelay := 0
-                }
+                ; CastEngine 认为 DONE（条亮过并正常结束） -> 直接视为本次尝试成功
+                if (st = CAST_STATE_DONE) {
+                    RE_Session.VerActive     := false
+                    RE_Session.VerSkillIndex := 0
+                    RE_Session.VerTargetInt  := 0
+                    RE_Session.VerTol        := 0
 
-                RE_Session.NextAt := now + gap + nextDelay
-                return false
+                    RE_Session.Index := RE_Session.Index + 1
+
+                    gap := 0
+                    try {
+                        if HasProp(rule, "ActionGapMs") {
+                            gap := Max(0, Integer(rule.ActionGapMs))
+                        } else {
+                            gap := 0
+                        }
+                    } catch {
+                        gap := 0
+                    }
+
+                    nextDelay := 0
+                    if (RE_Session.Index <= acts.Length) {
+                        nextAct := acts[RE_Session.Index]
+                        try {
+                            if HasProp(nextAct, "DelayMs") {
+                                nextDelay := Max(0, Integer(nextAct.DelayMs))
+                            } else {
+                                nextDelay := 0
+                            }
+                        } catch {
+                            nextDelay := 0
+                        }
+                    }
+
+                    if (ignoreDelay) {
+                        gap       := 0
+                        nextDelay := 0
+                    }
+
+                    RE_Session.NextAt := now + gap + nextDelay
+                    return false
+                }
             }
         }
+
+        ; ========= 原有：技能格子颜色 Verify（兜底） =========
+        si := RE_Session.VerSkillIndex
+        if (si >= 1) {
+            if (si <= prof.Skills.Length) {
+                s := prof.Skills[si]
+                cur := Pixel_FrameGet(s.X, s.Y)
+                match := Pixel_ColorMatch(cur, RE_Session.VerTargetInt, s.Tol)
+                if (!match) {
+                    ; 通过（颜色变了）
+                    RE_Session.VerActive     := false
+                    RE_Session.VerSkillIndex := 0
+                    RE_Session.VerTargetInt  := 0
+                    RE_Session.VerTol        := 0
+
+                    RE_Session.Index := RE_Session.Index + 1
+
+                    gap2 := 0
+                    try {
+                        if HasProp(rule, "ActionGapMs") {
+                            gap2 := Max(0, Integer(rule.ActionGapMs))
+                        } else {
+                            gap2 := 0
+                        }
+                    } catch {
+                        gap2 := 0
+                    }
+
+                    nextDelay2 := 0
+                    if (RE_Session.Index <= acts.Length) {
+                        nextAct2 := acts[RE_Session.Index]
+                        try {
+                            if HasProp(nextAct2, "DelayMs") {
+                                nextDelay2 := Max(0, Integer(nextAct2.DelayMs))
+                            } else {
+                                nextDelay2 := 0
+                            }
+                        } catch {
+                            nextDelay2 := 0
+                        }
+                    }
+
+                    if (ignoreDelay) {
+                        gap2       := 0
+                        nextDelay2 := 0
+                    }
+
+                    RE_Session.NextAt := now + gap2 + nextDelay2
+                    return false
+                }
+            }
+        }
+
+        ; 颜色未变，检查是否超出本次 Verify 的最大等待
         if (RE_Session.VerElapsed >= RE_Session.VerTimeoutMs) {
             if (RE_Session.VerRetryLeft > 0) {
                 RE_Session.VerRetryLeft := RE_Session.VerRetryLeft - 1
-                RE_Session.VerElapsed := 0
-                RE_Session.VerLastTick := now
-                RE_Session.VerActive := false
-                RE_Session.NextAt := now + RE_Session.VerRetryGapMs
-                 ; 日志：Verify retry scheduled
+                RE_Session.VerElapsed   := 0
+                RE_Session.VerLastTick  := now
+                RE_Session.VerActive    := false
+                RE_Session.NextAt       := now + RE_Session.VerRetryGapMs
+
+                ; 日志：Verify retry scheduled
                 try {
-                    f := Map()
-                    f["ruleId"] := rIdx
-                    f["actIdx"] := RE_Session.Index
-                    f["threadId"] := RE_Session.ThreadId
-                    f["retryLeft"] := RE_Session.VerRetryLeft
-                    f["gapMs"] := RE_Session.VerRetryGapMs
-                    Logger_Info("RuleEngine", "Verify retry scheduled", f)
+                    f3 := Map()
+                    f3["ruleId"]    := rIdx
+                    f3["actIdx"]    := RE_Session.Index
+                    f3["threadId"]  := RE_Session.ThreadId
+                    f3["retryLeft"] := RE_Session.VerRetryLeft
+                    f3["gapMs"]     := RE_Session.VerRetryGapMs
+                    Logger_Info("RuleEngine", "Verify retry scheduled", f3)
                 } catch {
                 }
+
                 return false
             } else {
-                abortCd := 0
+                abortCd3 := 0
                 try {
-                    if (HasProp(rule, "AbortCooldownMs")) {
-                        abortCd := Max(0, Integer(rule.AbortCooldownMs))
+                    if HasProp(rule, "AbortCooldownMs") {
+                        abortCd3 := Max(0, Integer(rule.AbortCooldownMs))
                     }
                 } catch {
-                    abortCd := 0
+                    abortCd3 := 0
                 }
-                if (abortCd > 0) {
+
+                if (abortCd3 > 0) {
                     try {
-                        rule.LastFire := now - rule.CooldownMs + abortCd
+                        rule.LastFire := now - rule.CooldownMs + abortCd3
                         RE_LastFireTick[rIdx] := rule.LastFire
                     } catch {
                     }
                 }
+
                 ; 日志：Verify timeout abort
                 try {
-                    f := Map()
-                    f["ruleId"] := rIdx
-                    f["actIdx"] := RE_Session.Index
-                    f["threadId"] := RE_Session.ThreadId
-                    f["skillIdx"] := RE_Session.VerSkillIndex
-                    f["elapsed"] := RE_Session.VerElapsed
-                    f["timeoutMs"] := RE_Session.VerTimeoutMs
-                    Logger_Warn("RuleEngine", "Verify timeout abort", f)
+                    f4 := Map()
+                    f4["ruleId"]    := rIdx
+                    f4["actIdx"]    := RE_Session.Index
+                    f4["threadId"]  := RE_Session.ThreadId
+                    f4["skillIdx"]  := RE_Session.VerSkillIndex
+                    f4["elapsed"]   := RE_Session.VerElapsed
+                    f4["timeoutMs"] := RE_Session.VerTimeoutMs
+                    Logger_Warn("RuleEngine", "Verify timeout abort", f4)
                 } catch {
                 }
+
                 ; Cast 引擎调试日志
                 try {
                     CastEngine_LogCurrentRuleIfNeeded("VerifyTimeoutAbort")
                 } catch {
                 }
+
                 RE_Session.Active := false
                 return false
             }
         }
+
         return false
     }
 
@@ -257,24 +425,29 @@ RuleEngine_SessionStep() {
             } catch {
             }
         }
-         ; 日志：Session end
+
+        ; 日志：Session end
         try {
-            f := Map()
-            f["ruleId"] := rIdx
-            Logger_Info("RuleEngine", "Session end", f)
+            f5 := Map()
+            f5["ruleId"] := rIdx
+            Logger_Info("RuleEngine", "Session end", f5)
         } catch {
         }
+
         ; Cast 引擎调试日志
         try {
             CastEngine_LogCurrentRuleIfNeeded("SessionEnd")
         } catch {
         }
+
         RE_Session.Active := false
         return false
     }
+
     if (now < RE_Session.NextAt) {
         return false
     }
+
     ; CastBar + LockDuringCast：若前置动作有锁定中的技能，则等待
     if (castUse) {
         canProceed := true
@@ -289,55 +462,76 @@ RuleEngine_SessionStep() {
     }
 
     thr := RE_Session.ThreadId
-    lk := WorkerPool_CastIsLocked(thr)
+    lk  := WorkerPool_CastIsLocked(thr)
     if (lk.Locked) {
         budget := 0
         if (RE_Session.Index > 1) {
             prevAct := acts[RE_Session.Index - 1]
-            prevSi  := HasProp(prevAct,"SkillIndex") ? prevAct.SkillIndex : 0
-            if (prevSi >= 1 && prevSi <= prof.Skills.Length) {
-                try budget := Max(0, Integer(HasProp(prof.Skills[prevSi],"CastMs") ? prof.Skills[prevSi].CastMs : 0))
+            prevSi  := 0
+            if HasProp(prevAct, "SkillIndex") {
+                prevSi := prevAct.SkillIndex
+            }
+            if (prevSi >= 1) {
+                if (prevSi <= prof.Skills.Length) {
+                    try {
+                        if HasProp(prof.Skills[prevSi], "CastMs") {
+                            budget := Max(0, Integer(prof.Skills[prevSi].CastMs))
+                        } else {
+                            budget := 0
+                        }
+                    } catch {
+                        budget := 0
+                    }
+                }
             }
         }
+
         budget := budget + RE_Session_CastMarginMs
+
         if (RE_Session.LockWaitUntil = 0) {
             RE_Session.LockWaitUntil := now + budget
             return false
         }
+
         if (now < RE_Session.LockWaitUntil) {
             return false
         }
-        abortCd := 0
+
+        abortCd4 := 0
         try {
-            if (HasProp(rule, "AbortCooldownMs")) {
-                abortCd := Max(0, Integer(rule.AbortCooldownMs))
+            if HasProp(rule, "AbortCooldownMs") {
+                abortCd4 := Max(0, Integer(rule.AbortCooldownMs))
             }
         } catch {
-            abortCd := 0
+            abortCd4 := 0
         }
-        if (abortCd > 0) {
+
+        if (abortCd4 > 0) {
             try {
-                rule.LastFire := now - rule.CooldownMs + abortCd
+                rule.LastFire := now - rule.CooldownMs + abortCd4
                 RE_LastFireTick[rIdx] := rule.LastFire
             } catch {
             }
         }
-         ; 日志：Cast lock abort
+
+        ; 日志：Cast lock abort
         try {
-            f := Map()
-            f["ruleId"] := rIdx
-            f["actIdx"] := RE_Session.Index
-            f["threadId"] := thr
-            f["budgetMs"] := budget
-            f["locked"] := 1
-            Logger_Warn("RuleEngine", "Cast lock abort", f)
+            f6 := Map()
+            f6["ruleId"]   := rIdx
+            f6["actIdx"]   := RE_Session.Index
+            f6["threadId"] := thr
+            f6["budgetMs"] := budget
+            f6["locked"]   := 1
+            Logger_Warn("RuleEngine", "Cast lock abort", f6)
         } catch {
         }
+
         ; Cast 引擎调试日志
         try {
             CastEngine_LogCurrentRuleIfNeeded("CastLockAbort")
         } catch {
         }
+
         RE_Session.Active := false
         return false
     } else {
@@ -346,77 +540,117 @@ RuleEngine_SessionStep() {
 
     idx := RE_Session.Index
     act := acts[idx]
-    si  := HasProp(act,"SkillIndex") ? act.SkillIndex : 0
-    if (si < 1 || si > prof.Skills.Length) {
+    si2 := 0
+    if HasProp(act, "SkillIndex") {
+        si2 := act.SkillIndex
+    }
+
+    if (si2 < 1) {
+        RE_Session.Active := false
+        return false
+    }
+    if (si2 > prof.Skills.Length) {
         RE_Session.Active := false
         return false
     }
 
     needReady := 0
-    try needReady := (HasProp(act, "RequireReady") && act.RequireReady) ? 1 : 0
+    try {
+        if HasProp(act, "RequireReady") {
+            if act.RequireReady {
+                needReady := 1
+            } else {
+                needReady := 0
+            }
+        } else {
+            needReady := 0
+        }
+    } catch {
+        needReady := 0
+    }
+
     if (needReady) {
-        if (!RuleEngine_CheckSkillReady(prof, si)) {
+        if (!RuleEngine_CheckSkillReady(prof, si2)) {
             return false
         }
     }
 
     holdOverride := -1
     try {
-        if (HasProp(act, "HoldMs")) {
+        if HasProp(act, "HoldMs") {
             hm := Integer(act.HoldMs)
-            if (hm >= 0)
+            if (hm >= 0) {
                 holdOverride := hm
+            }
         }
+    } catch {
+        holdOverride := -1
     }
 
-    sent := WorkerPool_SendSkillIndex(thr, si, "RuleSession:" rule.Name, holdOverride)
+    sent := WorkerPool_SendSkillIndex(thr, si2, "RuleSession:" rule.Name, holdOverride)
     if (!sent) {
-        retryLeft := 0
-        retryGap := 150
+        retryLeft2 := 0
+        retryGap2  := 150
+
         try {
-            retryLeft := Max(0, Integer(HasProp(act,"Retry") ? act.Retry : 0))
-        } catch {
-            retryLeft := 0
-        }
-        try {
-            retryGap := Max(0, Integer(HasProp(act,"RetryGapMs") ? act.RetryGapMs : 150))
-        } catch {
-            retryGap := 150
-        }
-        if (retryLeft > 0) {
-            RE_Session.NextAt := now + retryGap
-            return false
-        }
-        abortCd := 0
-        try {
-            if (HasProp(rule, "AbortCooldownMs")) {
-                abortCd := Max(0, Integer(rule.AbortCooldownMs))
+            if HasProp(act, "Retry") {
+                retryLeft2 := Max(0, Integer(act.Retry))
+            } else {
+                retryLeft2 := 0
             }
         } catch {
-            abortCd := 0
+            retryLeft2 := 0
         }
-        if (abortCd > 0) {
+
+        try {
+            if HasProp(act, "RetryGapMs") {
+                retryGap2 := Max(0, Integer(act.RetryGapMs))
+            } else {
+                retryGap2 := 150
+            }
+        } catch {
+            retryGap2 := 150
+        }
+
+        if (retryLeft2 > 0) {
+            RE_Session.NextAt := now + retryGap2
+            return false
+        }
+
+        abortCd5 := 0
+        try {
+            if HasProp(rule, "AbortCooldownMs") {
+                abortCd5 := Max(0, Integer(rule.AbortCooldownMs))
+            }
+        } catch {
+            abortCd5 := 0
+        }
+
+        if (abortCd5 > 0) {
             try {
-                rule.LastFire := now - rule.CooldownMs + abortCd
+                rule.LastFire := now - rule.CooldownMs + abortCd5
                 RE_LastFireTick[rIdx] := rule.LastFire
             } catch {
             }
         }
+
         ; 日志：Send fail abort
         try {
-            f := Map()
-            f["ruleId"] := rIdx
-            f["actIdx"] := idx
-            f["skillIdx"] := si
-            f["threadId"] := thr
-            Logger_Warn("RuleEngine", "Send fail abort", f)
+            f7 := Map()
+            f7["ruleId"]   := rIdx
+            f7["actIdx"]   := idx
+            f7["skillIdx"] := si2
+            f7["threadId"] := thr
+            Logger_Warn("RuleEngine", "Send fail abort", f7)
         } catch {
         }
+
         ; Cast 引擎调试日志
         try {
             CastEngine_LogCurrentRuleIfNeeded("SendFailAbort")
         } catch {
         }
+
         RE_Session.Active := false
         return false
     }
@@ -425,60 +659,110 @@ RuleEngine_SessionStep() {
 
     ; 日志：Action sent
     try {
-        f := Map()
-        f["ruleId"] := rIdx
-        f["actIdx"] := idx
-        f["skillIdx"] := si
-        f["threadId"] := thr
-        f["hold"] := holdOverride
-        Logger_Info("RuleEngine", "Action sent", f)
+        f8 := Map()
+        f8["ruleId"]   := rIdx
+        f8["actIdx"]   := idx
+        f8["skillIdx"] := si2
+        f8["threadId"] := thr
+        f8["hold"]     := holdOverride
+        Logger_Info("RuleEngine", "Action sent", f8)
     } catch {
     }
 
     needVerify := 0
-    try needVerify := (HasProp(act, "Verify") && act.Verify) ? 1 : 0
-    if (needVerify) {
-        s := prof.Skills[si]
-        RE_Session.VerActive := true
-        RE_Session.VerSkillIndex := si
-        RE_Session.VerTargetInt := Pixel_HexToInt(s.Color)
-        RE_Session.VerTol := s.Tol
-        RE_Session.VerLastTick := now
-        RE_Session.VerElapsed := 0
-        try {
-            RE_Session.VerTimeoutMs := Max(0, Integer(HasProp(act,"VerifyTimeoutMs") ? act.VerifyTimeoutMs : 600))
-            RE_Session.VerRetryLeft := Max(0, Integer(HasProp(act,"Retry") ? act.Retry : 0))
-            RE_Session.VerRetryGapMs := Max(0, Integer(HasProp(act,"RetryGapMs") ? act.RetryGapMs : 150))
+    try {
+        if HasProp(act, "Verify") {
+            if act.Verify {
+                needVerify := 1
+            } else {
+                needVerify := 0
+            }
+        } else {
+            needVerify := 0
         }
+    } catch {
+        needVerify := 0
+    }
+
+    if (needVerify) {
+        s2 := prof.Skills[si2]
+        RE_Session.VerActive      := true
+        RE_Session.VerSkillIndex  := si2
+        RE_Session.VerTargetInt   := Pixel_HexToInt(s2.Color)
+        RE_Session.VerTol         := s2.Tol
+        RE_Session.VerLastTick    := now
+        RE_Session.VerElapsed     := 0
+
+        try {
+            if HasProp(act, "VerifyTimeoutMs") {
+                RE_Session.VerTimeoutMs := Max(0, Integer(act.VerifyTimeoutMs))
+            } else {
+                RE_Session.VerTimeoutMs := 600
+            }
+        } catch {
+            RE_Session.VerTimeoutMs := 600
+        }
+
+        try {
+            if HasProp(act, "Retry") {
+                RE_Session.VerRetryLeft := Max(0, Integer(act.Retry))
+            } else {
+                RE_Session.VerRetryLeft := 0
+            }
+        } catch {
+            RE_Session.VerRetryLeft := 0
+        }
+
+        try {
+            if HasProp(act, "RetryGapMs") {
+                RE_Session.VerRetryGapMs := Max(0, Integer(act.RetryGapMs))
+            } else {
+                RE_Session.VerRetryGapMs := 150
+            }
+        } catch {
+            RE_Session.VerRetryGapMs := 150
+        }
+
         return true
     }
 
     ; 不需要验证 -> 推进到下一个动作
     RE_Session.Index := idx + 1
-    gap := 0
+
+    gap3 := 0
     try {
-        gap := (HasProp(rule,"ActionGapMs") ? Max(0, Integer(rule.ActionGapMs)) : 0)
+        if HasProp(rule, "ActionGapMs") {
+            gap3 := Max(0, Integer(rule.ActionGapMs))
+        } else {
+            gap3 := 0
+        }
     } catch {
-        gap := 0
+        gap3 := 0
     }
 
-    nextDelay := 0
+    nextDelay3 := 0
     if (RE_Session.Index <= acts.Length) {
-        nextAct := acts[RE_Session.Index]
+        nextAct3 := acts[RE_Session.Index]
         try {
-            nextDelay := (HasProp(nextAct,"DelayMs") ? Max(0, Integer(nextAct.DelayMs)) : 0)
+            if HasProp(nextAct3, "DelayMs") {
+                nextDelay3 := Max(0, Integer(nextAct3.DelayMs))
+            } else {
+                nextDelay3 := 0
+            }
         } catch {
-            nextDelay := 0
+            nextDelay3 := 0
         }
     }
 
     if (ignoreDelay) {
-        gap := 0
-        nextDelay := 0
+        gap3       := 0
+        nextDelay3 := 0
     }
-    RE_Session.NextAt := now + gap + nextDelay
+
+    RE_Session.NextAt := now + gap3 + nextDelay3
     return true
 }
+
 RuleEngine_CanProceedNextActionByCastBar(currActionIndex, ruleIndex) {
     global gCast, CAST_STATE_CASTING
 

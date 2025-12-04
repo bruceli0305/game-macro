@@ -92,6 +92,7 @@ PM_ToRuntime(profile) {
       , Tol: 10
       , DebugLog: 0
       , IgnoreActionDelay: 0
+      , AcceptWindowMs: 120    ; 新增：默认接受窗口 120ms
     }
     data.CastBar.Enabled := OM_Get(g, "CastBarEnabled", data.CastBar.Enabled)
     data.CastBar.X := OM_Get(g, "CastBarX", data.CastBar.X)
@@ -100,7 +101,8 @@ PM_ToRuntime(profile) {
     data.CastBar.Tol := OM_Get(g, "CastBarTol", data.CastBar.Tol)
     data.CastBar.DebugLog := OM_Get(g, "CastBarDebugLog", data.CastBar.DebugLog)
     data.CastBar.IgnoreActionDelay := OM_Get(g, "CastBarIgnoreActionDelay", data.CastBar.IgnoreActionDelay)
-
+    data.CastBar.AcceptWindowMs := OM_Get(g, "CastBarAcceptWindowMs", data.CastBar.AcceptWindowMs)
+    
     ; === 新增：调试窗口运行时结构 ===
     data.CastDebug := {
         Hotkey: OM_Get(g, "CastDebugHotkey", "")
