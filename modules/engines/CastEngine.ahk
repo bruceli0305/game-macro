@@ -107,6 +107,8 @@ CastEngine_OnRuleTriggered(prof, ruleIndex, rule, trackId := 0, trackName := "")
               , FailedAt: 0
               , LockDuringCast: lockFlag
               , TimeoutMs: timeout
+              , SawBar: 0           ; 本次尝试期间是否见过施法条
+              , AcceptUntil: 0      ; 接受窗口截止时间
             }
             try {
                 if HasProp(s, "Name") {
@@ -153,6 +155,16 @@ CastEngine_OnSkillSent(skillIndex, src := "") {
             if (useBar) {
                 e.State := CAST_STATE_CASTING
                 e.StartedAt := now
+                e.SawBar := 0
+                accMs := 120
+                try {
+                    if HasProp(prof, "CastBar") && HasProp(prof.CastBar, "AcceptWindowMs") {
+                        accMs := Max(60, Integer(prof.CastBar.AcceptWindowMs))
+                    }
+                } catch {
+                    accMs := 120
+                }
+                e.AcceptUntil := now + accMs
             } else {
                 e.State := CAST_STATE_DONE
                 e.StartedAt := now
@@ -225,14 +237,45 @@ CastEngine_Tick() {
 
     now := A_TickCount
 
-    ; 施法条不活跃：视为当前所有 CASTING 已结束（成功）
-    if !barActive {
+        ; 施法条当前颜色
+    cur := 0
+    try {
+        cur := Pixel_FrameGet(cb.X, cb.Y)
+    } catch {
+        cur := 0
+    }
+
+    tgtInt := 0
+    try {
+        tgtInt := Pixel_HexToInt(cb.Color)
+    } catch {
+        tgtInt := 0
+    }
+
+    barActive := false
+    try {
+        barActive := Pixel_ColorMatch(cur, tgtInt, cb.Tol)
+    } catch {
+        barActive := false
+    }
+
+    now := A_TickCount
+
+    ; 条亮：标记 SawBar，并处理“读条超时=FAILED”
+    if (barActive) {
         i := 1
         while (i <= gCast.Skills.Length) {
             e := gCast.Skills[i]
             if (e.State = CAST_STATE_CASTING) {
-                e.State := CAST_STATE_DONE
-                e.EndedAt := now
+                e.SawBar := 1
+                timeout := e.TimeoutMs
+                if (timeout > 0 && e.StartedAt > 0) {
+                    elapsed := now - e.StartedAt
+                    if (elapsed > timeout) {
+                        e.State := CAST_STATE_FAILED
+                        e.FailedAt := now
+                    }
+                }
                 gCast.Skills[i] := e
             }
             i := i + 1
@@ -240,20 +283,23 @@ CastEngine_Tick() {
         return
     }
 
-    ; 施法条活跃：对 CASTING 技能做超时失败判定
+    ; 条灭：根据 SawBar / AcceptUntil 决定 DONE / FAILED / 继续观察
     i := 1
     while (i <= gCast.Skills.Length) {
         e := gCast.Skills[i]
         if (e.State = CAST_STATE_CASTING) {
-            timeout := e.TimeoutMs
-            if (timeout > 0 && e.StartedAt > 0) {
-                elapsed := now - e.StartedAt
-                if (elapsed > timeout) {
-                    e.State := CAST_STATE_FAILED
-                    e.FailedAt := now
-                    gCast.Skills[i] := e
-                }
+            if (e.SawBar) {
+                ; 这次尝试期间见过施法条 -> 现在条灭了，视为正常结束
+                e.State := CAST_STATE_DONE
+                e.EndedAt := now
+            } else if (e.AcceptUntil > 0 && now > e.AcceptUntil) {
+                ; 在接受窗口内始终没见过施法条 -> 本次按键未被游戏接受
+                e.State := CAST_STATE_FAILED
+                e.FailedAt := now
+            } else {
+                ; 接受窗口未过且从未亮条 -> 下一帧继续观察
             }
+            gCast.Skills[i] := e
         }
         i := i + 1
     }
@@ -314,6 +360,31 @@ CastEngine_LogCurrentRuleIfNeeded(reason := "SessionEnd") {
         Logger_Info("Cast", "RuleSkillSummary", fields)
     } catch {
     }
+}
+
+CastEngine_GetEntry(ruleIndex, actionIndex, skillIndex) {
+    global gCast
+    if !gCast.Active {
+        return 0
+    }
+    if (gCast.RuleIndex != ruleIndex) {
+        return 0
+    }
+    i := 1
+    while (i <= gCast.Skills.Length) {
+        e := gCast.Skills[i]
+        ridx := 0
+        aidx := 0
+        sidx := 0
+        try ridx := gCast.RuleIndex
+        try aidx := e.ActionIndex
+        try sidx := e.SkillIndex
+        if (aidx = actionIndex && sidx = skillIndex) {
+            return e
+        }
+        i := i + 1
+    }
+    return 0
 }
 
 CastEngine_StateName(state) {

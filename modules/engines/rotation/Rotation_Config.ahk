@@ -2,18 +2,37 @@
 ;modules\engines\rotation\Rotation_Config.ahk
 Rotation_ReadCfg(prof) {
     cfg := HasProp(prof, "Rotation") ? prof.Rotation : {}
-    if !HasProp(cfg, "Enabled")         cfg.Enabled := 0
-    if !HasProp(cfg, "DefaultTrackId")  cfg.DefaultTrackId := 1
-    if !HasProp(cfg, "BusyWindowMs")    cfg.BusyWindowMs := 200
-    if !HasProp(cfg, "ColorTolBlack")   cfg.ColorTolBlack := 16
-    if !HasProp(cfg, "RespectCastLock") cfg.RespectCastLock := 1
-    if !HasProp(cfg, "Opener")          cfg.Opener := { Enabled: 0, MaxDurationMs: 4000, Watch: [], StepsCount: 0, Steps: [] }
-    if !HasProp(cfg, "GatesEnabled")    cfg.GatesEnabled := 0
-    if !HasProp(cfg, "Gates")           cfg.Gates := []
-    if !HasProp(cfg, "GateCooldownMs")  cfg.GateCooldownMs := 0
-    if !HasProp(cfg, "Tracks")          cfg.Tracks := []   ; 仅保留 Tracks[]
-
-    if !HasProp(cfg, "BlackGuard") {
+    if !HasProp(cfg, "Enabled"){
+        cfg.Enabled := 0
+    }
+    if !HasProp(cfg, "DefaultTrackId"){
+        cfg.DefaultTrackId := 1
+    }
+    if !HasProp(cfg, "BusyWindowMs"){
+        cfg.BusyWindowMs := 200
+    }
+    if !HasProp(cfg, "ColorTolBlack"){
+        cfg.ColorTolBlack := 16
+    }
+    if !HasProp(cfg, "RespectCastLock"){
+        cfg.RespectCastLock := 1
+    }
+    if !HasProp(cfg, "Opener"){
+        cfg.Opener := { Enabled: 0, MaxDurationMs: 4000, Watch: [], StepsCount: 0, Steps: [] }
+    }
+    if !HasProp(cfg, "GatesEnabled"){
+        cfg.GatesEnabled := 0
+    }
+    if !HasProp(cfg, "Gates"){
+        cfg.Gates := []
+    }
+    if !HasProp(cfg, "GateCooldownMs"){
+        cfg.GateCooldownMs := 0
+    }
+    if !HasProp(cfg, "Tracks"){ 
+        cfg.Tracks := []   ; 仅保留 Tracks[]
+    }
+    if !HasProp(cfg, "BlackGuard"){
         cfg.BlackGuard := {
             Enabled: 1, SampleCount: 5, BlackRatioThresh: 0.7
           , WindowMs: 120, CooldownMs: 600
