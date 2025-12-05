@@ -174,24 +174,6 @@ SettingsAbout_BuildSummary() {
     ; DXGI 概要
     dx_en := 0, dx_ready := 0, outIdx := 0, monName := "", fps := 0
     rect := ""
-    try {
-        dx_en := gDX.Enabled ? 1 : 0
-    } catch {
-        dx_en := 0
-    }
-    try {
-        dx_ready := DX_IsReady()
-    } catch {
-        dx_ready := 0
-    }
-    try {
-        outIdx := gDX.OutIdx
-        monName := gDX.MonName
-        fps := gDX.FPS
-        rect := "(" gDX.L "," gDX.T ") - (" gDX.R "," gDX.B ")"
-    } catch {
-        rect := "-"
-    }
 
     ; WorkerHost 存在性
     hostPath := SettingsAbout_FindWorkerHost()

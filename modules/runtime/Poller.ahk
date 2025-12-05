@@ -59,8 +59,7 @@ Poller_Tick() {
     if !gPoller.running
         return
     try ToolTip()
-    try if !DX_IsReady()
-        Pixel_ROI_BeginSnapshot()
+    try Pixel_ROI_BeginSnapshot()
     try Pixel_FrameBegin()
     ; 更新施法条驱动的技能状态机（如启用）
     try {

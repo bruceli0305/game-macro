@@ -265,10 +265,6 @@ Profile_SwitchProfile_Strong(name) {
         Rotation_InitFromProfile()
     } catch {
     }
-    try {
-        Dup_OnProfileChanged()
-    } catch {
-    }
 
     return true
 }

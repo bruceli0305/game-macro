@@ -130,12 +130,6 @@ Diag_FillOutputs() {
     cnt := 0
     names := []
 
-    try {
-        cnt := DX_EnumOutputs()
-    } catch {
-        cnt := 0
-    }
-
     if (cnt <= 0) {
         UI.DG_DdOut.Add(["（无输出）"])
         UI.DG_DdOut.Value := 1
@@ -146,11 +140,6 @@ Diag_FillOutputs() {
     loop cnt {
         idx := A_Index - 1
         nm := ""
-        try {
-            nm := DX_GetOutputName(idx)
-        } catch {
-            nm := ""
-        }
         if (nm = "") {
             nm := "Output#" idx
         }
@@ -161,11 +150,6 @@ Diag_FillOutputs() {
     ; 选中当前 OutIdx
     sel := 1
     cur := 0
-    try {
-        cur := gDX.OutIdx
-    } catch {
-        cur := 0
-    }
     i := 0
     for _, row in names {
         i += 1
@@ -180,49 +164,6 @@ Diag_FillOutputs() {
         }
     }
     UI.DG_DdOut.Value := sel
-}
-
-Diag_BuildDXSummary() {
-    out := ""
-    try {
-        en := 0
-        rd := 0
-        idx := 0
-        fps := 0
-        name := ""
-        l := 0, t := 0, r := 0, b := 0
-
-        try {
-            en := gDX.Enabled ? 1 : 0
-        } catch {
-            en := 0
-        }
-        ready := 0
-        try {
-            ready := DX_IsReady()
-        } catch {
-            ready := 0
-        }
-        try {
-            idx := gDX.OutIdx
-            fps := gDX.FPS
-            name := gDX.MonName
-            l := gDX.L
-            t := gDX.T
-            r := gDX.R
-            b := gDX.B
-        } catch {
-        }
-
-        out .= "Enabled: " en "`r`n"
-        out .= "Ready: " ready "`r`n"
-        out .= "OutIdx: " idx "  Name: " name "`r`n"
-        out .= "Rect: (" l "," t ") - (" r "," b ")" "`r`n"
-        out .= "FPS: " fps "`r`n"
-    } catch {
-        out := "读取 DXGI 状态失败。"
-    }
-    return out
 }
 
 Diag_BuildROISummary() {
@@ -258,12 +199,6 @@ Diag_BuildStatsSummary() {
     s := ""
     try {
         dx := 0, roi := 0, gdi := 0
-        try {
-            dx := gDX.Stats.Dx
-            roi := gDX.Stats.Roi
-            gdi := gDX.Stats.Gdi
-        } catch {
-        }
         s := "Path Hits => DXGI: " dx "   ROI: " roi "   GDI: " gdi
     } catch {
         s := "读取统计失败。"
@@ -274,10 +209,6 @@ Diag_BuildStatsSummary() {
 ; ====== 事件处理 ======
 
 Diag_OnRefresh(*) {
-    try {
-        UI.DG_Info.Value := Diag_BuildDXSummary()
-    } catch {
-    }
     try {
         UI.DG_ROI_Info.Text := Diag_BuildROISummary()
     } catch {
@@ -308,11 +239,6 @@ Diag_OnApplyOutput(*) {
     }
 
     ok := 0
-    try {
-        ok := Dup_SelectOutputIdx(idx)
-    } catch {
-        ok := 0
-    }
     if (ok = 1) {
         Notify("输出已切换到 #" idx)
     } else {
@@ -387,15 +313,6 @@ Diag_OnPick(*) {
 }
 
 Diag_OnClearStats(*) {
-    try {
-        gDX.Stats.Dx := 0
-        gDX.Stats.Roi := 0
-        gDX.Stats.Gdi := 0
-        gDX.Stats.LastLog := 0
-        Notify("统计已清零")
-    } catch {
-        Notify("统计清零失败")
-    }
     Diag_OnRefresh()
 }
 

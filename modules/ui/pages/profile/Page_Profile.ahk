@@ -870,10 +870,6 @@ Profile_OnApplyGeneral(*) {
         } catch {
         }
         try {
-            Dup_OnProfileChanged()
-        } catch {
-        }
-        try {
             Logger_Info("UI", "ApplyGeneral end", Map("hk", hk, "poll", pi, "delay", delay))
         } catch {
         }

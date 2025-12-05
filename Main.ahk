@@ -29,7 +29,6 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 #Include "modules\core\AppConfig.ahk"
 #Include "modules\core\Core.ahk"
 #Include "modules\engines\Rotation.ahk"
-#Include "modules\engines\Dup.ahk"
 #Include "modules\engines\Pixel.ahk"
 #Include "modules\engines\CastEngine.ahk"
 #Include "modules\engines\RuleEngine.ahk"
@@ -69,9 +68,6 @@ env["arch"] := (A_PtrSize = 8) ? "x64" : "x86"
     env["os"] := A_OSVersion
     Logger_Info("Core", "App start", env)
     Core_Init()
-    try {
-        Dup_InitAuto()   ; 如果 EnumOutputs=0，将直接返回 false，不创建线程
-    }
     ; 初始化 ID 生成器（建议从 AppConfig 读取）
     try {
         ID_Init(1)
@@ -85,7 +81,6 @@ env["arch"] := (A_PtrSize = 8) ? "x64" : "x86"
         try Poller_Stop()
         try WorkerPool_Dispose()
         try Pixel_ROI_Dispose()
-        try DX_Shutdown()
         try Logger_Flush()
         Logger_Info("Core", "App exit", Map())
         return 0
