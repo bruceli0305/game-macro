@@ -179,7 +179,7 @@ WorkerPool_SendSkillIndex(threadId, idx, src := "", holdOverride := -1) {
     } catch {
         finalHold := 0
     }
-    ok := WorkerPool_FireAndForget(s.Key, delay, finalHold)
+    ok := KeyOut_SendSkill(s, delay, finalHold)
 
     if (ok) {
         try {
@@ -228,6 +228,6 @@ WorkerPool_SendSkillIndex(threadId, idx, src := "", holdOverride := -1) {
 WorkerPool_TestFF() {
     MsgBox("3秒后向前台窗口发送 'a'，请切到记事本")
     Sleep 3000
-    ok := WorkerPool_FireAndForget("a", 100, 0)
+    ok := KeyOut_Send("a", 100, 0)
     MsgBox("FireAndForget: " (ok ? "OK" : "FAIL"))
 }

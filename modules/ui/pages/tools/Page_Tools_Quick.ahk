@@ -110,9 +110,9 @@ ToolsQuick_OnSend(*) {
     }
 
     ok := false
-    ; 优先用 WorkerPool_FireAndForget，失败再回退 SendEvent
+    ; 优先用 KeyOut_Send，失败再回退 SendEvent
     try {
-        ok := WorkerPool_FireAndForget(key, Max(0, delay), Max(0, hold))
+        ok := KeyOut_Send(key, Max(0, delay), Max(0, hold))
     } catch {
         ok := false
     }

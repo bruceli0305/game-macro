@@ -3,6 +3,7 @@
 ; 将“文件夹-模块化-Id引用”Profile 转为“引擎可用的索引引用”结构（运行时模型）
 ; 依赖：OM_Get / PM_BuildIdMaps / PM_*IndexById / Logger_*
 ; 严格块结构，不使用单行 if/try/catch
+#Include "..\..\..\core\KeyMap.ahk"
 
 PM_ToRuntime(profile) {
     data := Core_DefaultProfileData()
@@ -111,6 +112,7 @@ PM_ToRuntime(profile) {
     }
 
     ; ===== Skills =====
+        ; ===== Skills =====
     data.Skills := []
     if (profile.Has("Skills") && IsObject(profile["Skills"])) {
         i := 1
@@ -126,10 +128,39 @@ PM_ToRuntime(profile) {
             cast := OM_Get(s, "CastMs", 0)
             lock := OM_Get(s, "LockDuringCast", 1)
             cto  := OM_Get(s, "CastTimeoutMs", 0)
+
+            hid := 0
+            km := 0
+            try {
+                km := KeyMap_ResolveKey(key)
+                if (IsObject(km) && km.Has("CanQmk")) {
+                    if (km["CanQmk"]) {
+                        hid := km["HidCode"]
+                    } else {
+                        hid := 0
+                    }
+                }
+            } catch {
+                hid := 0
+            }
+
+            if (dbgRt) {
+                if (hid = 0) {
+                    try {
+                        fK := Map()
+                        fK["SkillId"] := id
+                        fK["Key"] := key
+                        Logger_Warn("Runtime", "Skill Key→HidCode failed", fK)
+                    } catch {
+                    }
+                }
+            }
+
             data.Skills.Push({
                   Id: id
                 , Name: nm
                 , Key: key
+                , HidCode: hid
                 , X: x
                 , Y: y
                 , Color: col
