@@ -167,5 +167,5 @@ Poller_SendKey(keySpec, holdMs := 0) {
         if IsObject(App) && App.Has("ProfileData") && HasProp(App["ProfileData"], "SendCooldownMs")
             delay := Max(0, Integer(App["ProfileData"].SendCooldownMs))
     }
-    return WorkerPool_FireAndForget(s, delay, Max(0, holdMs))
+    return KeyOut_Send(s, delay, Max(0, holdMs))
 }

@@ -38,6 +38,7 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 #Include "modules\runtime\Poller.ahk"
 #Include "modules\runtime\Hotkeys.ahk"
 #Include "modules\workers\WorkerPool.ahk"
+#Include "modules\core\KeyOut.ahk"
 #Include "modules\storage\Exporter.ahk"
 #Include "modules\ui\UI_Layout.ahk"
 #Include "modules\ui\UI_Shell.ahk"
@@ -63,30 +64,33 @@ try {
     Logger_SetThrottlePerSec(0)
 } catch {
 }
+; 初始化键输出后端（QMK DLL + 回退）
+KeyOut_Init()
 env := Map()
 env["arch"] := (A_PtrSize = 8) ? "x64" : "x86"
-    env["admin"] := (A_IsAdmin ? "Admin" : "User")
-    env["os"] := A_OSVersion
-    Logger_Info("Core", "App start", env)
-    Core_Init()
-    try {
-        Dup_InitAuto()   ; 如果 EnumOutputs=0，将直接返回 false，不创建线程
-    }
-    ; 初始化 ID 生成器（建议从 AppConfig 读取）
-    try {
-        ID_Init(1)
-    } catch {
-    }
-    UI_ShowMain()
-    Logger_Info("UI", "Main shown", Map("hwnd", UI.Main.Hwnd))
-    ; 退出时清理
-    OnExit ExitCleanup
-    ExitCleanup(*) {
-        try Poller_Stop()
-        try WorkerPool_Dispose()
-        try Pixel_ROI_Dispose()
-        try DX_Shutdown()
-        try Logger_Flush()
-        Logger_Info("Core", "App exit", Map())
-        return 0
-    }
+env["admin"] := (A_IsAdmin ? "Admin" : "User")
+env["os"] := A_OSVersion
+Logger_Info("Core", "App start", env)
+Core_Init()
+try {
+    Dup_InitAuto()   ; 如果 EnumOutputs=0，将直接返回 false，不创建线程
+}
+; 初始化 ID 生成器（建议从 AppConfig 读取）
+try {
+    ID_Init(1)
+} catch {
+}
+UI_ShowMain()
+Logger_Info("UI", "Main shown", Map("hwnd", UI.Main.Hwnd))
+; 退出时清理
+OnExit ExitCleanup
+ExitCleanup(*) {
+    try Poller_Stop()
+    try WorkerPool_Dispose()
+    try Pixel_ROI_Dispose()
+    try DX_Shutdown()
+    try KeyOut_Shutdown()
+    try Logger_Flush()
+    Logger_Info("Core", "App exit", Map())
+    return 0
+}
