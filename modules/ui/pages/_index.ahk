@@ -54,7 +54,7 @@
 ; tools
 #Include "tools\Page_Tools_IO.ahk"
 #Include "tools\Page_Tools_Quick.ahk"
-
+#Include "tools\Page_RandomRules.ahk"
 ; settings
 #Include "settings\Page_Settings_Lang.ahk"
 #Include "settings\Page_Settings_About.ahk"

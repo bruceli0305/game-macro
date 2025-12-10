@@ -55,6 +55,7 @@ UI_ShowMain() {
 
     nodeToolsIO    := UI.Nav.Add("导入 / 导出", rootTools)
     nodeToolsQuick := UI.Nav.Add("快捷测试",    rootTools)
+    nodeToolsRand  := UI.Nav.Add("随机规则", rootTools)
 
     nodeSettingsLang  := UI.Nav.Add("界面 / 语言", rootSet)
     nodeSettingsAbout := UI.Nav.Add("关于",       rootSet)
@@ -86,6 +87,8 @@ UI_ShowMain() {
 
     UI_NavMap[nodeToolsIO]      := "tools_io"
     UI_NavMap[nodeToolsQuick]   := "tools_quick"
+    UI_NavMap[nodeToolsRand]    := "tools_random_rules"
+
     UI_NavMap[nodeSettingsLang] := "settings_lang"
     UI_NavMap[nodeSettingsAbout]:= "settings_about"
 
@@ -109,7 +112,7 @@ UI_ShowMain() {
     UI_RegisterPage("adv_rotation_opener",  "轮换-起手",  Page_RotOpener_Build,      Page_RotOpener_Layout,     Page_RotOpener_OnEnter)
     UI_RegisterPage("tools_io",       "导入导出",   Page_ToolsIO_Build,        Page_ToolsIO_Layout, Page_ToolsIO_OnEnter)
     UI_RegisterPage("tools_quick",    "快捷测试",   Page_ToolsQuick_Build,     Page_ToolsQuick_Layout, Page_ToolsQuick_Layout)
-
+    UI_RegisterPage("tools_random_rules","随机规则", Page_RandomRules_Build, Page_RandomRules_Layout, Page_RandomRules_OnEnter)
     UI_RegisterPage("settings_lang",  "界面语言",   Page_Settings_Lang_Build,  Page_Settings_Lang_Layout, Page_Settings_Lang_OnEnter)
     UI_RegisterPage("settings_about", "关于",       Page_Settings_About_Build, Page_Settings_About_Layout,Page_Settings_About_OnEnter)
 

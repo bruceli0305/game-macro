@@ -43,7 +43,7 @@ if FileExist(A_ScriptDir "\assets\icon.ico") {
 #Include "modules\ui\UI_Layout.ahk"
 #Include "modules\ui\UI_Shell.ahk"
 #Include "modules\gw2\GW2_DB.ahk"
-
+#Include "modules\runtime\RandomRules\_index.ahk"
 ; ========= Bootstrap =========
 AppConfig_Init()
 Lang_Init(AppConfig_Get("Language", "zh-CN"))
@@ -72,14 +72,11 @@ env["admin"] := (A_IsAdmin ? "Admin" : "User")
 env["os"] := A_OSVersion
 Logger_Info("Core", "App start", env)
 Core_Init()
-try {
-    Dup_InitAuto()   ; 如果 EnumOutputs=0，将直接返回 false，不创建线程
-}
-; 初始化 ID 生成器（建议从 AppConfig 读取）
-try {
-    ID_Init(1)
-} catch {
-}
+
+try RandomRules_Init()
+try Dup_InitAuto()
+try ID_Init(1)
+
 UI_ShowMain()
 Logger_Info("UI", "Main shown", Map("hwnd", UI.Main.Hwnd))
 ; 退出时清理
