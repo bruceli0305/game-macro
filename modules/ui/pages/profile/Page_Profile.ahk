@@ -8,15 +8,14 @@ global g_Profile_Populating := IsSet(g_Profile_Populating) ? g_Profile_Populatin
 Page_Profile_Build(page := 0) {
     global UI, UI_Pages, UI_CurrentPage
 
+    wasCrit := A_IsCritical
+    Critical "On"
+
     rc := 0
     try {
         rc := UI_GetPageRect()
     } catch {
         rc := { X: 244, Y: 10, W: 804, H: 760 }
-    }
-    try {
-        Logger_Info("UI", "Profile_Build begin", Map("x", rc.X, "y", rc.Y, "w", rc.W, "h", rc.H))
-    } catch {
     }
 
     pg := 0
@@ -126,9 +125,9 @@ Page_Profile_Build(page := 0) {
         }
     }
 
-    ; 当用户手动输入键盘热键时，清空鼠标回显与缓存
+    ; 当用户手动输入键盘热键时，清空鼠标回显与缓存（箭头回调避免 #Warn）
     try {
-        UI.HkStart.OnEvent("Change", Profile_OnHotkeyChanged)
+        UI.HkStart.OnEvent("Change", (*) => Profile_OnHotkeyChanged())
     } catch {
     }
 
@@ -256,24 +255,28 @@ Page_Profile_Build(page := 0) {
     }
 
     try {
-        UI.ProfilesDD.OnEvent("Change", Profile_OnProfilesChanged)
-        UI.BtnNew.OnEvent("Click", Profile_OnNew)
-        UI.BtnClone.OnEvent("Click", Profile_OnClone)
-        UI.BtnDelete.OnEvent("Click", Profile_OnDelete)
-        UI.BtnCapStartMouse.OnEvent("Click", Profile_OnCaptureStartMouse)
-        UI.BtnApply.OnEvent("Click", Profile_OnApplyGeneral)
+        UI.ProfilesDD.OnEvent("Change", (*) => Profile_OnProfilesChanged())
+        UI.BtnNew.OnEvent("Click", (*) => Profile_OnNew())
+        UI.BtnClone.OnEvent("Click", (*) => Profile_OnClone())
+        UI.BtnDelete.OnEvent("Click", (*) => Profile_OnDelete())
+        UI.BtnCapStartMouse.OnEvent("Click", (*) => Profile_OnCaptureStartMouse())
+        UI.BtnApply.OnEvent("Click", (*) => Profile_OnApplyGeneral())
     } catch {
     }
 
     ; 构建完成后立即填充下拉
     try {
-        ok := Profile_UI_PopulateProfilesDD()
-        Logger_Info("UI", "PopulateProfilesDD after build", Map("ok", ok ? 1 : 0))
+        Profile_UI_PopulateProfilesDD()
     } catch {
     }
 
+    ; 还原 Critical 状态
     try {
-        Logger_Info("UI", "Profile_Build end", Map())
+        if (wasCrit) {
+            Critical "On"
+        } else {
+            Critical "Off"
+        }
     } catch {
     }
 }
@@ -400,19 +403,9 @@ Page_Profile_Layout(rc := 0) {
 }
 
 Page_Profile_OnEnter(*) {
+    ; 刷新（强一致）
     try {
-        Logger_Info("UI", "Profile_OnEnter", Map())
-    } catch {
-    }
-
-    ok := false
-    try {
-        ok := Profile_RefreshAll_Strong()
-    } catch {
-        ok := false
-    }
-    try {
-        Logger_Info("UI", "Profile_OnEnter RefreshAll", Map("ok", ok ? 1 : 0))
+        Profile_RefreshAll_Strong()
     } catch {
     }
 
@@ -424,8 +417,7 @@ Page_Profile_OnEnter(*) {
         } catch {
             cur := ""
         }
-        ok2 := Profile_UI_PopulateProfilesDD(cur)
-        Logger_Info("UI", "PopulateProfilesDD on enter", Map("ok", ok2 ? 1 : 0, "cur", cur))
+        Profile_UI_PopulateProfilesDD(cur)
     } catch {
     }
 
@@ -466,11 +458,6 @@ Profile_OnProfilesChanged(*) {
         ok := Profile_SwitchProfile_Strong(name)
     } catch {
         ok := false
-    }
-
-    try {
-        Logger_Info("UI", "ProfilesChanged", Map("name", name, "ok", ok ? 1 : 0))
-    } catch {
     }
 
     if (ok) {
@@ -526,7 +513,6 @@ Profile_OnNew(*) {
         Profile_RefreshAll_Strong()
         Profile_UI_PopulateProfilesDD(name)
         Notify(T("msg.created","已创建：") name)
-        Logger_Info("UI", "ProfileNew", Map("name", name))
     } catch {
     }
 }
@@ -600,7 +586,6 @@ Profile_OnClone(*) {
         Profile_RefreshAll_Strong()
         Profile_UI_PopulateProfilesDD(newName)
         Notify(T("msg.cloned","已复制为：") newName)
-        Logger_Info("UI", "ProfileClone", Map("src", src, "dst", newName))
     } catch {
     }
 }
@@ -659,7 +644,6 @@ Profile_OnDelete(*) {
         Profile_RefreshAll_Strong()
         Profile_UI_PopulateProfilesDD()
         Notify(T("msg.deleted","已删除：") cur)
-        Logger_Info("UI", "ProfileDelete", Map("name", cur))
     } catch {
     }
 }
@@ -699,7 +683,7 @@ Profile_OnCaptureStartMouse(*) {
         } catch {
         }
         try {
-            UI.HkStart.Tag  := key
+            UI.HkStart.Tag := key
         } catch {
         }
         try {
@@ -733,11 +717,6 @@ Profile_OnHotkeyChanged(*) {
 ; 新版：保存到新存储（general.ini），不再调用旧 Storage_SaveProfile
 Profile_OnApplyGeneral(*) {
     global App, UI
-
-    try {
-        Logger_Info("UI", "ApplyGeneral begin", Map())
-    } catch {
-    }
 
     ; 取当前 Profile 名称
     name := ""
@@ -871,10 +850,6 @@ Profile_OnApplyGeneral(*) {
         }
         try {
             Dup_OnProfileChanged()
-        } catch {
-        }
-        try {
-            Logger_Info("UI", "ApplyGeneral end", Map("hk", hk, "poll", pi, "delay", delay))
         } catch {
         }
         Notify(T("msg.saved","配置已保存"))

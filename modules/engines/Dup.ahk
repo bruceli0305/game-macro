@@ -188,40 +188,32 @@ Dup_InitAuto(outputIdx := 0, fps := 0) {
 }
 
 Dup_UpdateMonitorRect() {
-    name := ""
-    try name := DX_GetOutputName(gDX.OutIdx)
-    gDX.MonName := name
-
+    global gDX
+    ; 不再调用 DX_GetOutputName / MonitorGetName 匹配，避免反复 BuildAllOutputs
     cnt := 0
     try cnt := MonitorGetCount()
-    found := false
-    l := 0, t := 0, r := A_ScreenWidth - 1, b := A_ScreenHeight - 1
+    if (cnt <= 0) {
+        gDX.L := 0, gDX.T := 0, gDX.R := A_ScreenWidth - 1, gDX.B := A_ScreenHeight - 1
+        gDX.MonName := ""
+        return
+    }
 
-    loop cnt {
-        i := A_Index
-        mname := ""
-        try {
-            mname := MonitorGetName(i)
-        } catch {
-            mname := ""
-        }
-        if (mname != "" && name != "" && mname = name) {
-            try MonitorGet(i, &l, &t, &r, &b)
-            gDX.L := l, gDX.T := t, gDX.R := r, gDX.B := b
-            found := true
-            break
-        }
+    idx := gDX.OutIdx + 1
+    if (idx < 1 || idx > cnt) {
+        idx := 1
     }
-    if !found {
-        idx := gDX.OutIdx + 1
-        if (idx >= 1 && idx <= cnt) {
-            try MonitorGet(idx, &l, &t, &r, &b)
-        } else {
-            try MonitorGet(1, &l, &t, &r, &b)   ; 主屏兜底
-        }
-        gDX.L := l, gDX.T := t, gDX.R := r, gDX.B := b
+
+    l := 0, t := 0, r := 0, b := 0
+    try {
+        MonitorGet(idx, &l, &t, &r, &b)
+    } catch {
+        l := 0, t := 0, r := A_ScreenWidth - 1, b := A_ScreenHeight - 1
     }
+
+    gDX.L := l, gDX.T := t, gDX.R := r, gDX.B := b
+    gDX.MonName := ""  ; 不再依赖 \\.\DISPLAYX
 }
+
 
 Dup_ScreenToOutput(x, y) {
     if (x < gDX.L || y < gDX.T || x > gDX.R || y > gDX.B)

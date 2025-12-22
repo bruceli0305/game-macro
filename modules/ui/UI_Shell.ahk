@@ -1,11 +1,16 @@
-; ============================== modules\ui\UI_Shell.ahk ==============================
 #Requires AutoHotkey v2
+; ============================== modules\ui\UI_Shell.ahk ==============================
 #Include "pages\_index.ahk"
 
 ; 主壳：左侧 TreeView + 右侧面板（严格块结构）
+; 保留修复点：
+; - OnEvent 绑定全部改为箭头函数（不使用 Func("...")，同时消除 #Warn）
+; - Size/Nav 事件在切页期间直接跳过（配合 g_UI_Switching 防止重入导致卡住）
+; 已删除：UI_ShowMain begin/end 的 Info 打点日志
 
 UI_ShowMain() {
     global UI, UI_NavMap
+
     UI_EnablePerMonitorDPI()
 
     try {
@@ -13,18 +18,22 @@ UI_ShowMain() {
             Lang_Init("zh-CN")
         }
     } catch {
-        Lang_Init("zh-CN")
+        try {
+            Lang_Init("zh-CN")
+        } catch {
+        }
     }
 
     UI.Main := Gui("+Resize +OwnDialogs", T("app.title", "Game Macro - v0.2.4"))
     UI.Main.MarginX := 12
     UI.Main.MarginY := 10
     UI.Main.SetFont("s10", "Segoe UI")
-    UI.Main.OnEvent("Size", UI_OnResize_LeftNav)
-    UI.Main.OnEvent("Close", UI_OnMainClose)
+
+    UI.Main.OnEvent("Size", (gui, minmax, w, h) => UI_OnResize_LeftNav(gui, minmax, w, h))
+    UI.Main.OnEvent("Close", (*) => UI_OnMainClose())
 
     UI.Nav := UI.Main.Add("TreeView", "xm ym w220 h620 +Lines +Buttons")
-    UI.Nav.OnEvent("Click", UI_OnNavChange)
+    UI.Nav.OnEvent("Click", (*) => UI_OnNavChange())
 
     rootProfile := UI.Nav.Add("概览与配置")
     rootData    := UI.Nav.Add("数据与检测")
@@ -47,7 +56,8 @@ UI_ShowMain() {
     nodeDiag    := UI.Nav.Add("采集诊断（DXGI/ROI）", rootAdv)
     nodeLogs    := UI.Nav.Add("日志查看",             rootAdv)
     nodeCastDbg := UI.Nav.Add("技能调试 / 施法条",     rootAdv)
-    ; 新增：轮换配置的三级菜单（第一步：常规、轨道）
+
+    ; 轮换配置三级菜单
     nodeRotGen    := UI.Nav.Add("常规", nodeRot)
     nodeRotTrks   := UI.Nav.Add("轨道", nodeRot)
     nodeRotGates  := UI.Nav.Add("跳轨", nodeRot)
@@ -55,7 +65,7 @@ UI_ShowMain() {
 
     nodeToolsIO    := UI.Nav.Add("导入 / 导出", rootTools)
     nodeToolsQuick := UI.Nav.Add("快捷测试",    rootTools)
-    nodeToolsRand  := UI.Nav.Add("随机规则", rootTools)
+    nodeToolsRand  := UI.Nav.Add("随机规则",    rootTools)
 
     nodeSettingsLang  := UI.Nav.Add("界面 / 语言", rootSet)
     nodeSettingsAbout := UI.Nav.Add("关于",       rootSet)
@@ -67,30 +77,34 @@ UI_ShowMain() {
         UI.Nav.Modify(rootAdv,     "Expand")
         UI.Nav.Modify(rootTools,   "Expand")
         UI.Nav.Modify(rootSet,     "Expand")
+    } catch {
     }
-    UI_NavMap[nodeProfile]      := "profile"
-    UI_NavMap[nodeSkills]       := "skills"
-    UI_NavMap[nodePoints]       := "points"
-    UI_NavMap[nodeDefault]      := "default_skill"
-    UI_NavMap[nodeRules]        := "rules"
-    UI_NavMap[nodeBuffs]        := "buffs"
-    UI_NavMap[nodeThreads]      := "threads"
-    UI_NavMap[nodeRot]          := "adv_rotation"
-    UI_NavMap[nodeDiag]         := "adv_diag"
-    UI_NavMap[nodeLogs]         := "adv_logs"
-    UI_NavMap[nodeCastDbg]      := "adv_castdebug"
-    ; 新增映射
-    UI_NavMap[nodeRotGen]       := "adv_rotation_general"
-    UI_NavMap[nodeRotTrks]      := "adv_rotation_tracks"
-    UI_NavMap[nodeRotGates]     := "adv_rotation_gates"
-    UI_NavMap[nodeRotOpener]    := "adv_rotation_opener"
 
-    UI_NavMap[nodeToolsIO]      := "tools_io"
-    UI_NavMap[nodeToolsQuick]   := "tools_quick"
-    UI_NavMap[nodeToolsRand]    := "tools_random_rules"
+    UI_NavMap[nodeProfile]       := "profile"
+    UI_NavMap[nodeSkills]        := "skills"
+    UI_NavMap[nodePoints]        := "points"
+    UI_NavMap[nodeDefault]       := "default_skill"
 
-    UI_NavMap[nodeSettingsLang] := "settings_lang"
-    UI_NavMap[nodeSettingsAbout]:= "settings_about"
+    UI_NavMap[nodeRules]         := "rules"
+    UI_NavMap[nodeBuffs]         := "buffs"
+    UI_NavMap[nodeThreads]       := "threads"
+
+    UI_NavMap[nodeRot]           := "adv_rotation"
+    UI_NavMap[nodeDiag]          := "adv_diag"
+    UI_NavMap[nodeLogs]          := "adv_logs"
+    UI_NavMap[nodeCastDbg]       := "adv_castdebug"
+
+    UI_NavMap[nodeRotGen]        := "adv_rotation_general"
+    UI_NavMap[nodeRotTrks]       := "adv_rotation_tracks"
+    UI_NavMap[nodeRotGates]      := "adv_rotation_gates"
+    UI_NavMap[nodeRotOpener]     := "adv_rotation_opener"
+
+    UI_NavMap[nodeToolsIO]       := "tools_io"
+    UI_NavMap[nodeToolsQuick]    := "tools_quick"
+    UI_NavMap[nodeToolsRand]     := "tools_random_rules"
+
+    UI_NavMap[nodeSettingsLang]  := "settings_lang"
+    UI_NavMap[nodeSettingsAbout] := "settings_about"
 
     UI_RegisterPage("profile",        "概览与配置", Page_Profile_Build,        Page_Profile_Layout, Page_Profile_OnEnter)
     UI_RegisterPage("skills",         "技能配置",   Page_Skills_Build,         Page_Skills_Layout, Page_Skills_OnEnter)
@@ -103,25 +117,43 @@ UI_ShowMain() {
 
     UI_RegisterPage("adv_rotation",   "轮换配置",   Page_Rotation_Build,       Page_Rotation_Layout,      Page_Rotation_OnEnter)
     UI_RegisterPage("adv_diag",       "采集诊断",   Page_Diag_Build,           Page_Diag_Layout)
-    UI_RegisterPage("adv_logs",       "日志查看",   Page_Logs_Build,           Page_Logs_Layout,         Page_Logs_OnEnter)
-    UI_RegisterPage("adv_castdebug",  "技能调试",   Page_CastDebug_Build, Page_CastDebug_Layout, Page_CastDebug_OnEnter)
-    ; 新注册：轮换配置下的两页
-    UI_RegisterPage("adv_rotation_general", "轮换-常规", Page_RotGen_Build,   Page_RotGen_Layout,   Page_RotGen_OnEnter)
-    UI_RegisterPage("adv_rotation_tracks",  "轮换-轨道", Page_RotTracks_Build,Page_RotTracks_Layout,Page_RotTracks_OnEnter)
-    UI_RegisterPage("adv_rotation_gates",   "轮换-跳轨",  Page_RotGates_Build,       Page_RotGates_Layout,      Page_RotGates_OnEnter)
-    UI_RegisterPage("adv_rotation_opener",  "轮换-起手",  Page_RotOpener_Build,      Page_RotOpener_Layout,     Page_RotOpener_OnEnter)
-    UI_RegisterPage("tools_io",       "导入导出",   Page_ToolsIO_Build,        Page_ToolsIO_Layout, Page_ToolsIO_OnEnter)
-    UI_RegisterPage("tools_quick",    "快捷测试",   Page_ToolsQuick_Build,     Page_ToolsQuick_Layout, Page_ToolsQuick_Layout)
-    UI_RegisterPage("tools_random_rules","随机规则", Page_RandomRules_Build, Page_RandomRules_Layout, Page_RandomRules_OnEnter)
-    UI_RegisterPage("settings_lang",  "界面语言",   Page_Settings_Lang_Build,  Page_Settings_Lang_Layout, Page_Settings_Lang_OnEnter)
-    UI_RegisterPage("settings_about", "关于",       Page_Settings_About_Build, Page_Settings_About_Layout,Page_Settings_About_OnEnter)
+    UI_RegisterPage("adv_logs",       "日志查看",   Page_Logs_Build,           Page_Logs_Layout,          Page_Logs_OnEnter)
+    UI_RegisterPage("adv_castdebug",  "技能调试",   Page_CastDebug_Build,      Page_CastDebug_Layout,     Page_CastDebug_OnEnter)
+
+    UI_RegisterPage("adv_rotation_general", "轮换-常规", Page_RotGen_Build,       Page_RotGen_Layout,       Page_RotGen_OnEnter)
+    UI_RegisterPage("adv_rotation_tracks",  "轮换-轨道", Page_RotTracks_Build,    Page_RotTracks_Layout,    Page_RotTracks_OnEnter)
+    UI_RegisterPage("adv_rotation_gates",   "轮换-跳轨", Page_RotGates_Build,     Page_RotGates_Layout,     Page_RotGates_OnEnter)
+    UI_RegisterPage("adv_rotation_opener",  "轮换-起手", Page_RotOpener_Build,    Page_RotOpener_Layout,    Page_RotOpener_OnEnter)
+
+    UI_RegisterPage("tools_io",           "导入导出", Page_ToolsIO_Build,        Page_ToolsIO_Layout,       Page_ToolsIO_OnEnter)
+
+    ; 修复：第 5 个参数是 OnEnter，不要误传 Layout
+    UI_RegisterPage("tools_quick",        "快捷测试", Page_ToolsQuick_Build,     Page_ToolsQuick_Layout)
+
+    UI_RegisterPage("tools_random_rules", "随机规则", Page_RandomRules_Build,    Page_RandomRules_Layout,   Page_RandomRules_OnEnter)
+
+    UI_RegisterPage("settings_lang",      "界面语言", Page_Settings_Lang_Build,  Page_Settings_Lang_Layout,  Page_Settings_Lang_OnEnter)
+    UI_RegisterPage("settings_about",     "关于",     Page_Settings_About_Build, Page_Settings_About_Layout, Page_Settings_About_OnEnter)
 
     UI.Main.Show("w1060 h780")
 
     try {
         UI.Nav.Modify(nodeProfile, "Select")
+    } catch {
     }
-    UI_OnNavChange()
+
+    try {
+        UI_OnNavChange()
+    } catch as e {
+        try {
+            Logger_Crash("UI", e, Map("where", "UI_OnNavChange (init)"))
+            if HasProp(e, "Stack") {
+                Logger_Error("UI", "Stack", Map("stack", e.Stack))
+            }
+        } catch {
+        }
+        throw e
+    }
 }
 
 UI_OnMainClose(*) {
@@ -130,6 +162,10 @@ UI_OnMainClose(*) {
 
 UI_OnNavChange(*) {
     global UI, UI_NavMap
+
+    if (IsSet(g_UI_Switching) && g_UI_Switching) {
+        return
+    }
 
     sel := UI.Nav.GetSelection()
     if (!sel) {
@@ -149,6 +185,9 @@ UI_OnNavChange(*) {
 UI_OnResize_LeftNav(gui, minmax, w, h) {
     global UI
 
+    if (IsSet(g_UI_Switching) && g_UI_Switching) {
+        return
+    }
     if (minmax = 1) {
         return
     }
@@ -158,7 +197,11 @@ UI_OnResize_LeftNav(gui, minmax, w, h) {
     if (w <= 0 || h <= 0) {
         return
     }
+
     navW := 220
-    UI.Nav.Move(UI.Main.MarginX, UI.Main.MarginY, navW, Max(h - UI.Main.MarginY * 2, 320))
+    try {
+        UI.Nav.Move(UI.Main.MarginX, UI.Main.MarginY, navW, Max(h - UI.Main.MarginY * 2, 320))
+    } catch {
+    }
     UI_LayoutCurrentPage()
 }
