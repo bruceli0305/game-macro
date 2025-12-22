@@ -79,6 +79,10 @@ Exporter_ExportProfile(profileName, opts) {
         } catch {
         }
         MsgBox "复制配置目录失败，导出中止。"
+        try {
+            DirDelete(tempDir, true)
+        } catch {
+        }
         return false
     }
 
@@ -94,6 +98,10 @@ Exporter_ExportProfile(profileName, opts) {
         } catch {
         }
         MsgBox "压缩失败，请检查 minizip 配置或查看日志。"
+        try {
+            DirDelete(tempDir, true)
+        } catch {
+        }
         return false
     }
 

@@ -36,6 +36,28 @@ Minizip_GetExePath() {
     return "minizip.exe"
 }
 
+; 将命令行中的密码参数脱敏（避免写入日志）
+Minizip_RedactCmd(cmd) {
+    s := "" cmd
+    if (s = "")
+        return ""
+
+    ; 匹配：-p "password"（允许 -p 和引号之间有/无空格）
+    try {
+        s := RegExReplace(s, "i)(^|\s)-p\s*`"[^`"]*`"", "$1-p `"***`"")
+    } catch {
+    }
+
+    ; 匹配：-p password（无引号情况）
+    try {
+        s := RegExReplace(s, "i)(^|\s)-p\s*\S+", "$1-p ***")
+    } catch {
+    }
+
+    return s
+}
+
+
 ; 压缩整个目录 rootFolder 到 zipPath
 ; password 可为空字符串（无密码）
 Minizip_ZipFolder(zipPath, rootFolder, password := "") {
@@ -148,7 +170,7 @@ Minizip_ZipFolder(zipPath, rootFolder, password := "") {
 
     if (exitCode != 0) {
         try {
-            Logger_Error("Minizip", "ZipFolder failed", Map("code", exitCode, "cmd", cmd))
+            Logger_Error("Minizip", "ZipFolder failed", Map("code", exitCode, "cmd", Minizip_RedactCmd(cmd)))
         } catch {
         }
         return false
@@ -217,7 +239,7 @@ Minizip_UnzipToFolder(zipPath, destFolder, password := "") {
 
     if (exitCode != 0) {
         try {
-            Logger_Error("Minizip", "UnzipToFolder failed", Map("code", exitCode, "cmd", cmd))
+            Logger_Error("Minizip", "UnzipToFolder failed", Map("code", exitCode, "cmd", Minizip_RedactCmd(cmd)))
         } catch {
         }
         return false

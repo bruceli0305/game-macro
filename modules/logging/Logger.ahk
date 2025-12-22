@@ -9,6 +9,40 @@ global g_LogLevelText := Map()
 global g_LogLevelNum  := Map()
 global g_LogThrottle := Map()
 
+Logger__OptHas(opts, key) {
+    if !IsObject(opts) {
+        return false
+    }
+    try {
+        if (opts is Map) {
+            return opts.Has(key)
+        }
+    } catch {
+    }
+    try {
+        return HasProp(opts, key)
+    } catch {
+        return false
+    }
+}
+
+Logger__OptGet(opts, key, default := "") {
+    if !IsObject(opts) {
+        return default
+    }
+    try {
+        if (opts is Map) {
+            return opts.Has(key) ? opts[key] : default
+        }
+    } catch {
+    }
+    try {
+        return HasProp(opts, key) ? opts.%key% : default
+    } catch {
+        return default
+    }
+}
+
 Logger___InitTables() {
     global g_LogLevelText, g_LogLevelNum
     if (g_LogLevelText.Count = 0) {
@@ -55,17 +89,18 @@ Logger_Init(opts := 0) {
     g_LogCfg["ThrottlePerSec"] := 5
 
     if IsObject(opts) {
-        if HasProp(opts, "Level") {
-            Logger_SetLevel(opts.Level)
+        if Logger__OptHas(opts, "Level") {
+            Logger_SetLevel(Logger__OptGet(opts, "Level", "INFO"))
         }
-        if HasProp(opts, "PerCategory") {
+        if Logger__OptHas(opts, "PerCategory") {
             ; 允许传入 Map 或 "RuleEngine=DEBUG,DXGI=INFO" 字符串
-            if IsObject(opts.PerCategory) {
-                for k, v in opts.PerCategory {
+            perCat := Logger__OptGet(opts, "PerCategory", 0)
+            if IsObject(perCat) {
+                for k, v in perCat {
                     Logger_SetLevelFor(k, v)
                 }
             } else {
-                pairs := StrSplit("" opts.PerCategory, ",")
+                pairs := StrSplit("" perCat, ",")
                 for _, kv in pairs {
                     kv2 := StrSplit(Trim(kv), "=")
                     if (kv2.Length = 2) {
@@ -74,16 +109,16 @@ Logger_Init(opts := 0) {
                 }
             }
         }
-        if HasProp(opts, "File") {
-            g_LogCfg["File"] := "" opts.File
+        if Logger__OptHas(opts, "File") {
+            g_LogCfg["File"] := "" Logger__OptGet(opts, "File", g_LogCfg["File"])
         }
-        if HasProp(opts, "CrashFile") {
-            g_LogCfg["CrashFile"] := "" opts.CrashFile
+        if Logger__OptHas(opts, "CrashFile") {
+            g_LogCfg["CrashFile"] := "" Logger__OptGet(opts, "CrashFile", g_LogCfg["CrashFile"])
         }
-        if HasProp(opts, "RotateSizeMB") {
+        if Logger__OptHas(opts, "RotateSizeMB") {
             rsz := 10
             try {
-                rsz := Integer(opts.RotateSizeMB)
+                rsz := Integer(Logger__OptGet(opts, "RotateSizeMB", 10))
             } catch {
                 rsz := 10
             }
@@ -92,10 +127,10 @@ Logger_Init(opts := 0) {
             }
             g_LogCfg["RotateSizeMB"] := rsz
         }
-        if HasProp(opts, "RotateKeep") {
+        if Logger__OptHas(opts, "RotateKeep") {
             rkp := 5
             try {
-                rkp := Integer(opts.RotateKeep)
+                rkp := Integer(Logger__OptGet(opts, "RotateKeep", 5))
             } catch {
                 rkp := 5
             }
@@ -104,17 +139,17 @@ Logger_Init(opts := 0) {
             }
             g_LogCfg["RotateKeep"] := rkp
         }
-        if HasProp(opts, "EnableMemory") {
+        if Logger__OptHas(opts, "EnableMemory") {
             try {
-                g_LogCfg["EnableMemory"] := (opts.EnableMemory ? 1 : 0)
+                g_LogCfg["EnableMemory"] := (Logger__OptGet(opts, "EnableMemory", 1) ? 1 : 0)
             } catch {
                 g_LogCfg["EnableMemory"] := true
             }
         }
-        if HasProp(opts, "MemoryCap") {
+        if Logger__OptHas(opts, "MemoryCap") {
             mc := 10000
             try {
-                mc := Integer(opts.MemoryCap)
+                mc := Integer(Logger__OptGet(opts, "MemoryCap", 10000))
             } catch {
                 mc := 10000
             }
@@ -123,27 +158,27 @@ Logger_Init(opts := 0) {
             }
             g_LogCfg["MemoryCap"] := mc
         }
-        if HasProp(opts, "EnablePipe") {
+        if Logger__OptHas(opts, "EnablePipe") {
             try {
-                g_LogCfg["EnablePipe"] := (opts.EnablePipe ? 1 : 0)
+                g_LogCfg["EnablePipe"] := (Logger__OptGet(opts, "EnablePipe", 0) ? 1 : 0)
             } catch {
                 g_LogCfg["EnablePipe"] := false
             }
         }
-        if HasProp(opts, "PipeName") {
-            g_LogCfg["PipeName"] := "" opts.PipeName
+        if Logger__OptHas(opts, "PipeName") {
+            g_LogCfg["PipeName"] := "" Logger__OptGet(opts, "PipeName", "GW2_LogSink")
         }
-        if HasProp(opts, "PipeClient") {
+        if Logger__OptHas(opts, "PipeClient") {
             try {
-                g_LogCfg["PipeClient"] := (opts.PipeClient ? 1 : 0)
+                g_LogCfg["PipeClient"] := (Logger__OptGet(opts, "PipeClient", 0) ? 1 : 0)
             } catch {
                 g_LogCfg["PipeClient"] := false
             }
         }
-        if HasProp(opts, "ThrottlePerSec") {
+        if Logger__OptHas(opts, "ThrottlePerSec") {
             tp := 5
             try {
-                tp := Integer(opts.ThrottlePerSec)
+                tp := Integer(Logger__OptGet(opts, "ThrottlePerSec", 5))
             } catch {
                 tp := 5
             }
@@ -394,7 +429,7 @@ Logger__DirectWriteLine(line) {
     } else {
         FileSink_WriteLine(g_LogCfg["File"], line, g_LogCfg["RotateSizeMB"], g_LogCfg["RotateKeep"])
     }
-    if g_LogCfg["EnableMemory"] {
+    if (g_LogCfg["EnableMemory"]) {
         MemorySink_Add(line)
     }
 }

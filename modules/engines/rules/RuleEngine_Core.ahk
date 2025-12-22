@@ -36,8 +36,9 @@ RuleEngine_Tick() {
             return false
 
         ; 冷却
+        cd := HasProp(r, "CooldownMs") ? r.CooldownMs : 0
         last := HasProp(r, "LastFire") ? r.LastFire : 0
-        if (r.CooldownMs - (now - last) > 0)
+        if (cd - (now - last) > 0)
             return false
 
         ; 过滤（若外部仍开启）
@@ -235,7 +236,8 @@ RuleEngine_Fire(rule, prof, ruleIndex := 0) {
             anySent := true
             try {
                 f := Map()
-                f["ruleId"] := (HasProp(rule, "Priority") ? rule.Priority : 0)
+                f["ruleId"] := (ruleIndex > 0 ? ruleIndex : 0)
+                f["priority"] := (HasProp(rule, "Priority") ? rule.Priority : 0)
                 f["name"] := rule.Name
                 f["mode"] := "Counter"
                 Logger_Info("RuleEngine", "Rule fired", f)
@@ -247,7 +249,12 @@ RuleEngine_Fire(rule, prof, ruleIndex := 0) {
     }
 
     if (anySent && ruleIndex > 0) {
-        RE_LastFireTick[ruleIndex] := A_TickCount
+        now := A_TickCount
+        RE_LastFireTick[ruleIndex] := now
+        try {
+            rule.LastFire := now
+        } catch {
+        }
         resetList := []
         for _, c in rule.Conditions
             if (HasProp(c, "Kind") && StrUpper(c.Kind) = "COUNTER"

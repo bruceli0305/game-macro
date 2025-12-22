@@ -237,30 +237,6 @@ CastEngine_Tick() {
 
     now := A_TickCount
 
-        ; 施法条当前颜色
-    cur := 0
-    try {
-        cur := Pixel_FrameGet(cb.X, cb.Y)
-    } catch {
-        cur := 0
-    }
-
-    tgtInt := 0
-    try {
-        tgtInt := Pixel_HexToInt(cb.Color)
-    } catch {
-        tgtInt := 0
-    }
-
-    barActive := false
-    try {
-        barActive := Pixel_ColorMatch(cur, tgtInt, cb.Tol)
-    } catch {
-        barActive := false
-    }
-
-    now := A_TickCount
-
     ; 条亮：标记 SawBar，并处理“读条超时=FAILED”
     if (barActive) {
         i := 1

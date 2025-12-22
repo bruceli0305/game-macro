@@ -84,7 +84,7 @@ OnCopyData(wParam, lParam, msg, hwndFrom) {
 
     cmd := parts[1]
     try {
-        Logger_Info("WorkerHost", "recv cmd", Map("cmd", cmd, "key", key, "delay", delay, "hold", hold))
+        Logger_Info("WorkerHost", "recv cmd", Map("cmd", cmd))
     } catch {
     }
     if (cmd = "SK") {

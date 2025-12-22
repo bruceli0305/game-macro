@@ -27,6 +27,15 @@ Dup_DumpEnv() {
 }
 
 ; ---------- DLL 导出 ----------
+DX_LoadDll(dllPath := "") {
+    global DX_dll
+    if (dllPath = "") {
+        dllPath := A_ScriptDir "\modules\lib\dxgi_dup.dll"
+    }
+    DX_dll := dllPath
+    return (DX_dll != "" && FileExist(DX_dll)) ? 1 : 0
+}
+
 DX_Init(output := 0, fps := 60, dllPath := "") {
     global DX_dll
     if (dllPath = "")
@@ -104,6 +113,16 @@ Dup_InitAuto(outputIdx := 0, fps := 0) {
         Logger_Info("DXGI", "InitAuto begin", f)
     } catch {
     }
+
+    ; 先加载 DLL（仅设置路径，不创建线程）
+    dllOk := 0
+    try dllOk := DX_LoadDll()
+    if (!dllOk) {
+        gDX.Ready := false
+        try Logger_Error("DXGI", "dxgi_dup.dll not found", Map("dll", DX_dll))
+        return false
+    }
+
     ; 先探测输出数量（若为0，绝不创建线程）
     cnt := 0
     try cnt := DX_EnumOutputs()
